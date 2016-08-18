@@ -1,0 +1,263 @@
+﻿//------------------------------------------------------------------------------
+//----- ResourceTypeHandler -----------------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2012 WiM - USGS
+
+//    authors:  Jeremy K. Newson USGS Wisconsin Internet Mapping
+//              
+//  
+//   purpose:   Handles resource type resources through the HTTP uniform interface.
+//              Equivalent to the controller in MVC.
+//
+//discussion:   Handlers are objects which handle all interaction with resources in 
+//              this case the resources are POCO classes derived from the EF. 
+//               https://github.com/openrasta/openrasta/wiki/Handlers
+//
+//     
+#region Comments
+// 05.02.12 - jkn - Created
+#endregion   
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+using LaMPServices.Authentication;
+using OpenRasta.Web;
+using OpenRasta.Security;
+
+namespace LaMPServices.Handlers
+{
+    public class ResourceTypeHandler
+    {
+
+        #region Properties
+
+        // will be automatically injected by DI in OpenRasta
+        public ICommunicationContext Context { get; set; }
+
+        private string connectionString = @"metadata=res://*/LaMPDSModel.csdl|res://*/LaMPDSModel.ssdl|res://*/LaMPDSModel.msl;provider=Oracle.DataAccess.Client;provider connection string=""DATA SOURCE=LAMPRDS;USER ID={0};PASSWORD={1}""";
+
+        #endregion
+
+        #region Routed Methods
+
+        #region GetMethods
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get()
+        {
+            List<RESOURCE_TYPE> resourceTypes;
+
+            //Get basic authentication password
+            // using (EasySecureString securedPassword = new EasySecureString(
+            //                        LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            /// {
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+
+                resourceTypes = Context.RESOURCE_TYPE.OrderBy(r => r.RESOURCE_TYPE_ID).ToList();
+
+            }//end using
+            //  }//end using
+
+            return new OperationResult.OK { ResponseResource = resourceTypes };
+        }//end httpMethod get
+
+
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get(Int32 resourceTypeID)
+        {
+            RESOURCE_TYPE aResourceType;
+
+            //return BadRequest if ther is no ID
+            if (resourceTypeID <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            // using (EasySecureString securedPassword = new EasySecureString(
+            //                        LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            /// {
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+
+                aResourceType = Context.RESOURCE_TYPE.Single(r => r.RESOURCE_TYPE_ID == resourceTypeID);
+
+
+            }//end using
+            //  }//end using
+
+            return new OperationResult.OK { ResponseResource = aResourceType };
+        }//end httpMethod get
+
+        #endregion
+
+        #region PostMethods
+        /// 
+        /// Force the user to provide authentication 
+        /// 
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.POST, ForUriName = "CreateResourceType")]
+        public OperationResult Post(RESOURCE_TYPE aResourceType)
+        {
+            //Return BadRequest if missing required fields
+            if (String.IsNullOrEmpty(aResourceType.RESOURCE_NAME))
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            //using (EasySecureString securedPassword = new EasySecureString(
+            //                      LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            //{
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+                decimal nextEntityId = 0;
+                //Increment Key
+                RESOURCE_TYPE lastEntity = Context.RESOURCE_TYPE.OrderByDescending(r => r.RESOURCE_TYPE_ID).FirstOrDefault();
+                if (lastEntity != null) nextEntityId = lastEntity.RESOURCE_TYPE_ID + 1;
+
+                aResourceType.RESOURCE_TYPE_ID = nextEntityId;
+
+                Context.RESOURCE_TYPE.AddObject(aResourceType);
+
+                Context.SaveChanges();
+            }// end using
+
+            // } end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = aResourceType };
+        }
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.POST, ForUriName = "CreateResourceTypeList")]
+        public OperationResult Post(List<RESOURCE_TYPE> resourceTypes)
+        {
+            //Return BadRequest if missing required fields
+            if (resourceTypes.Count <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            //using (EasySecureString securedPassword = new EasySecureString(
+            //                      LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            //{
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+                decimal nextEntityId = 0;
+                //Increment Key
+                RESOURCE_TYPE lastEntity = Context.RESOURCE_TYPE.OrderByDescending(r => r.RESOURCE_TYPE_ID).FirstOrDefault();
+                if (lastEntity != null) nextEntityId = lastEntity.RESOURCE_TYPE_ID + 1;
+
+                foreach (RESOURCE_TYPE item in resourceTypes)
+                {
+                    //update database ID
+                    item.RESOURCE_TYPE_ID = nextEntityId;
+
+                    Context.RESOURCE_TYPE.AddObject(item);
+                    nextEntityId += 1;
+
+                }//next item
+
+                Context.SaveChanges();
+            }// end using
+
+            //} end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = resourceTypes };
+        }
+        #endregion
+
+        #region PutMethods
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.PUT, ForUriName = "UpdateResourceType")]
+        public OperationResult Post(Int32 resourceTypeId, RESOURCE_TYPE instance)
+        {
+            //Return BadRequest if missing required fields
+            if ((resourceTypeId <= 0))
+            {
+                return new OperationResult.BadRequest();
+            }
+
+
+            //Get basic authentication password
+            //using (EasySecureString securedPassword = new EasySecureString(
+            //                      LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            //{
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+                //fetch the object to be updated (assuming that it exists)
+                RESOURCE_TYPE ObjectToBeUpdated = Context.RESOURCE_TYPE.Single(r => r.RESOURCE_TYPE_ID == resourceTypeId);
+
+                //RESOURCE
+                ObjectToBeUpdated.RESOURCE_NAME = (string.IsNullOrEmpty(instance.RESOURCE_NAME) ?
+                    ObjectToBeUpdated.RESOURCE_NAME : instance.RESOURCE_NAME);
+
+                Context.SaveChanges();
+            }// end using
+
+            // } end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = instance };
+        }
+
+
+        #endregion
+
+        #region DeleteMethods
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.DELETE, ForUriName = "DeleteResourceType")]
+        public OperationResult Post(Int32 resourceTypeId)
+        {
+            //Return BadRequest if missing required fields
+            if (resourceTypeId <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+
+            //Get basic authentication password
+            //using (EasySecureString securedPassword = new EasySecureString(
+            //                      LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            //{
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+                //fetch the object to be updated (assuming that it exists)
+                RESOURCE_TYPE ObjectToBeDeleted = Context.RESOURCE_TYPE.Single(r => r.RESOURCE_TYPE_ID == resourceTypeId);
+              
+                //delete it
+                Context.RESOURCE_TYPE.DeleteObject(ObjectToBeDeleted);
+
+                Context.SaveChanges();
+
+            }// end using
+
+            // } end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { };
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Helper Methods
+
+        #endregion
+
+    }//end ResourceTypeHandler
+}//end namespace

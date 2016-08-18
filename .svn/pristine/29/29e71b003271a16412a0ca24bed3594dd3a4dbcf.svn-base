@@ -1,0 +1,125 @@
+﻿@*@*Comments:
+03.10.13 - TR - Changed from basic index to list of projects based on manager logged in
+*@
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+  * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *     List of Projects associated with manager 
+ */
+ *@
+
+@{
+    ViewBag.Title = "Home";
+}
+
+@using LaMPServices;
+@using LaMPServices.Resources;
+@using LaMPWeb;
+@using LaMPWeb.Models;
+
+
+<div id="loading"><div id="loadingcontent"><p id="loadingspinner" style=""><img src="@Url.Content("~/Assets/Images/loading1.gif")"  /></p></div></div>
+<div id="dataTitle">                                                        
+    <div class="title">
+        <div>Welcome to the SiGL (Science in the Great Lakes) Data Management System. Below is a current list of your projects. Click on the project name to review or add information. To start a new project, click on the button below the project list.</div>
+        <div>If you have questions or problems, contact Jen Bruce at jlbruce@usgs.gov or 608-821-3906.</div>
+
+    </div>
+    <span id="errorSection" class="failureNotification"><asp:Literal ID="ErrorMessage" runat="server"></asp:Literal></span>
+</div>
+
+<br clear="all" />
+
+<hr class="headerUnderline" />
+@*<input type="button" onclick="GetUser();" value="TEST" />*@
+<div>
+    <div style="width:94%;text-align:right;margin-bottom:5px;font-family:'BryantBold'";>Total Sites: <span>@Session["TotSites"]</span></div>
+
+    @if (ViewData["Role"] == "Admin")
+    {
+        <table id="DMListTable-a" class="tablesorter" style="margin:0;width:96%">
+            <thead>
+                <tr>
+                    <th class="header" style="width:65%;text-align:left">Project Name</th>
+                    <th class="header" style="width:15%;text-align:left">Data Manager</th>
+                    <th class="header" style="width:10%; text-align:center">Start Date</th>
+                    <th class="header" style="width:10%; text-align:center">Site Count</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (ProjectRes p in ViewData["ProjectList"] as List<ProjectRes>)
+            {
+                <tr>
+                    <td>@Html.ActionLink(p.Name, "ProjectDetails", "Project", new { id = p.ProjId }, new { onclick = "loading();" })</td>
+                    <td style="text-align:left">@p.Manager</td>
+                    <td style="text-align:center">@((p.StartDate != null) ? ((DateTime)p.StartDate).ToShortDateString() : "")</td>
+                    <td style="text-align:center">@((p.SiteCount != null) ? p.SiteCount : 0)</td>
+                </tr>
+            }
+            </tbody>
+        </table> 
+    }
+    else
+    {
+        <table id="DMListTable-a" class="tablesorter" style="margin:0;width:96%">
+            <thead>
+                <tr>
+                    <th class="header" style="width:65%;text-align:left">Project Name</th>
+                    <th class="header" style="width:10%; text-align:center">Start Date</th>
+                    <th class="header" style="width:10%; text-align:center">SiteCount</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (ViewData.ContainsKey("ProjectList"))
+            {
+                foreach (ProjectRes p in ViewData["ProjectList"] as List<ProjectRes>)
+                {
+                    <tr>
+                        <td>@Html.ActionLink(p.Name, "ProjectDetails", "Project", new { id = p.ProjId }, new { onclick = "loading();" })</td>
+                        <td style="text-align:center">@((p.StartDate != null) ? ((DateTime)p.StartDate).ToShortDateString() : "")</td>
+                        <td style="text-align:center">@((p.SiteCount != null) ? p.SiteCount : 0)</td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table> 
+    }
+    <br clear="all"/>     
+    <div>
+        @Html.ActionLink("Create Project", "ProjectCreate", "Project", null, new { @class = "LaMPButton blue", onclick = "loading();" })
+    </div>
+
+    <br clear="all"/>                        
+</div>
+
+<style type="text/css">
+    table tr:nth-child(even)
+    {
+        background: #F2F2F2;
+    }
+    table tr:nth-child(odd)
+    {
+        background: #fff;
+    }
+</style>
+<script type="text/javascript">
+    $(document).ready(function()
+    {
+        $("#DMListTable-a").tablesorter();
+    });
+
+    function GetUser() {
+        $.ajax({
+            url: '@Url.Action("GetLoggedInMember", "Home")',
+            success: function (response) {
+                alert(response);
+            }
+        });
+    }
+    function loading() {
+        $("#loading").fadeIn();
+    };
+</script>

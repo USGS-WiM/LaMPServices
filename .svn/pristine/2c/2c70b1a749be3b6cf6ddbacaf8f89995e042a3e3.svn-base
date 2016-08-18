@@ -1,0 +1,134 @@
+﻿@* Comments:
+03.11.13 - TR - Created (Parial View)
+
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+ * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Display details of a Project 
+ */
+ *@
+@using LaMPServices;
+@using LaMPWeb.Assets.Resources;
+
+@model LaMPServices.PROJECT
+
+@{ 
+    DATA_HOST thisHost = new DATA_HOST();
+    if (ViewData.ContainsKey("dataHost"))
+    {   
+        List<DATA_HOST> DataHosts = ViewData["dataHost"] as List<DATA_HOST>;
+        thisHost = DataHosts[0];
+    }
+   }
+
+@*<script type="text/javascript">
+    $(document).ready(function () {
+        $("#loading").fadeOut();
+    });        
+</script>*@
+<div class="detailColumn">
+    
+    @* Project Name: (PROJECT)*@
+    <div class="detailDiv">          
+        <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjName_Lbl)</span>
+        <label class="inline">@Model.NAME</label>
+    </div>
+
+    @* Organizations: (PROJECT_COOPERATORS)*@
+    <div class="detailDiv">
+        <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjOrg_Lbl)</span>
+        <label class="inline">
+            @foreach (ORGANIZATION o in ViewData["projOrgs"] as List<ORGANIZATION>)
+            {  @string.Format("- {0}", o.NAME);
+               if (o.DIVISION != null)
+               { string.Format(", (Division) {0}", o.DIVISION); }
+               if (o.SECTION != null)
+               { string.Format(", (Section) {0}", o.SECTION); }
+               <br />
+            }
+        </label>
+    </div>
+
+    @* Project Start Date: (PROJECT)*@
+    <div class="detailDiv">
+        <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjStartDate_Lbl)</span>
+        <label class="inline">@( ((DateTime)Model.START_DATE).ToShortDateString() )</label>
+    </div>
+
+    @* Project End Date: (PROJECT)*@
+    <div class="detailDiv">
+        <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjEndDate_Lbl)</span>
+        <label class="inline">@( Model.END_DATE != null ? ((DateTime)Model.END_DATE).ToShortDateString() : "" )</label>
+    </div>
+        
+    @* Project Objectives: (PROJECT_OBJECTIVES)*@
+    <div class="detailDiv">
+        <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjObj_Lbl)</span>
+        <label class="inline">
+            @if (ViewData.ContainsKey("projObjectives"))
+            {
+                foreach (OBJECTIVE_TYPE ot in ViewData["projObjectives"] as List<OBJECTIVE_TYPE>)
+                {  
+                    @string.Format("- {0}", ot.OBJECTIVE);<br />
+                }
+            }
+        </label>
+    </div>
+
+    @* Project Description: (PROJECT)*@
+    <div class="detailDiv">
+        <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjDescript_Lbl)</span>
+        <label class="inline">@Model.DESCRIPTION</label>
+    </div>
+
+    @* Project Keywords: (PROJECT_KEYWORDS)*@
+    <div class="detailDiv">
+        <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjKeywords_Lbl)</span>
+        <label class="inline">
+            @if (ViewData.ContainsKey("projKeywords"))
+            {
+                 foreach (KEYWORD k in ViewData["projKeywords"] as List<KEYWORD>)
+                 {       
+                    @string.Format("- {0}", k.TERM); <br />
+                 }
+            }
+        </label>
+    </div>
+
+        @* Project Website: (PROJECT)*@
+        <div class="detailDiv">
+            <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjWebsite_Lbl)</span>
+            <label class="inline">@Model.URL</label>
+        </div>
+
+        @* Additional Project Information: (PROJECT)*@
+        <div class="detailDiv">
+            <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjAddInfo_Lbl)</span>
+            <textarea class="textAreaDetails inline" cols="30" rows="4" readonly="readonly">@Model.ADDITIONAL_INFO</textarea>
+	
+        </div>
+
+         @* Data Management System: (PROJECT)*@
+        <div class="detailDiv">
+            <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjDataMngSys_Lbl)</span>
+            <label class="inline">@( (thisHost.DATA_HOST_ID != null) ? thisHost.DESCRIPTION : "" )</label>
+        </div>
+
+         @* Data Hosting Entity: (DATA_HOST)*@
+        <div class="detailDiv">
+            <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjDataHost_Lbl)</span>
+            <label class="inline">@( (thisHost.DATA_HOST_ID != null) ? thisHost.HOST_NAME : "" )</label>
+        </div>
+
+         @* Data Portal URL: (DATA_HOST)*@
+        <div class="detailDiv">
+            <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjDataPortal_Lbl)</span>
+            <label class="inline">@( (thisHost.DATA_HOST_ID != null) ? thisHost.PORTAL_URL : "")</label>
+        </div>
+    </div>
+    

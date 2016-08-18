@@ -1,0 +1,270 @@
+﻿//------------------------------------------------------------------------------
+//----- PublicationHandler -----------------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2012 WiM - USGS
+
+//    authors:  Jeremy K. Newson USGS Wisconsin Internet Mapping
+//              
+//  
+//   purpose:   Handles publication resources through the HTTP uniform interface.
+//              Equivalent to the controller in MVC.
+//
+//discussion:   Handlers are objects which handle all interaction with resources in 
+//              this case the resources are POCO classes derived from the EF. 
+//               https://github.com/openrasta/openrasta/wiki/Handlers
+//
+//     
+#region Comments
+// 04.25.12 - jkn - Created
+#endregion                          
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+using LaMPServices.Authentication;
+using OpenRasta.Web;
+using OpenRasta.Security;
+
+namespace LaMPServices.Handlers
+{
+    public class PublicationHandler:HandlerBase
+    {
+        #region Routed Methods
+
+        #region GetMethods
+      
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get()
+        {
+            List<PUBLICATION> pubs;
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    pubs = aLaMPRDS.PUBLICATIONS.OrderBy(p => p.PUBLICATION_ID).ToList();
+
+                }//end using
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = pubs };
+        }//end httpMethod get
+
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get(Int32 publicationId)
+        {
+            PUBLICATION aPub;
+
+            //return BadRequest if ther is no ID
+            if (publicationId <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    aPub = aLaMPRDS.PUBLICATIONS.Single(p => p.PUBLICATION_ID == publicationId);
+
+                }//end using
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = aPub };
+        }//end httpMethod get
+
+        #endregion
+
+        #region PostMethods
+        /// 
+        /// Force the user to provide authentication 
+        /// 
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.POST)]
+        public OperationResult Post(PUBLICATION aPub)
+        {
+            //Return BadRequest if missing required fields
+            if (String.IsNullOrEmpty(aPub.CITATION) && String.IsNullOrEmpty(aPub.URL))
+            {return new OperationResult.BadRequest(); }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    //check if it exists
+                    if (!Exists(aLaMPRDS.PUBLICATIONS, ref aPub))
+                    {
+                        //set ID
+                        aPub.PUBLICATION_ID = GetNextPublicationID(aLaMPRDS.PUBLICATIONS);
+
+                        aLaMPRDS.PUBLICATIONS.AddObject(aPub);
+
+                        aLaMPRDS.SaveChanges();
+                    }
+                }// end using
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = aPub };
+        }
+
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.POST)]
+        public OperationResult Post(List<PUBLICATION> aPublicationList)
+        {
+            //Return BadRequest if missing required fields
+            if (aPublicationList.Count <= 0)
+            {return new OperationResult.BadRequest();}
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    for (int i = 0; i < aPublicationList.Count; i++)
+                    {
+                        PUBLICATION item = aPublicationList[i];
+                        if (!Exists(aLaMPRDS.PUBLICATIONS, ref item))
+                        {
+                            item.PUBLICATION_ID = GetNextPublicationID(aLaMPRDS.PUBLICATIONS);
+                            aLaMPRDS.PUBLICATIONS.AddObject(item);
+                            aLaMPRDS.SaveChanges();
+                            //update
+                        }
+                        //update publications to pass back
+                        aPublicationList[i] = item;
+
+                    }//next item
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = aPublicationList };
+        }
+        #endregion
+
+        #region PutMethods
+
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.PUT)]
+        public OperationResult Put(Int32 PubId, PUBLICATION instance)
+        {
+            //Return BadRequest if missing required fields
+            if ((PubId <= 0))
+            {return new OperationResult.BadRequest();}
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    PUBLICATION ObjectToBeUpdated = aLaMPRDS.PUBLICATIONS.Single(p => p.PUBLICATION_ID == PubId);
+
+
+                    //url
+                    ObjectToBeUpdated.URL = (string.IsNullOrEmpty(instance.URL) ?
+                        ObjectToBeUpdated.URL : instance.URL);
+
+                    //Citation
+                    ObjectToBeUpdated.CITATION = (string.IsNullOrEmpty(instance.CITATION) ?
+                        ObjectToBeUpdated.CITATION : instance.CITATION);
+
+
+                    aLaMPRDS.SaveChanges();
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = instance };
+        }
+
+        #endregion
+
+        #region DeleteMethods
+        [RequiresRole( AdminRole)]
+        [HttpOperation(HttpMethod.DELETE)]
+        public OperationResult Delete(Int32 PublicationId)
+        {
+            //Return BadRequest if missing required fields
+            if (PublicationId <= 0)
+            {return new OperationResult.BadRequest();}
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    PUBLICATION ObjectToBeDeleted = aLaMPRDS.PUBLICATIONS.Single(p => p.PUBLICATION_ID == PublicationId);
+                    //delete it
+                    aLaMPRDS.PUBLICATIONS.DeleteObject(ObjectToBeDeleted);
+
+                    aLaMPRDS.SaveChanges();
+
+                }// end using
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { };
+        }
+
+        #endregion
+
+        #endregion
+        #region "Helper Methods"
+        private Boolean Exists(System.Data.Objects.IObjectSet<PUBLICATION> publications, ref PUBLICATION aPublication)
+        {
+            PUBLICATION existingPublication;
+            PUBLICATION thisPublication = aPublication;
+            //check if it exists
+            try
+            {
+                existingPublication = publications.FirstOrDefault(p => (p.CITATION.Trim().ToUpper() == thisPublication.CITATION.Trim().ToUpper() || string.IsNullOrEmpty(thisPublication.CITATION)) &&
+                                                                       (p.URL.ToUpper().Trim() == thisPublication.URL.ToUpper().Trim() || string.IsNullOrEmpty(thisPublication.URL)));
+
+
+                if (existingPublication == null)
+                    return false;
+
+                //if exists then update ref contact
+                aPublication = existingPublication;
+                return true;
+
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        private decimal GetNextPublicationID(System.Data.Objects.IObjectSet<PUBLICATION> publications)
+        {
+            decimal nextKey = 1;
+            if (publications.Count() > 0)
+            {
+                nextKey = publications.OrderByDescending(p => p.PUBLICATION_ID ).First().PUBLICATION_ID + 1;
+            }
+
+            return nextKey;
+        }
+        #endregion
+     }//end PublicationHandler
+}//end namespace

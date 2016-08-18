@@ -1,0 +1,94 @@
+﻿@*Comments:
+03.10.13 - TR - Changed from basic index to list of projects based on manager logged in
+*@
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+  * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *     List of Projects associated with manager 
+ */
+ *@
+
+
+
+@{
+    ViewBag.Title = "Home";
+    //List<> theseProjects = ViewData["ProjectList"] as List<PROJECT>;
+    }
+
+@using LaMPServices;
+@using LaMPWeb;
+@using LaMPWeb.Models;
+
+<div id="loading"><div id="loadingcontent"><p id="loadingspinner" style=""><img src="@Url.Content("~/Assets/Images/loading1.gif")"  /></p></div></div>
+<div id="dataTitle">                                                        
+    <div class="title">
+        <div>Welcome to the SiGL (Science in the Great Lakes) Data Management System. Below is a current list of your projects. Click on the project name to review or add information. To start a new project, click on the button below the project list.</div>
+        <div>If you have questions or problems, contact Jen Bruce at jlbruce@usgs.gov or 608-821-3906.</div>
+
+    </div>
+    <span id="errorSection" class="failureNotification"><asp:Literal ID="ErrorMessage" runat="server"></asp:Literal></span>
+</div>
+
+<br clear="all" />
+
+<hr class="headerUnderline" />
+
+<div>
+
+    <table id="MemberListTable-a">
+        <thead>
+            <tr>
+                <th scope="col" style="width:70%">Project Name</th>
+                <th scope="col" style="width:10%; text-align:center">Start Date</th>
+                <th scope="col" style="width:10%; text-align:center">End Date</th>
+                @*<th scope="col" style="text-align:center"># of Sites</th>*@
+
+            </tr>
+        </thead>
+        @foreach (ProjectDetails p in ViewData["ProjectList"] as List<ProjectDetails>) 
+        {
+            <tr>
+                <td>@Html.ActionLink(p.ProjName, "ProjectDetails", "Project", new { id = p.ProjId }, new { onclick = "loading();" })</td>
+                <td style="text-align:center">@((p.StartDate != null) ? ((DateTime)p.StartDate).ToShortDateString(): "")</td>
+                <td style="text-align:center">@((p.EndDate != null) ? ((DateTime)p.EndDate).ToShortDateString(): "")</td>
+                @*<td style="text-align:center">@p.NoSites</td>*@
+            </tr>
+        }
+    </table> 
+     <br clear="all"/>     
+    <div>
+        @Html.ActionLink("Create Project", "ProjectCreate", "Project", null, new { @class = "LaMPButton blue", onclick="loading();" })
+        @Html.ActionLink("Create Project", "ProjectUpload", "Project", null, new { @class = "LaMPButton blue", onclick="loading();" })
+    </div>
+
+    <br clear="all"/>                        
+</div>
+
+<script type="text/javascript">
+    function loading() {
+        $("#loading").fadeIn();
+    };
+</script>
+
+@*<h2>Welcome to the SiGL Data Submission application.</h2>
+<div>
+    <div>This application will help you enter your project and site information for inclusion in the Science in the Great Lakes (SiGL) Mapper. </div>
+    <div>You can manually enter your data, copy and paste into our forms, or <a style="color: Blue">upload your SiGL excel spreadsheet</a>.</div>
+    <div> Once you’ve submitted data, you can return at any time to revise or add information and sites.</div>
+    <br />
+    <div>If you already have an account, you can <a style="color: Blue">log in here</a> </div>
+    <div>If this is your first time submitting data, please <a style="color: Blue">create an account</a>.</div>
+    <br />
+    
+    <div class="submitDiv"><div class="darkButtonBorder"><input type="button" name="Start" class="submit" value="START" onclick="Start();" /></div></div>
+</div>
+
+<script type="text/javascript">
+    function Start() {
+        window.location.href = '@Url.Action("ProjectCreate", "Project")'
+    }
+</script>*@
+

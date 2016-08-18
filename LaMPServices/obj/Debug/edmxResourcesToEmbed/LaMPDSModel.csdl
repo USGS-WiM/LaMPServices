@@ -1,0 +1,946 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Schema Namespace="LaMPDSModel" Alias="Self" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns="http://schemas.microsoft.com/ado/2008/09/edm">
+  <EntityContainer Name="LaMPDSEntities" annotation:LazyLoadingEnabled="true">
+    <EntitySet Name="CONTACTS" EntityType="LaMPDSModel.CONTACT" />
+    <EntitySet Name="FREQUENCY_TYPE" EntityType="LaMPDSModel.FREQUENCY_TYPE" />
+    <EntitySet Name="MEDIA_TYPE" EntityType="LaMPDSModel.MEDIA_TYPE" />
+    <EntitySet Name="ORGANIZATIONS" EntityType="LaMPDSModel.ORGANIZATION" />
+    <EntitySet Name="PARAMETER_TYPE" EntityType="LaMPDSModel.PARAMETER_TYPE" />
+    <EntitySet Name="PROJECTS" EntityType="LaMPDSModel.PROJECT" />
+    <EntitySet Name="PROJECT_CONTACTS" EntityType="LaMPDSModel.PROJECT_CONTACTS" />
+    <EntitySet Name="PROJECT_COOPERATORS" EntityType="LaMPDSModel.PROJECT_COOPERATORS" />
+    <EntitySet Name="PROJECT_KEYWORDS" EntityType="LaMPDSModel.PROJECT_KEYWORDS" />
+    <EntitySet Name="PROJECT_PUBLICATIONS" EntityType="LaMPDSModel.PROJECT_PUBLICATIONS" />
+    <EntitySet Name="PUBLICATIONS" EntityType="LaMPDSModel.PUBLICATION" />
+    <EntitySet Name="RESOURCE_TYPE" EntityType="LaMPDSModel.RESOURCE_TYPE" />
+    <EntitySet Name="STATUS_TYPE" EntityType="LaMPDSModel.STATUS_TYPE" />
+    <AssociationSet Name="CONTACTPROJECT_CONTACTS" Association="LaMPDSModel.CONTACTPROJECT_CONTACTS">
+      <End Role="CONTACT" EntitySet="CONTACTS" />
+      <End Role="PROJECT_CONTACTS" EntitySet="PROJECT_CONTACTS" />
+    </AssociationSet>
+    <AssociationSet Name="PROJECTPROJECT_CONTACTS" Association="LaMPDSModel.PROJECTPROJECT_CONTACTS">
+      <End Role="PROJECT" EntitySet="PROJECTS" />
+      <End Role="PROJECT_CONTACTS" EntitySet="PROJECT_CONTACTS" />
+    </AssociationSet>
+    <AssociationSet Name="PROJECTPROJECT_COOPERATORS" Association="LaMPDSModel.PROJECTPROJECT_COOPERATORS">
+      <End Role="PROJECT" EntitySet="PROJECTS" />
+      <End Role="PROJECT_COOPERATORS" EntitySet="PROJECT_COOPERATORS" />
+    </AssociationSet>
+    <AssociationSet Name="PROJECTPROJECT_PUBLICATIONS" Association="LaMPDSModel.PROJECTPROJECT_PUBLICATIONS">
+      <End Role="PROJECT" EntitySet="PROJECTS" />
+      <End Role="PROJECT_PUBLICATIONS" EntitySet="PROJECT_PUBLICATIONS" />
+    </AssociationSet>
+    <AssociationSet Name="PUBLICATIONPROJECT_PUBLICATIONS" Association="LaMPDSModel.PUBLICATIONPROJECT_PUBLICATIONS">
+      <End Role="PUBLICATION" EntitySet="PUBLICATIONS" />
+      <End Role="PROJECT_PUBLICATIONS" EntitySet="PROJECT_PUBLICATIONS" />
+    </AssociationSet>
+    <AssociationSet Name="PROJECTPROJECT_KEYWORDS" Association="LaMPDSModel.PROJECTPROJECT_KEYWORDS">
+      <End EntitySet="PROJECTS" Role="PROJECT" />
+      <End EntitySet="PROJECT_KEYWORDS" Role="PROJECT_KEYWORDS" />
+    </AssociationSet>
+    <EntitySet Name="KEYWORDS" EntityType="LaMPDSModel.KEYWORD" />
+    <AssociationSet Name="KEYWORDPROJECT_KEYWORDS" Association="LaMPDSModel.KEYWORDPROJECT_KEYWORDS">
+      <End Role="KEYWORD" EntitySet="KEYWORDS" />
+      <End Role="PROJECT_KEYWORDS" EntitySet="PROJECT_KEYWORDS" />
+    </AssociationSet>
+    <EntitySet Name="DATA_MANAGER" EntityType="LaMPDSModel.DATA_MANAGER" />
+    <AssociationSet Name="DATA_MANAGERPROJECT" Association="LaMPDSModel.DATA_MANAGERPROJECT">
+      <End Role="DATA_MANAGER" EntitySet="DATA_MANAGER" />
+      <End Role="PROJECT" EntitySet="PROJECTS" />
+    </AssociationSet>
+    <EntitySet Name="ROLEs" EntityType="LaMPDSModel.ROLE" />
+    <AssociationSet Name="ROLEDATA_MANAGER" Association="LaMPDSModel.ROLEDATA_MANAGER">
+      <End Role="ROLE" EntitySet="ROLEs" />
+      <End Role="DATA_MANAGER" EntitySet="DATA_MANAGER" />
+    </AssociationSet>
+    <EntitySet Name="LAKE_TYPE" EntityType="LaMPDSModel.LAKE_TYPE" />
+    <EntitySet Name="DATA_HOST" EntityType="LaMPDSModel.DATA_HOST" />
+    <EntitySet Name="OBJECTIVE_TYPE" EntityType="LaMPDSModel.OBJECTIVE_TYPE" />
+    <EntitySet Name="PROJECT_OBJECTIVES" EntityType="LaMPDSModel.PROJECT_OBJECTIVES" />
+    <AssociationSet Name="DATA_HOSTPROJECT" Association="LaMPDSModel.DATA_HOSTPROJECT">
+      <End Role="DATA_HOST" EntitySet="DATA_HOST" />
+      <End Role="PROJECT" EntitySet="PROJECTS" />
+    </AssociationSet>
+    <AssociationSet Name="PROJECT_OBJECTIVESPROJECT" Association="LaMPDSModel.PROJECT_OBJECTIVESPROJECT">
+      <End Role="PROJECT_OBJECTIVES" EntitySet="PROJECT_OBJECTIVES" />
+      <End Role="PROJECT" EntitySet="PROJECTS" />
+    </AssociationSet>
+    <AssociationSet Name="OBJECTIVE_TYPEPROJECT_OBJECTIVES" Association="LaMPDSModel.OBJECTIVE_TYPEPROJECT_OBJECTIVES">
+      <End Role="OBJECTIVE_TYPE" EntitySet="OBJECTIVE_TYPE" />
+      <End Role="PROJECT_OBJECTIVES" EntitySet="PROJECT_OBJECTIVES" />
+    </AssociationSet>
+    <FunctionImport Name="OWNERPROFILE_ADD">
+      <Parameter Name="USERNAME" Mode="In" Type="String" />
+      <Parameter Name="PASSWORD" Mode="In" Type="String" />
+    </FunctionImport>
+    <FunctionImport Name="OWNERPROFILE_ADDROLE">
+      <Parameter Name="USERNAME" Mode="In" Type="String" />
+      <Parameter Name="ROLEID" Mode="In" Type="Decimal" />
+    </FunctionImport>
+    <FunctionImport Name="OWNERPROFILE_ALTER">
+      <Parameter Name="USERNAME" Mode="In" Type="String" />
+      <Parameter Name="ALTERSTATEMENT" Mode="In" Type="String" />
+    </FunctionImport>
+    <FunctionImport Name="OWNERPROFILE_EDITPASSWORD">
+      <Parameter Name="USERNAME" Mode="In" Type="String" />
+      <Parameter Name="NEWPASSWORD" Mode="In" Type="String" />
+    </FunctionImport>
+    <FunctionImport Name="OWNERPROFILE_REMOVE">
+      <Parameter Name="USERNAME" Mode="In" Type="String" />
+    </FunctionImport>
+    <EntitySet Name="SITE" EntityType="LaMPDSModel.SITE" />
+    <EntitySet Name="SITE_FREQUENCY" EntityType="LaMPDSModel.SITE_FREQUENCY" />
+    <EntitySet Name="SITE_MEDIA" EntityType="LaMPDSModel.SITE_MEDIA" />
+    <EntitySet Name="SITE_PARAMETERS" EntityType="LaMPDSModel.SITE_PARAMETERS" />
+    <EntitySet Name="SITE_RESOURCE" EntityType="LaMPDSModel.SITE_RESOURCE" />
+    <AssociationSet Name="LAKE_TYPESITE" Association="LaMPDSModel.LAKE_TYPESITE">
+      <End Role="LAKE_TYPE" EntitySet="LAKE_TYPE" />
+      <End Role="SITE" EntitySet="SITE" />
+    </AssociationSet>
+    <AssociationSet Name="STATUS_TYPESITE" Association="LaMPDSModel.STATUS_TYPESITE">
+      <End Role="STATUS_TYPE" EntitySet="STATUS_TYPE" />
+      <End Role="SITE" EntitySet="SITE" />
+    </AssociationSet>
+    <AssociationSet Name="SITE_PARAMETERSPARAMETER_TYPE" Association="LaMPDSModel.SITE_PARAMETERSPARAMETER_TYPE">
+      <End Role="SITE_PARAMETERS" EntitySet="SITE_PARAMETERS" />
+      <End Role="PARAMETER_TYPE" EntitySet="PARAMETER_TYPE" />
+    </AssociationSet>
+    <AssociationSet Name="SITE_PARAMETERSSITE" Association="LaMPDSModel.SITE_PARAMETERSSITE">
+      <End Role="SITE_PARAMETERS" EntitySet="SITE_PARAMETERS" />
+      <End Role="SITE" EntitySet="SITE" />
+    </AssociationSet>
+    <AssociationSet Name="FREQUENCY_TYPESITE_FREQUENCY" Association="LaMPDSModel.FREQUENCY_TYPESITE_FREQUENCY">
+      <End Role="FREQUENCY_TYPE" EntitySet="FREQUENCY_TYPE" />
+      <End Role="SITE_FREQUENCY" EntitySet="SITE_FREQUENCY" />
+    </AssociationSet>
+    <AssociationSet Name="SITESITE_FREQUENCY" Association="LaMPDSModel.SITESITE_FREQUENCY">
+      <End Role="SITE" EntitySet="SITE" />
+      <End Role="SITE_FREQUENCY" EntitySet="SITE_FREQUENCY" />
+    </AssociationSet>
+    <AssociationSet Name="MEDIA_TYPESITE_MEDIA" Association="LaMPDSModel.MEDIA_TYPESITE_MEDIA">
+      <End Role="MEDIA_TYPE" EntitySet="MEDIA_TYPE" />
+      <End Role="SITE_MEDIA" EntitySet="SITE_MEDIA" />
+    </AssociationSet>
+    <AssociationSet Name="SITE_MEDIASITE" Association="LaMPDSModel.SITE_MEDIASITE">
+      <End Role="SITE_MEDIA" EntitySet="SITE_MEDIA" />
+      <End Role="SITE" EntitySet="SITE" />
+    </AssociationSet>
+    <AssociationSet Name="RESOURCE_TYPESITE_RESOURCE" Association="LaMPDSModel.RESOURCE_TYPESITE_RESOURCE">
+      <End Role="RESOURCE_TYPE" EntitySet="RESOURCE_TYPE" />
+      <End Role="SITE_RESOURCE" EntitySet="SITE_RESOURCE" />
+    </AssociationSet>
+    <AssociationSet Name="SITESITE_RESOURCE" Association="LaMPDSModel.SITESITE_RESOURCE">
+      <End Role="SITE" EntitySet="SITE" />
+      <End Role="SITE_RESOURCE" EntitySet="SITE_RESOURCE" />
+    </AssociationSet>
+    <AssociationSet Name="PROJECTSITE" Association="LaMPDSModel.PROJECTSITE">
+      <End Role="PROJECT" EntitySet="PROJECTS" />
+      <End Role="SITE" EntitySet="SITE" />
+    </AssociationSet>
+    <EntitySet Name="PROJ_DURATION" EntityType="LaMPDSModel.PROJ_DURATION" />
+    <EntitySet Name="PROJ_STATUS" EntityType="LaMPDSModel.PROJ_STATUS" />
+    <AssociationSet Name="PROJ_DURATIONPROJECT" Association="LaMPDSModel.PROJ_DURATIONPROJECT">
+      <End Role="PROJ_DURATION" EntitySet="PROJ_DURATION" />
+      <End Role="PROJECT" EntitySet="PROJECTS" />
+    </AssociationSet>
+    <AssociationSet Name="PROJ_STATUSPROJECT" Association="LaMPDSModel.PROJ_STATUSPROJECT">
+      <End Role="PROJ_STATUS" EntitySet="PROJ_STATUS" />
+      <End Role="PROJECT" EntitySet="PROJECTS" />
+    </AssociationSet>
+    <EntitySet Name="PROJECT_SITECOUNT_VIEW" EntityType="LaMPDSModel.PROJECT_SITECOUNT_VIEW" />
+    <EntitySet Name="DIVISIONs" EntityType="LaMPDSModel.DIVISION" />
+    <EntitySet Name="ORGANIZATION_SYSTEM" EntityType="LaMPDSModel.ORGANIZATION_SYSTEM" />
+    <EntitySet Name="SECTIONs" EntityType="LaMPDSModel.SECTION" />
+    <AssociationSet Name="ORGANIZATION_SYSTEMPROJECT_COOPERATORS" Association="LaMPDSModel.ORGANIZATION_SYSTEMPROJECT_COOPERATORS">
+      <End Role="ORGANIZATION_SYSTEM" EntitySet="ORGANIZATION_SYSTEM" />
+      <End Role="PROJECT_COOPERATORS" EntitySet="PROJECT_COOPERATORS" />
+    </AssociationSet>
+    <AssociationSet Name="ORGANIZATION_SYSTEMCONTACT" Association="LaMPDSModel.ORGANIZATION_SYSTEMCONTACT">
+      <End Role="ORGANIZATION_SYSTEM" EntitySet="ORGANIZATION_SYSTEM" />
+      <End Role="CONTACT" EntitySet="CONTACTS" />
+    </AssociationSet>
+    <AssociationSet Name="ORGANIZATIONORGANIZATION_SYSTEM" Association="LaMPDSModel.ORGANIZATIONORGANIZATION_SYSTEM">
+      <End Role="ORGANIZATION" EntitySet="ORGANIZATIONS" />
+      <End Role="ORGANIZATION_SYSTEM" EntitySet="ORGANIZATION_SYSTEM" />
+    </AssociationSet>
+    <AssociationSet Name="DIVISIONORGANIZATION" Association="LaMPDSModel.DIVISIONORGANIZATION">
+      <End Role="DIVISION" EntitySet="DIVISIONs" />
+      <End Role="ORGANIZATION" EntitySet="ORGANIZATIONS" />
+    </AssociationSet>
+    <AssociationSet Name="SECTIONDIVISION" Association="LaMPDSModel.SECTIONDIVISION">
+      <End Role="SECTION" EntitySet="SECTIONs" />
+      <End Role="DIVISION" EntitySet="DIVISIONs" />
+    </AssociationSet>
+    <AssociationSet Name="DIVISIONORGANIZATION_SYSTEM" Association="LaMPDSModel.DIVISIONORGANIZATION_SYSTEM">
+      <End Role="DIVISION" EntitySet="DIVISIONs" />
+      <End Role="ORGANIZATION_SYSTEM" EntitySet="ORGANIZATION_SYSTEM" />
+    </AssociationSet>
+    <AssociationSet Name="SECTIONORGANIZATION_SYSTEM" Association="LaMPDSModel.SECTIONORGANIZATION_SYSTEM">
+      <End Role="SECTION" EntitySet="SECTIONs" />
+      <End Role="ORGANIZATION_SYSTEM" EntitySet="ORGANIZATION_SYSTEM" />
+    </AssociationSet>
+    <EntitySet Name="DM_LIST_VIEW" EntityType="LaMPDSModel.DM_LIST_VIEW" />
+    <EntitySet Name="SITE_LIST_VIEW" EntityType="LaMPDSModel.SITE_LIST_VIEW" />
+  </EntityContainer>
+  <EntityType Name="CONTACT">
+    <Key>
+      <PropertyRef Name="CONTACT_ID" />
+    </Key>
+    <Property Name="CONTACT_ID" Type="Decimal" Nullable="false" Precision="38" Scale="0" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="NAME" Type="String" MaxLength="100" Unicode="true" FixedLength="true" />
+    <Property Name="EMAIL" Type="String" MaxLength="100" Unicode="true" FixedLength="true" />
+    <Property Name="PHONE" Type="String" MaxLength="100" Unicode="true" FixedLength="true" />
+    <NavigationProperty Name="PROJECT" Relationship="LaMPDSModel.CONTACTPROJECT_CONTACTS" FromRole="CONTACT" ToRole="PROJECT_CONTACTS" />
+    <Property Type="String" Name="SCIENCE_BASE_ID" MaxLength="40" FixedLength="false" Unicode="true" />
+    <NavigationProperty Name="ORGANIZATION_SYSTEM" Relationship="LaMPDSModel.ORGANIZATION_SYSTEMCONTACT" FromRole="CONTACT" ToRole="ORGANIZATION_SYSTEM" />
+    <Property Type="Decimal" Name="ORGANIZATION_SYSTEM_ID" Precision="38" Scale="0" />
+  </EntityType>
+  <EntityType Name="FREQUENCY_TYPE">
+    <Key>
+      <PropertyRef Name="FREQUENCY_TYPE_ID" />
+    </Key>
+    <Property Name="FREQUENCY_TYPE_ID" Type="Decimal" Nullable="false" Precision="38" Scale="0" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="FREQUENCY" Type="String" MaxLength="50" Unicode="true" FixedLength="true" />
+    <NavigationProperty Name="SITE_FREQUENCY" Relationship="LaMPDSModel.FREQUENCY_TYPESITE_FREQUENCY" FromRole="FREQUENCY_TYPE" ToRole="SITE_FREQUENCY" />
+  </EntityType>
+  <EntityType Name="MEDIA_TYPE">
+    <Key>
+      <PropertyRef Name="MEDIA_TYPE_ID" />
+    </Key>
+    <Property Name="MEDIA_TYPE_ID" Type="Decimal" Nullable="false" Precision="38" Scale="0" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="MEDIA" Type="String" MaxLength="20" Unicode="true" FixedLength="true" />
+    <NavigationProperty Name="SITE_MEDIA" Relationship="LaMPDSModel.MEDIA_TYPESITE_MEDIA" FromRole="MEDIA_TYPE" ToRole="SITE_MEDIA" />
+  </EntityType>
+  <EntityType Name="ORGANIZATION">
+    <Key>
+      <PropertyRef Name="ORGANIZATION_ID" />
+    </Key>
+    <Property Name="ORGANIZATION_ID" Type="Decimal" Nullable="false" Precision="38" Scale="0" annotation:StoreGeneratedPattern="Identity" />
+    <Property Type="String" Name="ORGANIZATION_NAME" MaxLength="500" FixedLength="false" Unicode="true" />
+    <NavigationProperty Name="ORGANIZATION_SYSTEM" Relationship="LaMPDSModel.ORGANIZATIONORGANIZATION_SYSTEM" FromRole="ORGANIZATION" ToRole="ORGANIZATION_SYSTEM" />
+    <NavigationProperty Name="DIVISION" Relationship="LaMPDSModel.DIVISIONORGANIZATION" FromRole="ORGANIZATION" ToRole="DIVISION" />
+  </EntityType>
+  <EntityType Name="PARAMETER_TYPE">
+    <Key>
+      <PropertyRef Name="PARAMETER_TYPE_ID" />
+    </Key>
+    <Property Name="PARAMETER_TYPE_ID" Type="Decimal" Nullable="false" Precision="38" Scale="0" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="PARAMETER" Type="String" MaxLength="50" Unicode="true" FixedLength="true" />
+    <Property Type="String" Name="PARAMETER_GROUP" MaxLength="255" FixedLength="true" Unicode="true" />
+    <NavigationProperty Name="SITE_PARAMETERS" Relationship="LaMPDSModel.SITE_PARAMETERSPARAMETER_TYPE" FromRole="PARAMETER_TYPE" ToRole="SITE_PARAMETERS" />
+  </EntityType>
+  <EntityType Name="PROJECT">
+    <Key>
+      <PropertyRef Name="PROJECT_ID" />
+    </Key>
+    <Property Name="PROJECT_ID" Type="Decimal" Nullable="false" Precision="38" Scale="0" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="NAME" Type="String" MaxLength="255" Unicode="true" FixedLength="true" />
+    <Property Name="START_DATE" Type="DateTime" />
+    <Property Name="END_DATE" Type="DateTime" />
+    <Property Name="URL" Type="String" MaxLength="255" Unicode="true" FixedLength="true" />
+    <NavigationProperty Name="CONTACTS" Relationship="LaMPDSModel.PROJECTPROJECT_CONTACTS" FromRole="PROJECT" ToRole="PROJECT_CONTACTS" />
+    <NavigationProperty Name="COOPERATORS" Relationship="LaMPDSModel.PROJECTPROJECT_COOPERATORS" FromRole="PROJECT" ToRole="PROJECT_COOPERATORS" />
+    <NavigationProperty Name="PUBLICATIONS" Relationship="LaMPDSModel.PROJECTPROJECT_PUBLICATIONS" FromRole="PROJECT" ToRole="PROJECT_PUBLICATIONS" />
+    <NavigationProperty Name="KEYWORDS" Relationship="LaMPDSModel.PROJECTPROJECT_KEYWORDS" FromRole="PROJECT" ToRole="PROJECT_KEYWORDS" />
+    <Property Type="Decimal" Name="DATA_MANAGER_ID" Nullable="false" Precision="38" Scale="0" />
+    <NavigationProperty Name="DATA_MANAGER" Relationship="LaMPDSModel.DATA_MANAGERPROJECT" FromRole="PROJECT" ToRole="DATA_MANAGER" />
+    <Property Type="String" Name="DESCRIPTION" MaxLength="4000" FixedLength="false" Unicode="true" />
+    <NavigationProperty Name="DATA_HOST" Relationship="LaMPDSModel.DATA_HOSTPROJECT" FromRole="PROJECT" ToRole="DATA_HOST" />
+    <NavigationProperty Name="PROJECT_OBJECTIVES" Relationship="LaMPDSModel.PROJECT_OBJECTIVESPROJECT" FromRole="PROJECT" ToRole="PROJECT_OBJECTIVES" />
+    <Property Type="String" Name="ADDITIONAL_INFO" MaxLength="255" FixedLength="false" Unicode="true" />
+    <NavigationProperty Name="SITE" Relationship="LaMPDSModel.PROJECTSITE" FromRole="PROJECT" ToRole="SITE" />
+    <Property Type="String" Name="SCIENCE_BASE_ID" MaxLength="40" FixedLength="false" Unicode="true" />
+    <Property Type="Decimal" Name="PROJ_STATUS_ID" Precision="38" Scale="0" />
+    <Property Type="Decimal" Name="PROJ_DURATION_ID" Precision="38" Scale="0" />
+    <NavigationProperty Name="PROJ_DURATION" Relationship="LaMPDSModel.PROJ_DURATIONPROJECT" FromRole="PROJECT" ToRole="PROJ_DURATION" />
+    <NavigationProperty Name="PROJ_STATUS" Relationship="LaMPDSModel.PROJ_STATUSPROJECT" FromRole="PROJECT" ToRole="PROJ_STATUS" />
+    <Property Type="Decimal" Name="READY_FLAG" Precision="38" Scale="0" />
+    <Property Type="DateTime" Name="CREATED_STAMP" />
+    <Property Type="DateTime" Name="LAST_EDITED_STAMP" />
+  </EntityType>
+  <EntityType Name="PROJECT_CONTACTS">
+    <Key>
+      <PropertyRef Name="PROJECT_CONTACTS_ID" />
+    </Key>
+    <Property Name="PROJECT_CONTACTS_ID" Type="Decimal" Nullable="false" Precision="38" Scale="0" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="PROJECT_ID" Type="Decimal" Precision="38" Scale="0" />
+    <Property Name="CONTACT_ID" Type="Decimal" Precision="38" Scale="0" />
+    <NavigationProperty Name="CONTACT" Relationship="LaMPDSModel.CONTACTPROJECT_CONTACTS" FromRole="PROJECT_CONTACTS" ToRole="CONTACT" />
+    <NavigationProperty Name="PROJECT" Relationship="LaMPDSModel.PROJECTPROJECT_CONTACTS" FromRole="PROJECT_CONTACTS" ToRole="PROJECT" />
+  </EntityType>
+  <EntityType Name="PROJECT_COOPERATORS">
+    <Key>
+      <PropertyRef Name="PROJECT_COOPERATOR_ID" />
+    </Key>
+    <Property Name="PROJECT_COOPERATOR_ID" Type="Decimal" Nullable="false" Precision="38" Scale="0" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="PROJECT_ID" Type="Decimal" Precision="38" Scale="0" />
+    <NavigationProperty Name="PROJECT" Relationship="LaMPDSModel.PROJECTPROJECT_COOPERATORS" FromRole="PROJECT_COOPERATORS" ToRole="PROJECT" />
+    <NavigationProperty Name="ORGANIZATION_SYSTEM" Relationship="LaMPDSModel.ORGANIZATION_SYSTEMPROJECT_COOPERATORS" FromRole="PROJECT_COOPERATORS" ToRole="ORGANIZATION_SYSTEM" />
+    <Property Type="Decimal" Name="ORGANIZATION_SYSTEM_ID" Precision="38" Scale="0" />
+  </EntityType>
+  <EntityType Name="PROJECT_KEYWORDS">
+    <Key>
+      <PropertyRef Name="PROJECT_KEYWORDS_ID" />
+    </Key>
+    <Property Name="PROJECT_KEYWORDS_ID" Type="Decimal" Nullable="false" Precision="38" Scale="0" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="PROJECT_ID" Type="Decimal" Precision="38" Scale="0" />
+    <Property Name="KEYWORD_ID" Type="Decimal" Precision="38" Scale="0" />
+    <NavigationProperty Name="PROJECT" Relationship="LaMPDSModel.PROJECTPROJECT_KEYWORDS" FromRole="PROJECT_KEYWORDS" ToRole="PROJECT" />
+    <NavigationProperty Name="KEYWORD" Relationship="LaMPDSModel.KEYWORDPROJECT_KEYWORDS" FromRole="PROJECT_KEYWORDS" ToRole="KEYWORD" />
+  </EntityType>
+  <EntityType Name="PROJECT_PUBLICATIONS">
+    <Key>
+      <PropertyRef Name="PROJECT_PUBLICATION_ID" />
+    </Key>
+    <Property Name="PROJECT_PUBLICATION_ID" Type="Decimal" Nullable="false" Precision="38" Scale="0" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="PROJECT_ID" Type="Decimal" Precision="38" Scale="0" />
+    <Property Name="PUBLICATION_ID" Type="Decimal" Precision="38" Scale="0" />
+    <NavigationProperty Name="PROJECT" Relationship="LaMPDSModel.PROJECTPROJECT_PUBLICATIONS" FromRole="PROJECT_PUBLICATIONS" ToRole="PROJECT" />
+    <NavigationProperty Name="PUBLICATION" Relationship="LaMPDSModel.PUBLICATIONPROJECT_PUBLICATIONS" FromRole="PROJECT_PUBLICATIONS" ToRole="PUBLICATION" />
+  </EntityType>
+  <EntityType Name="PUBLICATION">
+    <Key>
+      <PropertyRef Name="PUBLICATION_ID" />
+    </Key>
+    <Property Name="PUBLICATION_ID" Type="Decimal" Nullable="false" Precision="38" Scale="0" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="URL" Type="String" MaxLength="255" Unicode="true" FixedLength="true" />
+    <NavigationProperty Name="PROJECT" Relationship="LaMPDSModel.PUBLICATIONPROJECT_PUBLICATIONS" FromRole="PUBLICATION" ToRole="PROJECT_PUBLICATIONS" />
+    <Property Type="String" Name="TITLE" MaxLength="255" FixedLength="false" Unicode="true" />
+    <Property Type="String" Name="DESCRIPTION" MaxLength="4000" FixedLength="false" Unicode="true" />
+    <Property Type="String" Name="CITATION" MaxLength="1000" FixedLength="false" Unicode="true" />
+    <Property Type="String" Name="SCIENCE_BASE_ID" MaxLength="40" FixedLength="false" Unicode="true" />
+  </EntityType>
+  <EntityType Name="RESOURCE_TYPE">
+    <Key>
+      <PropertyRef Name="RESOURCE_TYPE_ID" />
+    </Key>
+    <Property Name="RESOURCE_TYPE_ID" Type="Decimal" Nullable="false" Precision="38" Scale="0" annotation:StoreGeneratedPattern="Identity" />
+    <Property Type="String" Name="RESOURCE_NAME" MaxLength="30" FixedLength="true" Unicode="true" />
+    <NavigationProperty Name="SITE_RESOURCE" Relationship="LaMPDSModel.RESOURCE_TYPESITE_RESOURCE" FromRole="RESOURCE_TYPE" ToRole="SITE_RESOURCE" />
+  </EntityType>
+  <EntityType Name="STATUS_TYPE">
+    <Key>
+      <PropertyRef Name="STATUS_ID" />
+    </Key>
+    <Property Name="STATUS_ID" Type="Decimal" Nullable="false" Precision="38" Scale="0" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="STATUS" Type="String" MaxLength="50" Unicode="true" FixedLength="true" />
+    <NavigationProperty Name="SITE" Relationship="LaMPDSModel.STATUS_TYPESITE" FromRole="STATUS_TYPE" ToRole="SITE" />
+  </EntityType>
+  <Association Name="CONTACTPROJECT_CONTACTS">
+    <End Type="LaMPDSModel.CONTACT" Role="CONTACT" Multiplicity="0..1" />
+    <End Type="LaMPDSModel.PROJECT_CONTACTS" Role="PROJECT_CONTACTS" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="CONTACT">
+        <PropertyRef Name="CONTACT_ID" />
+      </Principal>
+      <Dependent Role="PROJECT_CONTACTS">
+        <PropertyRef Name="CONTACT_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="PROJECTPROJECT_CONTACTS">
+    <End Type="LaMPDSModel.PROJECT" Role="PROJECT" Multiplicity="0..1" />
+    <End Type="LaMPDSModel.PROJECT_CONTACTS" Role="PROJECT_CONTACTS" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="PROJECT">
+        <PropertyRef Name="PROJECT_ID" />
+      </Principal>
+      <Dependent Role="PROJECT_CONTACTS">
+        <PropertyRef Name="PROJECT_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="PROJECTPROJECT_COOPERATORS">
+    <End Type="LaMPDSModel.PROJECT" Role="PROJECT" Multiplicity="0..1" />
+    <End Type="LaMPDSModel.PROJECT_COOPERATORS" Role="PROJECT_COOPERATORS" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="PROJECT">
+        <PropertyRef Name="PROJECT_ID" />
+      </Principal>
+      <Dependent Role="PROJECT_COOPERATORS">
+        <PropertyRef Name="PROJECT_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="PROJECTPROJECT_PUBLICATIONS">
+    <End Type="LaMPDSModel.PROJECT" Role="PROJECT" Multiplicity="0..1" />
+    <End Type="LaMPDSModel.PROJECT_PUBLICATIONS" Role="PROJECT_PUBLICATIONS" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="PROJECT">
+        <PropertyRef Name="PROJECT_ID" />
+      </Principal>
+      <Dependent Role="PROJECT_PUBLICATIONS">
+        <PropertyRef Name="PROJECT_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="PUBLICATIONPROJECT_PUBLICATIONS">
+    <End Type="LaMPDSModel.PUBLICATION" Role="PUBLICATION" Multiplicity="0..1" />
+    <End Type="LaMPDSModel.PROJECT_PUBLICATIONS" Role="PROJECT_PUBLICATIONS" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="PUBLICATION">
+        <PropertyRef Name="PUBLICATION_ID" />
+      </Principal>
+      <Dependent Role="PROJECT_PUBLICATIONS">
+        <PropertyRef Name="PUBLICATION_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="PROJECTPROJECT_KEYWORDS">
+    <End Type="LaMPDSModel.PROJECT" Multiplicity="0..1" Role="PROJECT" />
+    <End Type="LaMPDSModel.PROJECT_KEYWORDS" Multiplicity="*" Role="PROJECT_KEYWORDS" />
+    <ReferentialConstraint>
+      <Principal Role="PROJECT">
+        <PropertyRef Name="PROJECT_ID" />
+      </Principal>
+      <Dependent Role="PROJECT_KEYWORDS">
+        <PropertyRef Name="PROJECT_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <EntityType Name="KEYWORD">
+    <Key>
+      <PropertyRef Name="KEYWORD_ID" />
+    </Key>
+    <Property Type="Decimal" Name="KEYWORD_ID" Nullable="false" Precision="38" Scale="0" annotation:StoreGeneratedPattern="Identity" />
+    <Property Type="String" Name="TERM" MaxLength="30" FixedLength="true" Unicode="true" />
+    <NavigationProperty Name="PROJECT_KEYWORDS" Relationship="LaMPDSModel.KEYWORDPROJECT_KEYWORDS" FromRole="KEYWORD" ToRole="PROJECT_KEYWORDS" />
+  </EntityType>
+  <Association Name="KEYWORDPROJECT_KEYWORDS">
+    <End Type="LaMPDSModel.KEYWORD" Role="KEYWORD" Multiplicity="0..1" />
+    <End Type="LaMPDSModel.PROJECT_KEYWORDS" Role="PROJECT_KEYWORDS" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="KEYWORD">
+        <PropertyRef Name="KEYWORD_ID" />
+      </Principal>
+      <Dependent Role="PROJECT_KEYWORDS">
+        <PropertyRef Name="KEYWORD_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <EntityType Name="DATA_MANAGER">
+    <Key>
+      <PropertyRef Name="DATA_MANAGER_ID" />
+    </Key>
+    <Property Type="String" Name="USERNAME" Nullable="false" MaxLength="50" FixedLength="false" Unicode="false" />
+    <Property Type="String" Name="FNAME" MaxLength="100" FixedLength="false" Unicode="true" />
+    <Property Type="String" Name="LNAME" MaxLength="100" FixedLength="false" Unicode="true" />
+    <Property Type="String" Name="PHONE" MaxLength="15" FixedLength="false" Unicode="true" />
+    <Property Type="String" Name="EMAIL" MaxLength="50" FixedLength="false" Unicode="true" />
+    <NavigationProperty Name="PROJECTs" Relationship="LaMPDSModel.DATA_MANAGERPROJECT" FromRole="DATA_MANAGER" ToRole="PROJECT" />
+    <Property Type="Decimal" Name="ROLE_ID" Precision="38" Scale="0" />
+    <NavigationProperty Name="ROLE" Relationship="LaMPDSModel.ROLEDATA_MANAGER" FromRole="DATA_MANAGER" ToRole="ROLE" />
+    <Property Type="Decimal" Name="DATA_MANAGER_ID" Nullable="false" Precision="38" Scale="0" annotation:StoreGeneratedPattern="Identity" />
+    <Property Type="Decimal" Name="ORGANIZATION_SYSTEM_ID" Precision="38" Scale="0" />
+  </EntityType>
+  <Association Name="DATA_MANAGERPROJECT">
+    <End Type="LaMPDSModel.DATA_MANAGER" Role="DATA_MANAGER" Multiplicity="1" />
+    <End Type="LaMPDSModel.PROJECT" Role="PROJECT" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="DATA_MANAGER">
+        <PropertyRef Name="DATA_MANAGER_ID" />
+      </Principal>
+      <Dependent Role="PROJECT">
+        <PropertyRef Name="DATA_MANAGER_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <EntityType Name="ROLE">
+    <Key>
+      <PropertyRef Name="ROLE_ID" />
+    </Key>
+    <Property Type="Decimal" Name="ROLE_ID" Nullable="false" Precision="38" Scale="0" annotation:StoreGeneratedPattern="Identity" />
+    <Property Type="String" Name="ROLE_NAME" Nullable="false" MaxLength="255" FixedLength="false" Unicode="true" />
+    <Property Type="String" Name="ROLE_DESCRIPTION" MaxLength="255" FixedLength="false" Unicode="true" />
+    <NavigationProperty Name="DATA_MANAGERS" Relationship="LaMPDSModel.ROLEDATA_MANAGER" FromRole="ROLE" ToRole="DATA_MANAGER" />
+  </EntityType>
+  <Association Name="ROLEDATA_MANAGER">
+    <End Type="LaMPDSModel.ROLE" Role="ROLE" Multiplicity="0..1" />
+    <End Type="LaMPDSModel.DATA_MANAGER" Role="DATA_MANAGER" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="ROLE">
+        <PropertyRef Name="ROLE_ID" />
+      </Principal>
+      <Dependent Role="DATA_MANAGER">
+        <PropertyRef Name="ROLE_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <EntityType Name="LAKE_TYPE">
+    <Key>
+      <PropertyRef Name="LAKE_TYPE_ID" />
+    </Key>
+    <Property Type="Decimal" Name="LAKE_TYPE_ID" Nullable="false" Precision="38" Scale="0" annotation:StoreGeneratedPattern="Identity" />
+    <Property Type="String" Name="LAKE" MaxLength="30" FixedLength="false" Unicode="true" />
+    <NavigationProperty Name="SITE" Relationship="LaMPDSModel.LAKE_TYPESITE" FromRole="LAKE_TYPE" ToRole="SITE" />
+  </EntityType>
+  <EntityType Name="DATA_HOST">
+    <Key>
+      <PropertyRef Name="DATA_HOST_ID" />
+    </Key>
+    <Property Type="Decimal" Name="DATA_HOST_ID" Nullable="false" Precision="38" Scale="0" annotation:StoreGeneratedPattern="Identity" />
+    <Property Type="String" Name="PORTAL_URL" MaxLength="255" FixedLength="false" Unicode="true" />
+    <Property Type="Decimal" Name="PROJECT_ID" Nullable="false" Precision="38" Scale="0" />
+    <Property Type="String" Name="DESCRIPTION" MaxLength="255" FixedLength="false" Unicode="true" />
+    <NavigationProperty Name="PROJECTs" Relationship="LaMPDSModel.DATA_HOSTPROJECT" FromRole="DATA_HOST" ToRole="PROJECT" />
+    <Property Type="String" Name="HOST_NAME" MaxLength="255" FixedLength="false" Unicode="true" />
+  </EntityType>
+  <EntityType Name="OBJECTIVE_TYPE">
+    <Key>
+      <PropertyRef Name="OBJECTIVE_TYPE_ID" />
+    </Key>
+    <Property Type="Decimal" Name="OBJECTIVE_TYPE_ID" Nullable="false" Precision="38" Scale="0" annotation:StoreGeneratedPattern="Identity" />
+    <Property Type="String" Name="OBJECTIVE" MaxLength="50" FixedLength="false" Unicode="true" />
+    <NavigationProperty Name="PROJECT_OBJECTIVES" Relationship="LaMPDSModel.OBJECTIVE_TYPEPROJECT_OBJECTIVES" FromRole="OBJECTIVE_TYPE" ToRole="PROJECT_OBJECTIVES" />
+  </EntityType>
+  <EntityType Name="PROJECT_OBJECTIVES">
+    <Key>
+      <PropertyRef Name="PROJECT_OBJECTIVES_ID" />
+    </Key>
+    <Property Type="Decimal" Name="PROJECT_OBJECTIVES_ID" Nullable="false" Precision="38" Scale="0" annotation:StoreGeneratedPattern="Identity" />
+    <Property Type="Decimal" Name="PROJECT_ID" Nullable="false" Precision="38" Scale="0" />
+    <Property Type="Decimal" Name="OBJECTIVE_ID" Nullable="false" Precision="38" Scale="0" />
+    <NavigationProperty Name="PROJECT" Relationship="LaMPDSModel.PROJECT_OBJECTIVESPROJECT" FromRole="PROJECT_OBJECTIVES" ToRole="PROJECT" />
+    <NavigationProperty Name="OBJECTIVE_TYPE" Relationship="LaMPDSModel.OBJECTIVE_TYPEPROJECT_OBJECTIVES" FromRole="PROJECT_OBJECTIVES" ToRole="OBJECTIVE_TYPE" />
+  </EntityType>
+  <Association Name="DATA_HOSTPROJECT">
+    <End Type="LaMPDSModel.DATA_HOST" Role="DATA_HOST" Multiplicity="*" />
+    <End Type="LaMPDSModel.PROJECT" Role="PROJECT" Multiplicity="1" />
+    <ReferentialConstraint>
+      <Principal Role="PROJECT">
+        <PropertyRef Name="PROJECT_ID" />
+      </Principal>
+      <Dependent Role="DATA_HOST">
+        <PropertyRef Name="PROJECT_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="PROJECT_OBJECTIVESPROJECT">
+    <End Type="LaMPDSModel.PROJECT_OBJECTIVES" Role="PROJECT_OBJECTIVES" Multiplicity="*" />
+    <End Type="LaMPDSModel.PROJECT" Role="PROJECT" Multiplicity="1" />
+    <ReferentialConstraint>
+      <Principal Role="PROJECT">
+        <PropertyRef Name="PROJECT_ID" />
+      </Principal>
+      <Dependent Role="PROJECT_OBJECTIVES">
+        <PropertyRef Name="PROJECT_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="OBJECTIVE_TYPEPROJECT_OBJECTIVES">
+    <End Type="LaMPDSModel.OBJECTIVE_TYPE" Role="OBJECTIVE_TYPE" Multiplicity="1" />
+    <End Type="LaMPDSModel.PROJECT_OBJECTIVES" Role="PROJECT_OBJECTIVES" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="OBJECTIVE_TYPE">
+        <PropertyRef Name="OBJECTIVE_TYPE_ID" />
+      </Principal>
+      <Dependent Role="PROJECT_OBJECTIVES">
+        <PropertyRef Name="OBJECTIVE_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <EntityType Name="SITE">
+    <Key>
+      <PropertyRef Name="SITE_ID" />
+    </Key>
+    <Property Type="Decimal" Name="SITE_ID" Nullable="false" Precision="38" Scale="0" annotation:StoreGeneratedPattern="Identity" />
+    <Property Type="DateTime" Name="START_DATE" Nullable="true" />
+    <Property Type="DateTime" Name="END_DATE" Nullable="true" />
+    <Property Type="Decimal" Name="PROJECT_ID" Precision="38" Scale="0" />
+    <Property Type="String" Name="SAMPLE_PLATFORM" MaxLength="255" FixedLength="false" Unicode="true" />
+    <Property Type="String" Name="ADDITIONAL_INFO" MaxLength="1000" FixedLength="false" Unicode="true" />
+    <Property Type="String" Name="NAME" MaxLength="255" FixedLength="false" Unicode="true" />
+    <Property Type="String" Name="DESCRIPTION" MaxLength="255" FixedLength="false" Unicode="true" />
+    <Property Type="Decimal" Name="LATITUDE" Precision="38" Scale="0" />
+    <Property Type="Decimal" Name="LONGITUDE" Precision="38" Scale="0" />
+    <Property Type="String" Name="WATERBODY" MaxLength="255" FixedLength="false" Unicode="true" />
+    <Property Type="Decimal" Name="STATUS_TYPE_ID" Precision="38" Scale="0" />
+    <Property Type="Decimal" Name="LAKE_TYPE_ID" Precision="38" Scale="0" />
+    <Property Type="String" Name="COUNTRY" MaxLength="25" FixedLength="false" Unicode="true" />
+    <Property Type="String" Name="STATE_PROVINCE" MaxLength="25" FixedLength="false" Unicode="true" />
+    <Property Type="String" Name="WATERSHED_HUC8" MaxLength="8" FixedLength="false" Unicode="true" />
+    <Property Type="String" Name="URL" MaxLength="255" FixedLength="false" Unicode="true" />
+    <NavigationProperty Name="LAKE_TYPE" Relationship="LaMPDSModel.LAKE_TYPESITE" FromRole="SITE" ToRole="LAKE_TYPE" />
+    <NavigationProperty Name="STATUS_TYPE" Relationship="LaMPDSModel.STATUS_TYPESITE" FromRole="SITE" ToRole="STATUS_TYPE" />
+    <NavigationProperty Name="SITE_PARAMETERS" Relationship="LaMPDSModel.SITE_PARAMETERSSITE" FromRole="SITE" ToRole="SITE_PARAMETERS" />
+    <NavigationProperty Name="SITE_FREQUENCY" Relationship="LaMPDSModel.SITESITE_FREQUENCY" FromRole="SITE" ToRole="SITE_FREQUENCY" />
+    <NavigationProperty Name="SITE_MEDIA" Relationship="LaMPDSModel.SITE_MEDIASITE" FromRole="SITE" ToRole="SITE_MEDIA" />
+    <NavigationProperty Name="SITE_RESOURCE" Relationship="LaMPDSModel.SITESITE_RESOURCE" FromRole="SITE" ToRole="SITE_RESOURCE" />
+    <NavigationProperty Name="PROJECT" Relationship="LaMPDSModel.PROJECTSITE" FromRole="SITE" ToRole="PROJECT" />
+  </EntityType>
+  <EntityType Name="SITE_FREQUENCY">
+    <Key>
+      <PropertyRef Name="ID" />
+    </Key>
+    <Property Type="Decimal" Name="ID" Nullable="false" Precision="38" Scale="0" annotation:StoreGeneratedPattern="Identity" />
+    <Property Type="Decimal" Name="SITE_ID" Nullable="false" Precision="38" Scale="0" />
+    <Property Type="Decimal" Name="FREQUENCY_TYPE_ID" Nullable="false" Precision="38" Scale="0" />
+    <NavigationProperty Name="FREQUENCY_TYPE" Relationship="LaMPDSModel.FREQUENCY_TYPESITE_FREQUENCY" FromRole="SITE_FREQUENCY" ToRole="FREQUENCY_TYPE" />
+    <NavigationProperty Name="SITE" Relationship="LaMPDSModel.SITESITE_FREQUENCY" FromRole="SITE_FREQUENCY" ToRole="SITE" />
+  </EntityType>
+  <EntityType Name="SITE_MEDIA">
+    <Key>
+      <PropertyRef Name="ID" />
+    </Key>
+    <Property Type="Decimal" Name="ID" Nullable="false" Precision="38" Scale="0" annotation:StoreGeneratedPattern="Identity" />
+    <Property Type="Decimal" Name="SITE_ID" Nullable="false" Precision="38" Scale="0" />
+    <Property Type="Decimal" Name="MEDIA_TYPE_ID" Nullable="false" Precision="38" Scale="0" />
+    <NavigationProperty Name="MEDIA_TYPE" Relationship="LaMPDSModel.MEDIA_TYPESITE_MEDIA" FromRole="SITE_MEDIA" ToRole="MEDIA_TYPE" />
+    <NavigationProperty Name="SITE" Relationship="LaMPDSModel.SITE_MEDIASITE" FromRole="SITE_MEDIA" ToRole="SITE" />
+  </EntityType>
+  <EntityType Name="SITE_PARAMETERS">
+    <Key>
+      <PropertyRef Name="ID" />
+    </Key>
+    <Property Type="Decimal" Name="ID" Nullable="false" Precision="38" Scale="0" annotation:StoreGeneratedPattern="Identity" />
+    <Property Type="Decimal" Name="SITE_ID" Precision="38" Scale="0" />
+    <Property Type="Decimal" Name="PARAMETER_TYPE_ID" Precision="38" Scale="0" />
+    <NavigationProperty Name="PARAMETER_TYPE" Relationship="LaMPDSModel.SITE_PARAMETERSPARAMETER_TYPE" FromRole="SITE_PARAMETERS" ToRole="PARAMETER_TYPE" />
+    <NavigationProperty Name="SITE" Relationship="LaMPDSModel.SITE_PARAMETERSSITE" FromRole="SITE_PARAMETERS" ToRole="SITE" />
+  </EntityType>
+  <EntityType Name="SITE_RESOURCE">
+    <Key>
+      <PropertyRef Name="ID" />
+    </Key>
+    <Property Type="Decimal" Name="ID" Nullable="false" Precision="38" Scale="0" annotation:StoreGeneratedPattern="Identity" />
+    <Property Type="Decimal" Name="SITE_ID" Nullable="false" Precision="38" Scale="0" />
+    <Property Type="Decimal" Name="RESOURCE_TYPE_ID" Nullable="false" Precision="38" Scale="0" />
+    <NavigationProperty Name="RESOURCE_TYPE" Relationship="LaMPDSModel.RESOURCE_TYPESITE_RESOURCE" FromRole="SITE_RESOURCE" ToRole="RESOURCE_TYPE" />
+    <NavigationProperty Name="SITE" Relationship="LaMPDSModel.SITESITE_RESOURCE" FromRole="SITE_RESOURCE" ToRole="SITE" />
+  </EntityType>
+  <Association Name="LAKE_TYPESITE">
+    <End Type="LaMPDSModel.LAKE_TYPE" Role="LAKE_TYPE" Multiplicity="0..1" />
+    <End Type="LaMPDSModel.SITE" Role="SITE" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="LAKE_TYPE">
+        <PropertyRef Name="LAKE_TYPE_ID" />
+      </Principal>
+      <Dependent Role="SITE">
+        <PropertyRef Name="LAKE_TYPE_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="STATUS_TYPESITE">
+    <End Type="LaMPDSModel.STATUS_TYPE" Role="STATUS_TYPE" Multiplicity="0..1" />
+    <End Type="LaMPDSModel.SITE" Role="SITE" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="STATUS_TYPE">
+        <PropertyRef Name="STATUS_ID" />
+      </Principal>
+      <Dependent Role="SITE">
+        <PropertyRef Name="STATUS_TYPE_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="SITE_PARAMETERSPARAMETER_TYPE">
+    <End Type="LaMPDSModel.SITE_PARAMETERS" Role="SITE_PARAMETERS" Multiplicity="*" />
+    <End Type="LaMPDSModel.PARAMETER_TYPE" Role="PARAMETER_TYPE" Multiplicity="0..1" />
+    <ReferentialConstraint>
+      <Principal Role="PARAMETER_TYPE">
+        <PropertyRef Name="PARAMETER_TYPE_ID" />
+      </Principal>
+      <Dependent Role="SITE_PARAMETERS">
+        <PropertyRef Name="PARAMETER_TYPE_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="SITE_PARAMETERSSITE">
+    <End Type="LaMPDSModel.SITE_PARAMETERS" Role="SITE_PARAMETERS" Multiplicity="*" />
+    <End Type="LaMPDSModel.SITE" Role="SITE" Multiplicity="0..1" />
+    <ReferentialConstraint>
+      <Principal Role="SITE">
+        <PropertyRef Name="SITE_ID" />
+      </Principal>
+      <Dependent Role="SITE_PARAMETERS">
+        <PropertyRef Name="SITE_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FREQUENCY_TYPESITE_FREQUENCY">
+    <End Type="LaMPDSModel.FREQUENCY_TYPE" Role="FREQUENCY_TYPE" Multiplicity="1" />
+    <End Type="LaMPDSModel.SITE_FREQUENCY" Role="SITE_FREQUENCY" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="FREQUENCY_TYPE">
+        <PropertyRef Name="FREQUENCY_TYPE_ID" />
+      </Principal>
+      <Dependent Role="SITE_FREQUENCY">
+        <PropertyRef Name="FREQUENCY_TYPE_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="SITESITE_FREQUENCY">
+    <End Type="LaMPDSModel.SITE" Role="SITE" Multiplicity="1" />
+    <End Type="LaMPDSModel.SITE_FREQUENCY" Role="SITE_FREQUENCY" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="SITE">
+        <PropertyRef Name="SITE_ID" />
+      </Principal>
+      <Dependent Role="SITE_FREQUENCY">
+        <PropertyRef Name="SITE_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="MEDIA_TYPESITE_MEDIA">
+    <End Type="LaMPDSModel.MEDIA_TYPE" Role="MEDIA_TYPE" Multiplicity="1" />
+    <End Type="LaMPDSModel.SITE_MEDIA" Role="SITE_MEDIA" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="MEDIA_TYPE">
+        <PropertyRef Name="MEDIA_TYPE_ID" />
+      </Principal>
+      <Dependent Role="SITE_MEDIA">
+        <PropertyRef Name="MEDIA_TYPE_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="SITE_MEDIASITE">
+    <End Type="LaMPDSModel.SITE_MEDIA" Role="SITE_MEDIA" Multiplicity="*" />
+    <End Type="LaMPDSModel.SITE" Role="SITE" Multiplicity="1" />
+    <ReferentialConstraint>
+      <Principal Role="SITE">
+        <PropertyRef Name="SITE_ID" />
+      </Principal>
+      <Dependent Role="SITE_MEDIA">
+        <PropertyRef Name="SITE_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="RESOURCE_TYPESITE_RESOURCE">
+    <End Type="LaMPDSModel.RESOURCE_TYPE" Role="RESOURCE_TYPE" Multiplicity="1" />
+    <End Type="LaMPDSModel.SITE_RESOURCE" Role="SITE_RESOURCE" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="RESOURCE_TYPE">
+        <PropertyRef Name="RESOURCE_TYPE_ID" />
+      </Principal>
+      <Dependent Role="SITE_RESOURCE">
+        <PropertyRef Name="RESOURCE_TYPE_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="SITESITE_RESOURCE">
+    <End Type="LaMPDSModel.SITE" Role="SITE" Multiplicity="1" />
+    <End Type="LaMPDSModel.SITE_RESOURCE" Role="SITE_RESOURCE" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="SITE">
+        <PropertyRef Name="SITE_ID" />
+      </Principal>
+      <Dependent Role="SITE_RESOURCE">
+        <PropertyRef Name="SITE_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="PROJECTSITE">
+    <End Type="LaMPDSModel.PROJECT" Role="PROJECT" Multiplicity="0..1" />
+    <End Type="LaMPDSModel.SITE" Role="SITE" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="PROJECT">
+        <PropertyRef Name="PROJECT_ID" />
+      </Principal>
+      <Dependent Role="SITE">
+        <PropertyRef Name="PROJECT_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <EntityType Name="PROJ_DURATION">
+    <Key>
+      <PropertyRef Name="PROJ_DURATION_ID" />
+    </Key>
+    <Property Type="Decimal" Name="PROJ_DURATION_ID" Nullable="false" Precision="38" Scale="0" />
+    <Property Type="String" Name="DURATION_VALUE" MaxLength="100" FixedLength="false" Unicode="true" />
+    <NavigationProperty Name="PROJECTs" Relationship="LaMPDSModel.PROJ_DURATIONPROJECT" FromRole="PROJ_DURATION" ToRole="PROJECT" />
+  </EntityType>
+  <EntityType Name="PROJ_STATUS">
+    <Key>
+      <PropertyRef Name="PROJ_STATUS_ID" />
+    </Key>
+    <Property Type="Decimal" Name="PROJ_STATUS_ID" Nullable="false" Precision="38" Scale="0" />
+    <Property Type="String" Name="STATUS_VALUE" MaxLength="100" FixedLength="false" Unicode="true" />
+    <NavigationProperty Name="PROJECTs" Relationship="LaMPDSModel.PROJ_STATUSPROJECT" FromRole="PROJ_STATUS" ToRole="PROJECT" />
+  </EntityType>
+  <Association Name="PROJ_DURATIONPROJECT">
+    <End Type="LaMPDSModel.PROJ_DURATION" Role="PROJ_DURATION" Multiplicity="0..1" />
+    <End Type="LaMPDSModel.PROJECT" Role="PROJECT" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="PROJ_DURATION">
+        <PropertyRef Name="PROJ_DURATION_ID" />
+      </Principal>
+      <Dependent Role="PROJECT">
+        <PropertyRef Name="PROJ_DURATION_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="PROJ_STATUSPROJECT">
+    <End Type="LaMPDSModel.PROJ_STATUS" Role="PROJ_STATUS" Multiplicity="0..1" />
+    <End Type="LaMPDSModel.PROJECT" Role="PROJECT" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="PROJ_STATUS">
+        <PropertyRef Name="PROJ_STATUS_ID" />
+      </Principal>
+      <Dependent Role="PROJECT">
+        <PropertyRef Name="PROJ_STATUS_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <EntityType Name="PROJECT_SITECOUNT_VIEW">
+    <Key>
+      <PropertyRef Name="PROJID" />
+    </Key>
+    <Property Type="Decimal" Name="PROJID" Nullable="false" Precision="38" Scale="0" />
+    <Property Type="Decimal" Name="MANAGER" Precision="38" Scale="0" Nullable="false" />
+    <Property Type="String" Name="NAME" MaxLength="255" FixedLength="false" Unicode="true" />
+    <Property Type="Decimal" Name="SITECOUNT" Precision="38" Scale="0" />
+  </EntityType>
+  <EntityType Name="DIVISION">
+    <Key>
+      <PropertyRef Name="DIVISION_ID" />
+    </Key>
+    <Property Type="Decimal" Name="DIVISION_ID" Nullable="false" Precision="38" Scale="0" annotation:StoreGeneratedPattern="Identity" />
+    <Property Type="String" Name="DIVISION_NAME" MaxLength="500" FixedLength="false" Unicode="false" />
+    <Property Type="Decimal" Name="ORG_ID" Precision="38" Scale="0" />
+    <NavigationProperty Name="ORGANIZATIONs" Relationship="LaMPDSModel.DIVISIONORGANIZATION" FromRole="DIVISION" ToRole="ORGANIZATION" />
+    <NavigationProperty Name="SECTION" Relationship="LaMPDSModel.SECTIONDIVISION" FromRole="DIVISION" ToRole="SECTION" />
+    <NavigationProperty Name="ORGANIZATION_SYSTEM" Relationship="LaMPDSModel.DIVISIONORGANIZATION_SYSTEM" FromRole="DIVISION" ToRole="ORGANIZATION_SYSTEM" />
+  </EntityType>
+  <EntityType Name="ORGANIZATION_SYSTEM">
+    <Key>
+      <PropertyRef Name="ORGANIZATION_SYSTEM_ID" />
+    </Key>
+    <Property Type="Decimal" Name="ORGANIZATION_SYSTEM_ID" Nullable="false" Precision="38" Scale="0" annotation:StoreGeneratedPattern="Identity" />
+    <Property Type="Decimal" Name="ORG_ID" Nullable="false" Precision="38" Scale="0" />
+    <Property Type="Decimal" Name="DIV_ID" Precision="38" Scale="0" Nullable="true" />
+    <Property Type="Decimal" Name="SEC_ID" Precision="38" Scale="0" Nullable="true" />
+    <Property Type="String" Name="SCIENCE_BASE_ID" MaxLength="50" FixedLength="false" Unicode="false" />
+    <NavigationProperty Name="PROJECT" Relationship="LaMPDSModel.ORGANIZATION_SYSTEMPROJECT_COOPERATORS" FromRole="ORGANIZATION_SYSTEM" ToRole="PROJECT_COOPERATORS" />
+    <NavigationProperty Name="CONTACTs" Relationship="LaMPDSModel.ORGANIZATION_SYSTEMCONTACT" FromRole="ORGANIZATION_SYSTEM" ToRole="CONTACT" />
+    <NavigationProperty Name="ORGANIZATION" Relationship="LaMPDSModel.ORGANIZATIONORGANIZATION_SYSTEM" FromRole="ORGANIZATION_SYSTEM" ToRole="ORGANIZATION" />
+    <NavigationProperty Name="DIVISION" Relationship="LaMPDSModel.DIVISIONORGANIZATION_SYSTEM" FromRole="ORGANIZATION_SYSTEM" ToRole="DIVISION" />
+    <NavigationProperty Name="SECTION" Relationship="LaMPDSModel.SECTIONORGANIZATION_SYSTEM" FromRole="ORGANIZATION_SYSTEM" ToRole="SECTION" />
+  </EntityType>
+  <EntityType Name="SECTION">
+    <Key>
+      <PropertyRef Name="SECTION_ID" />
+    </Key>
+    <Property Type="Decimal" Name="SECTION_ID" Nullable="false" Precision="38" Scale="0" annotation:StoreGeneratedPattern="Identity" />
+    <Property Type="String" Name="SECTION_NAME" MaxLength="500" FixedLength="false" Unicode="false" />
+    <Property Type="Decimal" Name="DIV_ID" Precision="38" Scale="0" />
+    <NavigationProperty Name="DIVISIONs" Relationship="LaMPDSModel.SECTIONDIVISION" FromRole="SECTION" ToRole="DIVISION" />
+    <NavigationProperty Name="ORGANIZATION_SYSTEM" Relationship="LaMPDSModel.SECTIONORGANIZATION_SYSTEM" FromRole="SECTION" ToRole="ORGANIZATION_SYSTEM" />
+  </EntityType>
+  <Association Name="ORGANIZATION_SYSTEMPROJECT_COOPERATORS">
+    <End Type="LaMPDSModel.ORGANIZATION_SYSTEM" Role="ORGANIZATION_SYSTEM" Multiplicity="0..1" />
+    <End Type="LaMPDSModel.PROJECT_COOPERATORS" Role="PROJECT_COOPERATORS" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="ORGANIZATION_SYSTEM">
+        <PropertyRef Name="ORGANIZATION_SYSTEM_ID" />
+      </Principal>
+      <Dependent Role="PROJECT_COOPERATORS">
+        <PropertyRef Name="ORGANIZATION_SYSTEM_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="ORGANIZATION_SYSTEMCONTACT">
+    <End Type="LaMPDSModel.ORGANIZATION_SYSTEM" Role="ORGANIZATION_SYSTEM" Multiplicity="0..1" />
+    <End Type="LaMPDSModel.CONTACT" Role="CONTACT" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="ORGANIZATION_SYSTEM">
+        <PropertyRef Name="ORGANIZATION_SYSTEM_ID" />
+      </Principal>
+      <Dependent Role="CONTACT">
+        <PropertyRef Name="ORGANIZATION_SYSTEM_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="ORGANIZATIONORGANIZATION_SYSTEM">
+    <End Type="LaMPDSModel.ORGANIZATION" Role="ORGANIZATION" Multiplicity="1" />
+    <End Type="LaMPDSModel.ORGANIZATION_SYSTEM" Role="ORGANIZATION_SYSTEM" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="ORGANIZATION">
+        <PropertyRef Name="ORGANIZATION_ID" />
+      </Principal>
+      <Dependent Role="ORGANIZATION_SYSTEM">
+        <PropertyRef Name="ORG_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="DIVISIONORGANIZATION">
+    <End Type="LaMPDSModel.DIVISION" Role="DIVISION" Multiplicity="*" />
+    <End Type="LaMPDSModel.ORGANIZATION" Role="ORGANIZATION" Multiplicity="0..1" />
+    <ReferentialConstraint>
+      <Principal Role="ORGANIZATION">
+        <PropertyRef Name="ORGANIZATION_ID" />
+      </Principal>
+      <Dependent Role="DIVISION">
+        <PropertyRef Name="ORG_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="SECTIONDIVISION">
+    <End Type="LaMPDSModel.SECTION" Role="SECTION" Multiplicity="*" />
+    <End Type="LaMPDSModel.DIVISION" Role="DIVISION" Multiplicity="0..1" />
+    <ReferentialConstraint>
+      <Principal Role="DIVISION">
+        <PropertyRef Name="DIVISION_ID" />
+      </Principal>
+      <Dependent Role="SECTION">
+        <PropertyRef Name="DIV_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="DIVISIONORGANIZATION_SYSTEM">
+    <End Type="LaMPDSModel.DIVISION" Role="DIVISION" Multiplicity="0..1" />
+    <End Type="LaMPDSModel.ORGANIZATION_SYSTEM" Role="ORGANIZATION_SYSTEM" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="DIVISION">
+        <PropertyRef Name="DIVISION_ID" />
+      </Principal>
+      <Dependent Role="ORGANIZATION_SYSTEM">
+        <PropertyRef Name="DIV_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="SECTIONORGANIZATION_SYSTEM">
+    <End Type="LaMPDSModel.SECTION" Role="SECTION" Multiplicity="0..1" />
+    <End Type="LaMPDSModel.ORGANIZATION_SYSTEM" Role="ORGANIZATION_SYSTEM" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="SECTION">
+        <PropertyRef Name="SECTION_ID" />
+      </Principal>
+      <Dependent Role="ORGANIZATION_SYSTEM">
+        <PropertyRef Name="SEC_ID" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <EntityType Name="DM_LIST_VIEW">
+    <Key>
+      <PropertyRef Name="DATA_MANAGER_ID" />
+    </Key>
+    <Property Type="Decimal" Name="DATA_MANAGER_ID" Nullable="false" Precision="38" Scale="0" />
+    <Property Type="Decimal" Name="ORGANIZATION_SYSTEM_ID" Precision="38" Scale="0" />
+    <Property Type="String" Name="FULLNAME" MaxLength="201" FixedLength="false" Unicode="true" />
+    <Property Type="String" Name="FNAME" MaxLength="100" FixedLength="false" Unicode="true" />
+    <Property Type="String" Name="LNAME" MaxLength="100" FixedLength="false" Unicode="true" />
+    <Property Type="String" Name="ROLE_NAME" MaxLength="255" FixedLength="false" Unicode="true" />
+    <Property Type="Decimal" Name="PROJECT_COUNT" Precision="38" Scale="0" />
+  </EntityType>
+  <EntityType Name="SITE_LIST_VIEW">
+    <Key>
+      <PropertyRef Name="SITE_ID" />
+    </Key>
+    <Property Type="Decimal" Name="SITE_ID" Nullable="false" Precision="38" Scale="0" />
+    <Property Type="DateTime" Name="START_DATE" />
+    <Property Type="DateTime" Name="END_DATE" />
+    <Property Type="Decimal" Name="PROJECT_ID" Precision="38" Scale="0" />
+    <Property Type="String" Name="SAMPLE_PLATFORM" MaxLength="255" FixedLength="false" Unicode="true" />
+    <Property Type="String" Name="ADDITIONAL_INFO" MaxLength="1000" FixedLength="false" Unicode="true" />
+    <Property Type="String" Name="NAME" MaxLength="255" FixedLength="false" Unicode="true" />
+    <Property Type="String" Name="DESCRIPTION" MaxLength="255" FixedLength="false" Unicode="true" />
+    <Property Type="Decimal" Name="LATITUDE" Precision="38" Scale="0" />
+    <Property Type="Decimal" Name="LONGITUDE" Precision="38" Scale="0" />
+    <Property Type="String" Name="WATERBODY" MaxLength="255" FixedLength="false" Unicode="true" />
+    <Property Type="String" Name="STATUS" MaxLength="50" FixedLength="false" Unicode="true" />
+    <Property Type="String" Name="LAKE" MaxLength="30" FixedLength="false" Unicode="true" />
+    <Property Type="String" Name="COUNTRY" MaxLength="25" FixedLength="false" Unicode="true" />
+    <Property Type="String" Name="STATE_PROVINCE" MaxLength="25" FixedLength="false" Unicode="true" />
+    <Property Type="String" Name="WATERSHED_HUC8" MaxLength="8" FixedLength="false" Unicode="true" />
+    <Property Type="String" Name="URL" MaxLength="255" FixedLength="false" Unicode="true" />
+  </EntityType>
+</Schema>

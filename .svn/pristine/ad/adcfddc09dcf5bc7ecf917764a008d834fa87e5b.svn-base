@@ -1,0 +1,612 @@
+﻿//------------------------------------------------------------------------------
+//----- EntityObjectResource -----------------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2012 WiM - USGS
+
+//    authors:  Jeremy K. Newson USGS Wisconsin Internet Mapping
+//              
+//  
+//   purpose:   EntityObject resources through the HTTP uniform interface.
+//              Equivalent to the model in MVC.
+//
+//discussion:   Resources are plain-old CLR objects (POCO) the resources are POCO classes derived from the EF
+//              SiteResource contains additional rederers of the derived EF POCO classes. 
+//              https://github.com/openrasta/openrasta/wiki/Resources
+//
+//              EntityObjectResource contain the remaining entity object partial classes 
+//              that where generated from the entity object model generator.
+//              The partial classes were created in order to extend resource method to the 
+//              generated objects
+//
+//              A partial class can implement more than one interface, 
+//              but it cannot inherit from more than one base class. 
+//              Therefore, all partial classes Inherits statements must specify the same base class.
+//              http://msdn.microsoft.com/en-us/library/wa80x488.aspx
+//              
+
+#region Comments
+// 03.06.13 - jkn - adapted from STNResourcesPartials
+// 08.02.12 - jkn - added method to add links to specified related objects
+// 06.29.12 - jkn - added additional entities, changed base from EntityObject to ResourceBase to HypermediaEntity
+// 06.28.12 - jkn - Created
+#endregion
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+namespace LaMPServices
+{
+    //  POST  /entities/{entityName}
+
+    //  PUT   /entities/{entityName}/{entityId} 
+    //  GET   /entities/{entityName}
+    //        /entities/{entityName}/{entityId}
+
+    public partial class CATALOG_ : HypermediaEntity
+    {
+
+        #region Overrided Methods
+
+        protected override string getRelativeURI(refType rType)
+        {
+            string uriString = "";
+            switch (rType)
+            {
+                case refType.e_get:
+                case refType.e_put:
+                case refType.e_delete:
+                    uriString = string.Format("catalogs/{0}", this.CATALOG_ID);
+                    break;
+
+                case refType.e_post:
+                    uriString = "catalogs";
+                    break;
+
+            }
+            return uriString;
+        }
+
+        protected override void addRelatedLinks(string BaseURI)
+        {
+            //calalog/{catalogId}/addParameter
+            this.LINKS.Add(new Link(BaseURI, "addParameter", getRelativeURI(refType.e_get) + "/addParameter"));
+            //calalog/{catalogId}/parameters
+            this.LINKS.Add(new Link(BaseURI, "parameters", getRelativeURI(refType.e_get) + "/parameters"));
+            //calalog/{catalogId}/resource
+            this.LINKS.Add(new Link(BaseURI, "resource", getRelativeURI(refType.e_get) + "/resource"));
+            //calalog/{catalogId}/media
+            this.LINKS.Add(new Link(BaseURI, "media", getRelativeURI(refType.e_get) + "/media"));
+            //calalog/{catalogId}/frequency
+            this.LINKS.Add(new Link(BaseURI, "frequency", getRelativeURI(refType.e_get) + "/frequency"));
+            //calalog/{catalogId}/project
+            this.LINKS.Add(new Link(BaseURI, "project", getRelativeURI(refType.e_get) + "/project"));
+            //calalog/{catalogId}/site
+            this.LINKS.Add(new Link(BaseURI, "site", getRelativeURI(refType.e_get) + "/site"));
+        }
+        #endregion
+
+    }//end Class CATALOG_
+
+    public partial class CONTACT : HypermediaEntity
+    {
+
+        #region Overrided Methods
+
+        protected override string getRelativeURI(refType rType)
+        {
+            string uriString = "";
+            switch (rType)
+            {
+                case refType.e_get:
+                case refType.e_put:
+                case refType.e_delete:
+                    uriString = string.Format("contacts/{0}", this.CONTACT_ID);
+                    break;
+
+                case refType.e_post:
+                    uriString = "contacts";
+                    break;
+
+            }
+            return uriString;
+        }
+        protected override void addRelatedLinks(string BaseURI)
+        {
+            //contacts/{contactId}/project
+            this.LINKS.Add(new Link(BaseURI, "projects", getRelativeURI(refType.e_get) + "/projects"));
+            //contacts/{contactId}/organization
+            this.LINKS.Add(new Link(BaseURI, "organization", getRelativeURI(refType.e_get) + "/organization"));
+        }
+        #endregion
+
+    }//end Class CONTACT
+
+    public partial class DATA_HOST : HypermediaEntity
+    {
+
+        #region Overrided Methods
+
+        protected override string getRelativeURI(refType rType)
+        {
+            string uriString = "";
+            switch (rType)
+            {
+                case refType.e_get:
+                case refType.e_put:
+                    uriString = string.Format("dataHosts/{0}", this.DATA_HOST_ID);
+                    break;
+
+                case refType.e_post:
+                    uriString = "";
+                    break;
+
+            }
+            return uriString;
+        }
+        protected override void addRelatedLinks(string BaseURI)
+        {
+            //dataHosts/{dataHosts}/project
+            this.LINKS.Add(new Link(BaseURI, "project", getRelativeURI(refType.e_get) + "/project"));
+
+        }
+        #endregion
+
+    }//end Class PUBLICATION
+
+    public partial class DATA_MANAGER : HypermediaEntity
+    {
+
+        #region Overrided Methods
+
+        protected override string getRelativeURI(refType rType)
+        {
+            string uriString = "";
+            switch (rType)
+            {
+                case refType.e_get:
+                case refType.e_put:
+                case refType.e_delete:
+                    uriString = string.Format("dataManagers/{0}", this.DATA_MANAGER_ID);
+                    break;
+
+                case refType.e_post:
+                    uriString = "";
+                    break;
+
+            }
+            return uriString;
+        }
+        protected override void addRelatedLinks(string BaseURI)
+        {
+            //dataManagers/{dataManagerId}/projects
+            this.LINKS.Add(new Link(BaseURI, "projects", getRelativeURI(refType.e_get) + "/projects"));
+            //dataManagers/{dataManagerId}/role
+            this.LINKS.Add(new Link(BaseURI, "role", getRelativeURI(refType.e_get) + "/role"));
+        }
+        #endregion
+
+    }//end Class DATA_MANAGER
+
+    public partial class FREQUENCY_TYPE : HypermediaEntity
+    {
+
+        #region Overrided Methods
+
+        protected override string getRelativeURI(refType rType)
+        {
+            string uriString = "";
+            switch (rType)
+            {
+                case refType.e_get:
+                case refType.e_put:
+                case refType.e_delete:
+                    uriString = string.Format("frequencyTypes/{0}", this.FREQUENCY_TYPE_ID);
+                    break;
+
+                case refType.e_post:
+                    uriString = "frequencyTypes";
+                    break;
+
+            }
+            return uriString;
+        }
+        protected override void addRelatedLinks(string BaseURI)
+        {
+            //frequencyTypes/{frequencyTypeId}/catalogs
+            this.LINKS.Add(new Link(BaseURI, "catalogs", getRelativeURI(refType.e_get) + "/catalogs"));
+        }
+        #endregion
+
+    }//end Class DATA_MANAGER
+
+    public partial class KEYWORD : HypermediaEntity
+    {
+
+        #region Overrided Methods
+
+        protected override string getRelativeURI(refType rType)
+        {
+            string uriString = "";
+            switch (rType)
+            {
+                case refType.e_get:
+                case refType.e_put:
+                case refType.e_delete:
+                    uriString = string.Format("keywords/{0}", this.KEYWORD_ID);
+                    break;
+
+                case refType.e_post:
+                    uriString = "keywords";
+                    break;
+
+            }
+            return uriString;
+        }
+        protected override void addRelatedLinks(string BaseURI)
+        {
+            //keywords/{keywordId}/projects
+            this.LINKS.Add(new Link(BaseURI, "projects", getRelativeURI(refType.e_get) + "/projects"));
+        }
+        #endregion
+
+    }//end Class KEYWORD
+
+    public partial class LAKE_TYPE : HypermediaEntity
+    {
+
+        #region Overrided Methods
+
+        protected override string getRelativeURI(refType rType)
+        {
+            string uriString = "";
+            switch (rType)
+            {
+                case refType.e_get:
+                case refType.e_put:
+                case refType.e_delete:
+                    //uriString = string.Format("Instruments/{0}", this.INSTRUMENT_ID);
+                    uriString = string.Format("lakes/{0}", this.LAKE_TYPE_ID);
+                    break;
+
+                case refType.e_post:
+                    uriString = "lakes";
+                    break;
+
+            }
+            return uriString;
+        }
+        protected override void addRelatedLinks(string BaseURI)
+        {
+            //lake/{lakeId}/sites
+            this.LINKS.Add(new Link(BaseURI, "sites", getRelativeURI(refType.e_get) + "/sites"));
+        }
+        #endregion
+
+    }//end Class LAKE_TYPE
+
+    public partial class LOCATION : HypermediaEntity
+    {
+
+        #region Overrided Methods
+
+        protected override string getRelativeURI(refType rType)
+        {
+            string uriString = "";
+            switch (rType)
+            {
+                case refType.e_get:
+                case refType.e_put:
+                case refType.e_delete:
+                    uriString = string.Format("sites/{0}", this.LOCATION_ID);
+                    break;
+
+                case refType.e_post:
+                    uriString = "sites";
+                    break;
+
+            }
+            return uriString;
+        }
+        protected override void addRelatedLinks(string BaseURI)
+        {
+            //site/{siteId}/catalogs
+            this.LINKS.Add(new Link(BaseURI, "catalogs", getRelativeURI(refType.e_get) + "/catalogs"));
+            //site/{siteId}/status
+            this.LINKS.Add(new Link(BaseURI, "status", getRelativeURI(refType.e_get) + "/status"));
+            //site/{siteId}/lake
+            this.LINKS.Add(new Link(BaseURI, "lake", getRelativeURI(refType.e_get) + "/lake"));
+        }
+        #endregion
+
+    }//end Class LOCATION
+
+    public partial class MEDIA_TYPE : HypermediaEntity
+    {
+
+        #region Overrided Methods
+
+        protected override string getRelativeURI(refType rType)
+        {
+            string uriString = "";
+            switch (rType)
+            {
+                case refType.e_get:
+                case refType.e_put:
+                case refType.e_delete:
+                    uriString = string.Format("media/{0}", this.MEDIA_TYPE_ID);
+                    break;
+
+                case refType.e_post:
+                    uriString = "media";
+                    break;
+
+            }
+            return uriString;
+        }
+        protected override void addRelatedLinks(string BaseURI)
+        {
+            //media/{mediaId}/catalogs
+            this.LINKS.Add(new Link(BaseURI, "catalogs", getRelativeURI(refType.e_get) + "/catalogs"));
+        }
+        #endregion
+
+    }//end Class MEDIA_TYPE
+
+    public partial class OBJECTIVE_TYPE : HypermediaEntity
+    {
+
+        #region Overrided Methods
+
+        protected override string getRelativeURI(refType rType)
+        {
+            string uriString = "";
+            switch (rType)
+            {
+                case refType.e_get:
+                case refType.e_put:
+                    uriString = string.Format("objectives/{0}", this.OBJECTIVE_TYPE_ID);
+                    break;
+
+                case refType.e_post:
+                    uriString = "";
+                    break;
+
+            }
+            return uriString;
+        }
+        protected override void addRelatedLinks(string BaseURI)
+        {
+            //objectives/{objectiveId}/projects
+            this.LINKS.Add(new Link(BaseURI, "projects", getRelativeURI(refType.e_get) + "/projects"));
+
+        }
+        #endregion
+
+    }//end Class PUBLICATION
+
+    public partial class ORGANIZATION : HypermediaEntity
+    {
+
+        #region Overrided Methods
+
+        protected override string getRelativeURI(refType rType)
+        {
+            string uriString = "";
+            switch (rType)
+            {
+                case refType.e_get:
+                case refType.e_put:
+                case refType.e_delete:
+                    uriString = string.Format("organizations/{0}", this.ORGANIZATION_ID);
+                    break;
+
+                case refType.e_post:
+                    uriString = "organizations";
+                    break;
+
+            }
+            return uriString;
+        }
+        protected override void addRelatedLinks(string BaseURI)
+        {
+            //organizations/{organizationId}/projects
+            this.LINKS.Add(new Link(BaseURI, "projects", getRelativeURI(refType.e_get) + "/projects"));
+            //organizations/{organizationId}/dataHosts
+            this.LINKS.Add(new Link(BaseURI, "dataHosts", getRelativeURI(refType.e_get) + "/dataHosts"));
+            //organizations/{organizationId}/contacts
+            this.LINKS.Add(new Link(BaseURI, "contacts", getRelativeURI(refType.e_get) + "/contacts"));
+        }
+        #endregion
+
+    }//end Class ORGANIZATION
+
+    public partial class PARAMETER_TYPE : HypermediaEntity
+    {
+
+        #region Overrided Methods
+
+        protected override string getRelativeURI(refType rType)
+        {
+            string uriString = "";
+            switch (rType)
+            {
+                case refType.e_get:
+                case refType.e_put:
+                case refType.e_delete:
+                    uriString = string.Format("parameters/{0}", this.PARAMETER_TYPE_ID);
+                    break;
+
+                case refType.e_post:
+                    uriString = "parameters";
+                    break;
+
+            }
+            return uriString;
+        }
+        protected override void addRelatedLinks(string BaseURI)
+        {
+            //parameter/{parameterId}/catalogs
+            this.LINKS.Add(new Link(BaseURI, "catalogs", getRelativeURI(refType.e_get) + "/catalogs"));
+  
+        }
+        #endregion
+
+    }//end Class PARAMETER_TYPE
+
+    public partial class PROJECT : HypermediaEntity
+    {
+
+        #region Overrided Methods
+
+        protected override string getRelativeURI(refType rType)
+        {
+            string uriString = "";
+            switch (rType)
+            {
+                case refType.e_get:
+                case refType.e_put:
+                case refType.e_delete:
+                    uriString = string.Format("projects/{0}", this.PROJECT_ID);
+                    break;
+
+                case refType.e_post:
+                    uriString = "projects";
+                    break;
+
+            }
+            return uriString;
+        }
+        protected override void addRelatedLinks(string BaseURI)
+        {
+            //projects/{projectId}/addKeyword
+            this.LINKS.Add(new Link(BaseURI, "addKeyword", getRelativeURI(refType.e_get) + "/addKeyword"));
+            //projects/{projectId}/addOrganization
+            this.LINKS.Add(new Link(BaseURI, "addOrganization", getRelativeURI(refType.e_get) + "/addOrganization"));
+            //projects/{projectId}/addPublication
+            this.LINKS.Add(new Link(BaseURI, "addPublication", getRelativeURI(refType.e_get) + "/addPublication"));
+            //projects/{projectId}/dataHosts
+            this.LINKS.Add(new Link(BaseURI, "dataHosts", getRelativeURI(refType.e_get) + "/dataHosts"));
+            //projects/{projectId}/catalogs
+            this.LINKS.Add(new Link(BaseURI, "catalogs", getRelativeURI(refType.e_get) + "/catalogs"));
+            //projects/{projectId}/contacts
+            this.LINKS.Add(new Link(BaseURI, "contacts", getRelativeURI(refType.e_get) + "/contacts"));
+            //projects/{projectId}/objectives
+            this.LINKS.Add(new Link(BaseURI, "objectives", getRelativeURI(refType.e_get) + "/objectives"));
+            //projects/{projectId}/organizations
+            this.LINKS.Add(new Link(BaseURI, "organizations", getRelativeURI(refType.e_get) + "/organizations"));
+            //projects/{projectId}/publications
+            this.LINKS.Add(new Link(BaseURI, "publications", getRelativeURI(refType.e_get) + "/publications"));
+            //projects/{projectId}/keywords
+            this.LINKS.Add(new Link(BaseURI, "keywords", getRelativeURI(refType.e_get) + "/keywords"));
+            //projects/{projectId}/dataManager
+            this.LINKS.Add(new Link(BaseURI, "dataManager", getRelativeURI(refType.e_get) + "/dataManager"));
+
+        }
+        #endregion
+
+    }//end Class PROJECT
+
+    public partial class PUBLICATION : HypermediaEntity
+    {
+
+        #region Overrided Methods
+
+        protected override string getRelativeURI(refType rType)
+        {
+            string uriString = "";
+            switch (rType)
+            {
+                case refType.e_get:
+                case refType.e_put:
+                    uriString = string.Format("publications/{0}", this.PUBLICATION_ID);
+                    break;
+
+                case refType.e_post:
+                    uriString = "";
+                    break;
+
+            }
+            return uriString;
+        }
+        protected override void addRelatedLinks(string BaseURI)
+        {
+            //publications/{publicationId}/projects
+            this.LINKS.Add(new Link(BaseURI, "projects", getRelativeURI(refType.e_get) + "/projects"));
+
+        }
+        #endregion
+
+    }//end Class PUBLICATION
+
+    public partial class RESOURCE_TYPE : HypermediaEntity
+    {
+
+        #region Overrided Methods
+
+        protected override string getRelativeURI(refType rType)
+        {
+            string uriString = "";
+            switch (rType)
+            {
+                case refType.e_get:
+                case refType.e_put:
+                case refType.e_delete:
+                    uriString = string.Format("resources/{0}", this.RESOURCE_TYPE_ID);
+                    break;
+
+                case refType.e_post:
+                    uriString = "resources";
+                    break;
+
+            }
+            return uriString;
+        }
+        protected override void addRelatedLinks(string BaseURI)
+        {
+            //resources/{resourceId}/catalogs
+            this.LINKS.Add(new Link(BaseURI, "catalogs", getRelativeURI(refType.e_get) + "/catalogs"));
+
+        }
+        #endregion
+
+    }//end Class PUBLICATION
+
+    public partial class STATUS_TYPE : HypermediaEntity
+    {
+
+        #region Overrided Methods
+
+        protected override string getRelativeURI(refType rType)
+        {
+            string uriString = "";
+            switch (rType)
+            {
+                case refType.e_get:
+                case refType.e_put:
+                case refType.e_delete:
+                    uriString = string.Format("status/{0}", this.STATUS_ID);
+                    break;
+
+                case refType.e_post:
+                    uriString = "status";
+                    break;
+
+            }
+            return uriString;
+        }
+        protected override void addRelatedLinks(string BaseURI)
+        {
+            //status/{statusId}/site
+            this.LINKS.Add(new Link(BaseURI, "sites", getRelativeURI(refType.e_get) + "/sites"));
+        }
+        #endregion
+
+    }//end Class STATUS_TYPE
+}//end namespace

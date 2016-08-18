@@ -1,0 +1,119 @@
+﻿@* Comments:
+03.11.13 - TR - Created (Parial View)
+
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+ * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Display edit partial view for a Project 
+ */
+ *@
+ 
+<script src="@Url.Content("~/Assets/Scripts/jquery-1.7.2.min.js")" type="text/javascript"></script>
+
+ 
+@using LaMPServices;
+@using LaMPWeb.Assets.Resources;
+
+@model LaMPServices.PROJECT
+
+<script src="@Url.Content("~/Assets/Scripts/jquery.unobtrusive-ajax.min.js")" type="text/javascript"></script>
+<div id="commonMessage"></div>
+
+@using (Ajax.BeginForm("Edit", "Project", new { id = Model.PROJECT_ID }, new AjaxOptions() { HttpMethod = "POST", UpdateTargetId = "content" }))
+{
+    <div class="siteColumn"> 
+        
+        <div data-role="fieldcontain">
+	        <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjName_Lbl)</span>
+	        <label>@Model.NAME</label>
+	    </div>
+        
+        <div data-role="fieldcontain">
+	        <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjOrg_Lbl)</span>
+	        <label>
+                Organization1
+                @*@foreach (ORGANIZATION o in ViewData["organizations"] as List<ORGANIZATION>)
+                {   
+                    @string.Format("- {0}", o.NAME);
+                                                   if (o.DIVISION != null)
+                                                   { string.Format(", (Division) {0}", o.DIVISION); }
+                                                   if (o.SECTION != null)
+                                                   { string.Format(", (Section) {0}", o.SECTION); }
+                    <br />
+                }*@
+            </label>
+	    </div>
+        @Html.ActionLink("OrganizationPopup", "Project", new {id = Model.PROJECT_ID}, new {@class ="editLink"})
+
+       <div id="updateDialog" title="Add an Organization"></div>        
+    </div>
+}
+
+<script type="text/javascript">
+    var linkObj;
+    $(function () {
+       $(".editLink").button();
+
+       $("#updateDialog").dialog({
+            autoOpen: false,
+            height: 400,
+            resizable: false,
+            modal: true,
+            buttons: {
+                "Update": function() {
+                    $("#update-message").html(''); //make sure nothing there
+                    $("#updateOrgForm").submit();
+                },
+                "Cancel": function() {
+                    $(this).dialog("close");
+                }
+            }
+        });
+    
+
+        $(".editLink").click(function() {
+            //change title of dialog
+            linkObj = $(this);
+            var dialogDiv = $("#updateDialog");
+            var viewUrl = linkObj.attr('href');
+            $.get(viewUrl, function (data) {
+                dialogDiv.html(data);
+                //validation
+                var $form = $("#updateOrgForm");
+                //unbind existing validation
+                $form.unbind();
+                $form.data("validator", null);
+                //check document for changes
+                $.validator.unobtrusive.parse(document);
+                //re add validation with changes
+                $form.validate($form.data("unobtrusiveValidation").options);
+                //open dialog
+                dialogDiv.dialog("open");
+            });
+            return false;
+        });
+    });
+    function updateSuccess(data) {
+        if (data.Success == true) {
+            //we update the table's info
+//            var parent = linkObj.closest("tr");
+//            parent.find(".carName").html(data.Object.Name);
+//            parent.find(".carDescription").html(data.Object.Description);
+            //now we can close the dialog
+            $('#updateDialog').dialog('close');
+            //twitter type notification
+            $('#commonMessage').html("Update Complete");
+            $('#commonMessage').delay(400).slideDown(400).delay(3000).slideUp(400);
+        }
+        else {
+            $("#update-message").html(data.ErrorMessage);
+            $("#update-message").show();
+        }
+    }
+
+</script>

@@ -1,0 +1,51 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenRasta.Codecs.WebForms", "..\openrasta-2.1\src\openrasta-aspnet\src\OpenRasta.Codecs.WebForms\OpenRasta.Codecs.WebForms.csproj", "{B4EC606E-48A7-4653-AD88-3614A5FF360A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenRasta.Hosting.AspNet", "..\openrasta-2.1\src\openrasta-aspnet\src\OpenRasta.Hosting.AspNet\OpenRasta.Hosting.AspNet.csproj", "{FE290BB8-9CB4-454E-89BE-E047674BB34F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenRasta", "..\openrasta-2.1\src\openrasta-core\src\OpenRasta\OpenRasta.csproj", "{C3ED9CCE-A140-4D0F-AE00-FBBF4CD27647}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LaMPServices", "LaMPServices\LaMPServices.csproj", "{338AED66-BA8F-4941-B741-18F354364326}"
+	ProjectSection(ProjectDependencies) = postProject
+		{C3ED9CCE-A140-4D0F-AE00-FBBF4CD27647} = {C3ED9CCE-A140-4D0F-AE00-FBBF4CD27647}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LaMPWeb", "LaMPWeb\LaMPWeb.csproj", "{083181D6-5C33-47C1-B202-E8FD237DB45B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B4EC606E-48A7-4653-AD88-3614A5FF360A} = {B4EC606E-48A7-4653-AD88-3614A5FF360A}
+		{FE290BB8-9CB4-454E-89BE-E047674BB34F} = {FE290BB8-9CB4-454E-89BE-E047674BB34F}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B4EC606E-48A7-4653-AD88-3614A5FF360A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B4EC606E-48A7-4653-AD88-3614A5FF360A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B4EC606E-48A7-4653-AD88-3614A5FF360A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B4EC606E-48A7-4653-AD88-3614A5FF360A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FE290BB8-9CB4-454E-89BE-E047674BB34F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FE290BB8-9CB4-454E-89BE-E047674BB34F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FE290BB8-9CB4-454E-89BE-E047674BB34F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FE290BB8-9CB4-454E-89BE-E047674BB34F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C3ED9CCE-A140-4D0F-AE00-FBBF4CD27647}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C3ED9CCE-A140-4D0F-AE00-FBBF4CD27647}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C3ED9CCE-A140-4D0F-AE00-FBBF4CD27647}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C3ED9CCE-A140-4D0F-AE00-FBBF4CD27647}.Release|Any CPU.Build.0 = Release|Any CPU
+		{338AED66-BA8F-4941-B741-18F354364326}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{338AED66-BA8F-4941-B741-18F354364326}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{338AED66-BA8F-4941-B741-18F354364326}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{338AED66-BA8F-4941-B741-18F354364326}.Release|Any CPU.Build.0 = Release|Any CPU
+		{083181D6-5C33-47C1-B202-E8FD237DB45B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{083181D6-5C33-47C1-B202-E8FD237DB45B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{083181D6-5C33-47C1-B202-E8FD237DB45B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{083181D6-5C33-47C1-B202-E8FD237DB45B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

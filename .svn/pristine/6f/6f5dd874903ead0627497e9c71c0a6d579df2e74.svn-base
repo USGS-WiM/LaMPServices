@@ -1,0 +1,47 @@
+﻿@* Comments: 
+02.28.13 - TR - Integrating the services
+02.25.13 - TR - Created 
+
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+  * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Project Sites GridView (copy/paste
+ */
+ *@
+ 
+ @{
+    ViewBag.Title = "Review";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div id="dataTitle">
+    <div class="title">Review</div>
+   
+</div>
+<br clear="all" />
+<hr class="headerUnderline" />
+
+<div>
+    Project Summary will be here
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+
+    <br />
+</div>
+
+    <br />
+    <div id="formSubmitDiv" class="formSection">
+        <div class="leftSideSubmit">
+            <div class="submitDiv"><div class="darkButtonBorder"><input type="submit" name="Create" class="submit" value="Submit" /></div></div>
+            <div class="cancelDiv"><div class="lightButtonBorder"><input id="resetButton" type="reset" class="cancel" value="Cancel" onclick="location.href='@Url.Action("ProjSummary1", "Project")' " /></div></div>
+            <span id="errorSection" class="failureNotification"><asp:Literal ID="ErrorMessage" runat="server"></asp:Literal></span>
+        </div>
+    </div>  

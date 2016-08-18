@@ -1,0 +1,66 @@
+﻿@* Comments:
+04.02.13 - TR - Created 
+
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+ * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Display details of a Contact 
+ */
+ *@
+@using LaMPServices;
+@using LaMPWeb.Assets.Resources;
+
+@model LaMPServices.CONTACT
+           
+
+@{
+    ViewBag.Title = "Contact Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ORGANIZATION thisOrg = ViewData["ContactOrg"] as ORGANIZATION;
+    PROJECT thisProject = ViewData["Project"] as PROJECT;
+}
+
+
+<div id="dataTitle">                                                        
+    <div class="title">Project: @Html.ActionLink(thisProject.NAME, "ProjectDetails", "Project", new { id = thisProject.PROJECT_ID }, new { onclick = "loading();" }), Contact: @Model.NAME</div>
+</div>
+<br clear="all" />
+
+<hr class="headerUnderline" />
+
+@* Contact Name: *@
+    <div class="detailDiv">          
+        <span class="bold ui-label-a">Contact Name:</span>
+        <label class="inline bold">@Model.NAME</label>
+    </div>
+
+    @* Organizations: (PROJECT_COOPERATORS)*@
+    <div class="detailDiv">
+        <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjOrg_Lbl)</span>
+        <label class="inline">
+               @string.Format("{0}", thisOrg.NAME)
+               @if (thisOrg.DIVISION != null)
+               { @string.Format(", {0}", thisOrg.DIVISION); }
+               @if (thisOrg.SECTION != null)
+               { @string.Format(", {0}", thisOrg.SECTION); }
+        </label>
+    </div>
+
+    @* Contact Email: *@
+    <div class="detailDiv">
+        <span class="bold ui-label-a">Email</span>
+        <label class="inline">@Model.EMAIL</label>
+    </div>
+    
+    @* Contact Phone: *@
+    <div class="detailDiv">
+        <span class="bold ui-label-a">Phone</span>
+        <label class="inline">@Model.PHONE</label>
+    </div>
+    <br />
+    @Html.ActionLink("Return to Project Details", "ProjectDetails", "Project", new { id = thisProject.PROJECT_ID }, new { @class = "LaMPButton blue", onclick = "loading();" })

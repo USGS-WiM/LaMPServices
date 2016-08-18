@@ -1,0 +1,162 @@
+﻿@* Comments: 
+03.26.13 - TR - Changed add another publication to button click instead of checkbox, added button for go to details
+02.28.13 - TR - Integrating the services
+02.06.13 - TR - Created 
+
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+  * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Project Publication
+ */
+ *@
+
+ @using LaMPServices;
+ @using LaMPWeb.Models;
+ @using LaMPWeb.Assets.Resources;
+
+@{
+    ViewBag.Title = "Project Publications";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@*<div id="loading"><div id="loadingcontent"><p id="loadingspinner" style=""><img src="@Url.Content("~/Assets/Images/loading1.gif")"  /></p></div></div>*@
+
+@model LaMPServices.PUBLICATION
+           
+<div id="dataTitle">
+    <div class="title">Project Publications</div>
+</div>
+<br clear="all" />
+<hr class="headerUnderline" />
+@{
+    PROJECT thisProject = ViewData["project"] as PROJECT;
+    Boolean pubs = false;
+}
+
+<script src="@Url.Content("~/Assets/Scripts/jquery.unobtrusive-ajax.min.js")" type="text/javascript"></script>
+
+@using (Html.BeginForm("ProjPublications", "Project", FormMethod.Post, new { @id = "form0" }))
+{
+    <div class="siteColumn">
+
+    @if (ViewData.ContainsKey("publications"))
+    { @* if (this project has publications) *@
+        <div class="ui-grid-a"> 
+            <div class="ui-block-a" style="width:100%">Publications:</div>
+            <div class="ui-block-b"><textarea style="width:100%" readonly="readonly" class="textarea ui-shadow-inset" name="Publication" rows="2" cols="30">@foreach (PUBLICATION pu in ViewData["publications"] as List<PUBLICATION>) 
+                                                                                                                                                        { 
+                                                                                                                                                            if(pu.TITLE != "") 
+                                                                                                                                                            { 
+                                                                                                                                                                string p = pu.TITLE + "\n"; @p}
+                                                                                                                                                            }</textarea></div>
+        </div>
+        pubs = true;
+    }
+        
+       <input type="hidden" name="projId" id="projId" value="@thisProject.PROJECT_ID" />
+
+        @* Project Name *@
+        <div class="ui-grid-a">           
+            <div class="ui-block-a">Project Name:</div>
+            <div class="ui-block-b"><label>@thisProject.NAME</label></div>
+        </div>
+
+        @* Publication Title: *@
+        <div class="ui-grid-a">
+             <div class="ui-block-a">Publication Title:</div>
+             <div class="ui-block-b"><input type="text" id="pubTitle" name="TITLE" class="stnTextInput ui-shadow-inset" /></div>
+        </div>
+        
+        @* Publication Description: *@
+        <div class="ui-grid-a">
+             <div class="ui-block-a">Publication Description:</div>
+             <div class="ui-block-b"><input type="text" id="pubDescription" name="DESCRIPTION" class="stnTextInput ui-shadow-inset" /></div>
+             <div class="ui-block-c notes">Briefly describe the content and format of the publication. Include publication number (if applicable).</div>
+        </div>
+        
+        @* Publication URL: *@
+        <div class="ui-grid-a">           
+            <div class="ui-block-a">Publication Website or Location:</div>
+            <div class="ui-block-b"><input type="text" id="pubURL" name="URL" class="stnTextInput ui-shadow-inset" /></div>
+            <div class="ui-block-c notes">If the publication is online, enter the URL. Otherwise, provide information on how to obtain a copy of the publication.</div>
+        </div>
+        
+    </div>
+        
+    <br clear="all" />
+    <br />
+    <div id="formSubmitDiv" class="formSection">
+        <div class="leftSideSubmit">
+            <div class="submitDiv"><div class="darkButtonBorder"><input type="submit" name="Create" class="submit" value="Add&#10; Another Publication" /></div></div>
+            <div class="submitDiv"><div class="darkButtonBorder"><input type="submit" name="Create" class="submit" value="Go To&#10; Project Details" /></div></div>
+            <div class="submitDiv"><div class="darkButtonBorder"><input type="submit" name="Create" class="submit" value="Proceed to&#10; Add Sites" /></div></div>
+        </div>
+    </div> 
+}
+
+
+<script type="text/javascript">
+    function loading() {
+        $("#loading").fadeIn();
+    }
+</script>
+
+
+<script type="text/javascript">
+
+    $("#form0").submit(function () {
+        var MISSING = "ui-req";
+
+        var requiredInput = $('input[class*="required"]');
+        var requiredSelect = $('select[class*="required"]');
+        var Ierr = false;
+        var Serr = false;
+        var missingMsg = "The highlighted fields are required.";
+
+        // Reset the previously highlighted form elements  
+        requiredInput.each(function (index) {
+            $(this).removeClass(MISSING);
+            $(this).addClass("ui-shadow-inset");
+        });
+        // Reset the previously highlighted form elements  
+        requiredSelect.each(function (index) {
+            $(this).removeClass(MISSING);
+            $(this).addClass("ui-shadow-inset");
+        });
+        // Perform form validation  
+        requiredInput.each(function (index) {
+            if ($(this).val() == null || $(this).val() == "") {
+                $(this).addClass(MISSING);
+                $(this).removeClass("ui-shadow-inset");
+                Ierr = true;
+                //                $("#errorSection").append(missingMsg);
+            }
+        });
+        // Perform form validation  
+        requiredSelect.each(function (index) {
+            var ind = $(this).context.selectedIndex;
+            if (ind == -1) {
+                $(this).addClass(MISSING);
+                Serr = true;
+                //                $("#errorSection").append(missingMsg);
+            }
+        });
+        if (Ierr == true || Serr == true) {
+            $("#errorSection").append(missingMsg);
+        }
+        // Check if validation fails
+        if (Ierr == true) {
+            return false;
+        }
+        // Check if validation fails
+        if (Serr == true) {
+            return false;
+        }
+
+    });
+
+</script>

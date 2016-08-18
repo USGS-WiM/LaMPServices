@@ -1,0 +1,32 @@
+﻿@* Comments: 
+03.11.13 - TR - Created 
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+  * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Partial view for Viewing list of publications for a project
+ */
+ *@
+
+@using LaMPServices;
+
+@model LaMPServices.PUBLICATION
+
+<div class="subSection softHeader">
+    <label class="bold Lpadded">Publications</label>
+    <br />
+    <ul>
+        @foreach (PUBLICATION p in ViewData["publications"] as List<PUBLICATION>)
+        {
+            <li>@p.TITLE</li>
+        }
+    </ul>
+                    	
+    <div style="padding-left:5px">@Html.ActionLink("Add New Publication", "ProjPublications", "Project", new { id = ViewData["projectId"] }, new {@class="LaMPButton blue", onclick="loading();"})</div>
+    <br />
+</div>
+<br />

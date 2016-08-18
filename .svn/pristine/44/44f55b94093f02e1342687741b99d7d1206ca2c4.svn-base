@@ -1,0 +1,482 @@
+﻿@*
+Comments:
+05.15.14 - TR - Created
+
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+ * Copyright:
+ *      2014 USGS - WiM
+ * Purpose:
+ *      Display lookup table listing
+ */
+ *@
+
+@using LaMPWeb.Assets.Resources;
+@using LaMPServices;
+
+@{
+    ViewBag.Title = "Lookups";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div id="loading"><div id="loadingcontent"><p id="loadingspinner" style=""><img src="@Url.Content("~/Assets/Images/loading1.gif")"  /></p></div></div>
+
+<div id="dataTitle">
+    <div class="title">Lookups</div>    
+</div>
+<br clear="all" />
+
+<hr class="headerUnderline" />
+
+<div class="dashboardColumn" style="width:46%;margin-left:32px">
+
+    <div class="subSection">
+        @* Frequency Type Lookup A1*@
+        <div class="subSectionHeader"><span class="bold">FREQUENCY TYPES</span></div>          
+        <div class="subSectionContent">
+            @if (ViewData["LoggedInRole"] == "Admin")
+            {
+                using (Html.BeginForm("FreqType", "Lookups", FormMethod.Post, null))
+                {
+                    <select id="freqDD" class="lampSelectInput" name="FREQUENCY_TYPE_ID" data-native-menu="false" data-mini="true">
+					    <option value="0">Choose Frequency Type to Edit or Delete</option>
+                        @foreach (FREQUENCY_TYPE ft in ViewData["FreqTypes"] as List<FREQUENCY_TYPE>)
+                        {
+                            <option value='@ft.FREQUENCY_TYPE_ID'>@ft.FREQUENCY</option> 
+                        }
+                    </select>
+                    <br />	<br />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Edit" />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Add New" />
+                    <input type="button" onclick="RemoveFreq();" class="LaMPButton blue" value="Delete" />          
+                }
+            }
+            else
+            { 
+                <select id="freqDD" class="lampSelectInput" data-native-menu="false" data-mini="true">
+			        @foreach (FREQUENCY_TYPE ft in ViewData["FreqTypes"] as List<FREQUENCY_TYPE>)
+           {
+                        <option>@ft.FREQUENCY</option> 
+           }
+                </select>
+                <br />	<br />
+            }
+           <script type="text/javascript">
+               function RemoveFreq() {
+                   var answer = confirm("Are you sure you want to delete this Frequency Type?");
+                   if (answer == true) {
+                       $("#loading").fadeIn();
+                       var toDelete = $("#freqDD").val();
+                       $.ajax({
+                           url: '@Url.Action("FreqTypeDelete", "Lookups")',
+                           data: { id: toDelete },
+                           success: function (response) {
+                               if (response == "True") {
+                                   window.location.href = '@Url.Action("Index", "Lookups")';
+                               }
+                               else if (response == "False") {
+                                   window.location.href = '@Url.Action("Index", "Lookups")';
+                                   alert("Delete was unsuccessful");
+                               }
+                           }
+                       });
+                   }
+               }
+           </script>                
+        </div>
+    </div>
+
+    <br />
+    
+    <div class="subSection">
+        @* Media Type Lookup A2*@
+        <div class="subSectionHeader"><span class="bold">MEDIA TYPES</span></div>          
+        <div class="subSectionContent">
+            @if (ViewData["LoggedInRole"] == "Admin")
+            {
+                using (Html.BeginForm("MediaType", "Lookups", FormMethod.Post, null))
+                {
+                    <select id="mediaDD" class="lampSelectInput" name="MEDIA_TYPE_ID" data-native-menu="false" data-mini="true">
+					    <option value="0">Choose Deployment Priority to Edit or Delete</option>
+                        @foreach (MEDIA_TYPE MedT in ViewData["MediaType"] as List<MEDIA_TYPE>)
+                        {
+                            <option value='@MedT.MEDIA_TYPE_ID'>@MedT.MEDIA</option> 
+                        }
+                    </select>
+                    <br />	<br />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Edit" />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Add New" />
+                    <input type="button" onclick="RemoveMedT();" class="LaMPButton blue" value="Delete" />      
+                }
+            }
+            else
+            {     
+                <select id="mediaDD" class="lampSelectInput" data-native-menu="false" data-mini="true">
+				    @foreach (MEDIA_TYPE MedT in ViewData["MediaType"] as List<MEDIA_TYPE>)
+        {
+                        <option>@MedT.MEDIA</option> 
+        }
+                </select>
+                <br />	<br />
+            }
+           <script type="text/javascript">
+               function RemoveMedT() {
+                   var answer = confirm("Are you sure you want to delete this Media Type?");
+                   if (answer == true) {
+                       $("#loading").fadeIn();
+                       var toDelete = $("#mediaDD").val();
+                       $.ajax({
+                           url: '@Url.Action("MediaTypeDelete", "Lookups")',
+                           data: { id: toDelete },
+                           success: function (response) {
+                               if (response == "True") {
+                                   window.location.href = '@Url.Action("Index", "Lookups")';
+                               }
+                               else if (response == "False") {
+                                   window.location.href = '@Url.Action("Index", "Lookups")';
+                                   alert("Delete was unsuccessful");
+                               }
+                           }
+                       });
+                   }
+               }
+           </script>                
+        </div>
+    </div>
+    
+    <br />
+
+    <div class="subSection">
+        @* Organization Lookup A3*@
+        <div class="subSectionHeader"><span class="bold">ORGANIZATIONS</span></div>          
+        <div class="subSectionContent">
+            @if (ViewData["LoggedInRole"] == "Admin")
+            {
+                using (Html.BeginForm("Organization", "Lookups", FormMethod.Post, null))
+                {
+                    <select id="OrgDD" class="lampSelectInput" name="ORGANIZATION_ID" data-native-menu="false" data-mini="true">
+					    <option value="0">Choose Organization to Edit or Delete</option>
+                        @foreach (ORGANIZATION org in ViewData["Organization"] as List<ORGANIZATION>)
+                        {
+                            if (!string.IsNullOrEmpty(org.SECTION))
+                            {
+                                <option value='@org.ORGANIZATION_ID'>@(org.NAME),  @(org.DIVISION), @(org.SECTION) </option>
+                            }
+                            else if (!string.IsNullOrEmpty(org.DIVISION))
+                            {
+                                <option value='@org.ORGANIZATION_ID'>@(org.NAME),  @(org.DIVISION) </option>
+                            }
+                            else
+                            {
+                                <option value='@org.ORGANIZATION_ID'>@(org.NAME) ----- </option>
+                            }
+                        }
+                    </select>
+                    <br />	<br />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Edit" />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Add New" />
+                    <input type="button" onclick="RemoveOrg();" class="LaMPButton blue" value="Delete" />          
+                }
+            }
+            else
+            {
+                <select id="OrgDD" class="lampSelectInput" data-native-menu="false" data-mini="true">				
+                    @foreach (ORGANIZATION org in ViewData["Organization"] as List<ORGANIZATION>)
+                    {
+                        if (!string.IsNullOrEmpty(org.SECTION))
+                        {
+                                <option>@(org.NAME),  @(org.DIVISION), @(org.SECTION) </option>
+                        }
+                        else if (!string.IsNullOrEmpty(org.DIVISION))
+                        {
+                                <option>@(org.NAME),  @(org.DIVISION) </option>
+                        }
+                        else
+                        {
+                                <option>@(org.NAME)</option>
+                        }
+                    }
+                </select>
+                <br /><br />
+            }
+           <script type="text/javascript">
+               function RemoveOrg() {
+                   var answer = confirm("Are you sure you want to delete this Organization?");
+                   if (answer == true) {
+                       $("#loading").fadeIn();
+                       var toDelete = $("#OrgDD").val();
+                       $.ajax({
+                           url: '@Url.Action("OrganizationDelete", "Lookups")',
+                           data: { id: toDelete },
+                           success: function (response) {
+                               if (response == "True") {
+                                   window.location.href = '@Url.Action("Index", "Lookups")';
+                               }
+                               else if (response == "False") {
+                                   window.location.href = '@Url.Action("Index", "Lookups")';
+                                   alert("Delete was unsuccessful");
+                               }
+                           }
+                       });
+                   }
+               }
+           </script>                
+        </div>
+    </div>    
+
+    <br />
+
+    <div class="subSection">
+        @* Resource Type Lookup A4*@
+        <div class="subSectionHeader"><span class="bold">RESOURCE TYPES</span></div>          
+        <div class="subSectionContent">
+            @if (ViewData["LoggedInRole"] == "Admin")
+            {
+                using (Html.BeginForm("ResourceType", "Lookups", FormMethod.Post, null))
+                {
+                    <select id="ResTypeDD" class="lampSelectInput" name="RESOURCE_TYPE_ID" data-native-menu="false" data-mini="true">
+					    <option value="0">Choose Resource Type to Edit or Delete</option>
+                        @foreach (RESOURCE_TYPE rt in ViewData["ResourceTypes"] as List<RESOURCE_TYPE>)
+                        {
+                            <option value='@rt.RESOURCE_TYPE_ID'>@rt.RESOURCE_NAME</option> 
+                        }
+                    </select>
+                    <br />	<br />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Edit" />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Add New" />
+                    <input type="button" onclick="RemoveResType();" class="LaMPButton blue" value="Delete" />          
+                }
+            }
+            else
+            { 
+                <select id="ResTypeDD" class="lampSelectInput" data-native-menu="false" data-mini="true">
+				    @foreach (RESOURCE_TYPE rt in ViewData["ResourceTypes"] as List<RESOURCE_TYPE>)
+        {
+                            <option>@rt.RESOURCE_NAME</option> 
+        }
+                 </select>
+                 <br />	<br />
+            }
+           <script type="text/javascript">
+               function RemoveResType() {
+                   var answer = confirm("Are you sure you want to delete this Resource Type?");
+                   if (answer == true) {
+                       $("#loading").fadeIn();
+                       var toDelete = $("#ResTypeDD").val();
+                       $.ajax({
+                           url: '@Url.Action("ResourceTypeDelete", "Lookups")',
+                           data: { id: toDelete },
+                           success: function (response) {
+                               if (response == "True") {
+                                   window.location.href = '@Url.Action("Index", "Lookups")';
+                               }
+                               else if (response == "False") {
+                                   window.location.href = '@Url.Action("Index", "Lookups")';
+                                   alert("Delete was unsuccessful");
+                               }
+                           }
+                       });
+                   }
+               }
+           </script>                
+        </div>
+    </div>
+
+    <br />
+
+</div>
+
+<div class="dashboardColumn" style="width:50%">
+    
+    <div class="subSection">
+        @* Lake Types Lookup B1*@
+        <div class="subSectionHeader"><span class="bold">LAKE TYPES</span></div>          
+        <div class="subSectionContent">
+            @if (ViewData["LoggedInRole"] == "Admin")
+            {
+                using (Html.BeginForm("LakeType", "Lookups", FormMethod.Post, null))
+                {
+                    <select id="LakeTDD" class="lampSelectInput" name="LAKE_TYPE_ID" data-native-menu="false" data-mini="true">
+					    <option value="0">Choose Lake Type to Edit or Delete</option>
+                        @foreach (LAKE_TYPE aLT in ViewData["LakeTypes"] as List<LAKE_TYPE>)
+                        {
+                            <option value='@aLT.LAKE_TYPE_ID'>@aLT.LAKE</option> 
+                        }
+                    </select>
+                    <br />	<br />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Edit" />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Add New" />
+                    <input type="button" onclick="RemoveLT();" class="LaMPButton blue" value="Delete" />          
+                }
+            }
+            else
+            {
+                <select id="LakeTDD" class="lampSelectInput" data-native-menu="false" data-mini="true">				
+                    @foreach (LAKE_TYPE aLT in ViewData["LakeTypes"] as List<LAKE_TYPE>)
+                    {
+                        <option>@aLT.LAKE</option> 
+                    }
+                </select>
+                <br /><br />
+            }
+           <script type="text/javascript">
+               function RemoveLT() {
+                   var answer = confirm("Are you sure you want to delete this Lake Type?");
+                   if (answer == true) {
+                       $("#loading").fadeIn();
+                       var toDelete = $("#LakeTDD").val();
+                       $.ajax({
+                           url: '@Url.Action("LakeTypeDelete", "Lookups")',
+                           data: { id: toDelete },
+                           success: function (response) {
+                               if (response == "True") {
+                                   window.location.href = '@Url.Action("Index", "Lookups")';
+                               }
+                               else if (response == "False") {
+                                   window.location.href = '@Url.Action("Index", "Lookups")';
+                                   alert("Delete was unsuccessful");
+                               }
+                           }
+                       });
+                   }
+               }
+           </script>                
+        </div>
+    </div>    
+
+    <br />
+
+    <div class="subSection">
+        @* Objective Type Lookup B2*@
+        <div class="subSectionHeader"><span class="bold">OBJECTIVE TYPES</span></div>          
+        <div class="subSectionContent">
+            @if (ViewData["LoggedInRole"] == "Admin")
+            {
+                using (Html.BeginForm("ObjectiveType", "Lookups", FormMethod.Post, null))
+                {
+                    <select id="ObjDD" class="lampSelectInput" name="OBJECTIVE_TYPE_ID" data-native-menu="false" data-mini="true">
+					    <option value="0">Choose Objective Type to Edit or Delete</option>
+                        @foreach (OBJECTIVE_TYPE obj in ViewData["ObjectiveType"] as List<OBJECTIVE_TYPE>)
+                        {
+                            <option value='@obj.OBJECTIVE_TYPE_ID'>@obj.OBJECTIVE</option> 
+                        }
+                    </select>
+                    <br />	<br />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Edit" />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Add New" />
+                    <input type="button" onclick="RemoveObj();" class="LaMPButton blue" value="Delete" /> 
+                }
+            }
+            else
+            {
+                <select id="ObjDD" class="lampSelectInput" data-native-menu="false" data-mini="true">
+				    @foreach (OBJECTIVE_TYPE obj in ViewData["ObjectiveType"] as List<OBJECTIVE_TYPE>)
+        {
+                            <option>@obj.OBJECTIVE</option> 
+        }
+                </select>
+                <br />	<br />
+            }
+           <script type="text/javascript">
+               function RemoveObj() {
+                   var answer = confirm("Are you sure you want to delete this Objective Point?");
+                   if (answer == true) {
+                       $("#loading").fadeIn();
+                       var toDelete = $("#ObjDD").val();
+                       $.ajax({
+                           url: '@Url.Action("ObjectiveTypeDelete", "Lookups")',
+                           data: { id: toDelete },
+                           success: function (response) {
+                               if (response == "True") {
+                                   window.location.href = '@Url.Action("Index", "Lookups")';
+                               }
+                               else if (response == "False") {
+                                   window.location.href = '@Url.Action("Index", "Lookups")';
+                                   alert("Delete was unsuccessful");
+                               }
+                           }
+                       });
+                   }
+               }
+           </script>                
+        </div>
+    </div>
+    
+    <br />
+
+    <div class="subSection">
+        @* Paramter Type Lookup B3*@
+        <div class="subSectionHeader"><span class="bold">PARAMETER TYPES</span></div>          
+        <div class="subSectionContent">
+            @if (ViewData["LoggedInRole"] == "Admin")
+            {
+                using (Html.BeginForm("ParamType", "Lookups", FormMethod.Post, null))
+                {
+                    <select id="ParamDD" class="lampSelectInput" name="PARAMETER_TYPE_ID" data-native-menu="false" data-mini="true">
+					    <option value="0">Choose Parameter Type to Edit or Delete</option>
+                        @foreach (PARAMETER_TYPE ptype in ViewData["ParameterTypes"] as List<PARAMETER_TYPE>)
+                        {
+                            <option value='@ptype.PARAMETER_TYPE_ID'>@ptype.PARAMETER</option> 
+                        }
+                    </select>
+                    <br />	<br />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Edit" />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Add New" />
+                    <input type="button" onclick="RemovePT();" class="LaMPButton blue" value="Delete" />         
+                }
+            }
+            else
+            { 
+                <select id="ParamDD" class="lampSelectInput" data-native-menu="false" data-mini="true">
+				    @foreach (PARAMETER_TYPE ptype in ViewData["ParameterTypes"] as List<PARAMETER_TYPE>)
+        {
+                            <option>@ptype.PARAMETER</option> 
+        }
+                </select>
+                <br /><br />
+            }
+           <script type="text/javascript">
+               function RemovePT() {
+                   var answer = confirm("Are you sure you want to delete this Parameter Type?");
+                   if (answer == true) {
+                       $("#loading").fadeIn();
+                       var toDelete = $("#ParamDD").val();
+                       $.ajax({
+                           url: '@Url.Action("ParamTypeDelete", "Lookups")',
+                           data: { id: toDelete },
+                           success: function (response) {
+                               if (response == "True") {
+                                   window.location.href = '@Url.Action("Index", "Lookups")';
+                               }
+                               else if (response == "False") {
+                                   window.location.href = '@Url.Action("Index", "Lookups")';
+                                   alert("Delete was unsuccessful");
+                               }
+                           }
+                       });
+                   }
+               }
+           </script>                
+        </div>
+    </div>
+    
+    <br />
+
+</div> @* end dashboardColumn *@
+
+<br clear="all" />
+
+
+<script type="text/javascript">
+    function loading() {
+        $("#loading").fadeIn();
+    };    
+</script>
+<script type="text/javascript">
+    $("#deleteClick").click(function () {
+        $("#loading").fadeIn();
+    });       
+</script>

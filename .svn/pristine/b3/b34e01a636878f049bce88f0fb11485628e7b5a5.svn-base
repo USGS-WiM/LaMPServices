@@ -1,0 +1,50 @@
+﻿@* Comments:
+03.05.143- TR - Created
+*@
+
+@* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+ * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Display a master settings page and link to individual setting pages 
+ *
+*@
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<div id="dataTitle">
+        <div class="title">Settings</div>
+    </div>
+    <br clear="all" />
+
+    <hr class="headerUnderline" />
+     
+    <div class="verticalColumn">
+        <div class="subSection borderChild sectionIcon">
+                <a onclick="loading();" class="bigAndBold" href="@Url.Action("Index", "Members")">
+                <img src="@Url.Content("~/Assets/Images/Members.png")" height="100px" alt="Users" /><br />
+	            Users
+                </a>
+		</div>
+
+        @*if (User.IsInRole("Admin")) {}*@
+        
+        <div class="subSection borderChild sectionIcon">                 
+	            <a onclick="loading();" class="bigAndBold" href="@Url.Action("Index", "Lookups")">
+                <img src="@Url.Content("~/Assets/Images/Tables.png")" alt="Lookup Tables" /><br />
+                Lookup Tables
+                </a>
+		</div>
+        
+        <br />
+    </div> @* end verticalColumn *@
+
+    <script type="text/javascript">
+        function loading() {
+            $("#loading").fadeIn();
+        };
+    </script>

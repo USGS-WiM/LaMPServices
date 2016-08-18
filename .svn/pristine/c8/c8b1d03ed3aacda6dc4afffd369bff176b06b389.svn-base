@@ -1,0 +1,262 @@
+﻿//------------------------------------------------------------------------------
+//----- FrequencyTypeHandler -----------------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2012 WiM - USGS
+
+//    authors:  Jeremy K. Newson USGS Wisconsin Internet Mapping
+//              
+//  
+//   purpose:   Handles frequency type resources through the HTTP uniform interface.
+//              Equivalent to the controller in MVC.
+//
+//discussion:   Handlers are objects which handle all interaction with resources in 
+//              this case the resources are POCO classes derived from the EF. 
+//               https://github.com/openrasta/openrasta/wiki/Handlers
+//
+//     
+#region Comments
+// 05.02.12 - jkn - Created
+#endregion  
+
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+using LaMPServices.Authentication;
+using OpenRasta.Web;
+using OpenRasta.Security;
+
+namespace LaMPServices.Handlers
+{
+    public class FrequencyTypeHandler
+    {
+        #region Properties
+
+        // will be automatically injected by DI in OpenRasta
+        public ICommunicationContext Context { get; set; }
+
+        private string connectionString = @"metadata=res://*/LaMPDSModel.csdl|res://*/LaMPDSModel.ssdl|res://*/LaMPDSModel.msl;provider=Oracle.DataAccess.Client;provider connection string=""DATA SOURCE=LAMPRDS;USER ID={0};PASSWORD={1}""";
+
+        #endregion
+
+        #region Routed Methods
+
+        #region GetMethods
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get()
+        {
+            List<FREQUENCY_TYPE> frequencyTypes;
+
+            //Get basic authentication password
+            // using (EasySecureString securedPassword = new EasySecureString(
+            //                        LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            /// {
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+
+                frequencyTypes = Context.FREQUENCY_TYPE.OrderBy(f => f.FREQUENCY_TYPE_ID).ToList();
+
+            }//end using
+            //  }//end using
+
+            return new OperationResult.OK { ResponseResource = frequencyTypes };
+        }//end httpMethod get
+
+
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get(Int32 frequencyTypeId)
+        {
+            FREQUENCY_TYPE aFrequencyType;
+
+            //return BadRequest if ther is no ID
+            if (frequencyTypeId <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            // using (EasySecureString securedPassword = new EasySecureString(
+            //                        LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            /// {
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+
+                aFrequencyType = Context.FREQUENCY_TYPE.Single(f => f.FREQUENCY_TYPE_ID == frequencyTypeId);
+
+
+            }//end using
+            //  }//end using
+
+            return new OperationResult.OK { ResponseResource = aFrequencyType };
+        }//end httpMethod get
+
+        #endregion
+
+        #region PostMethods
+        /// 
+        /// Force the user to provide authentication 
+        /// 
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.POST, ForUriName = "CreateFrequencyType")]
+        public OperationResult Post(FREQUENCY_TYPE aFrequencyType)
+        {
+            //Return BadRequest if missing required fields
+            if (String.IsNullOrEmpty(aFrequencyType.FREQUENCY))
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            //using (EasySecureString securedPassword = new EasySecureString(
+            //                      LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            //{
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+                decimal nextEntityId = 0;
+                //Increment Key
+                FREQUENCY_TYPE lastEntity = Context.FREQUENCY_TYPE.OrderByDescending(f => f.FREQUENCY_TYPE_ID).FirstOrDefault();
+                if (lastEntity != null) nextEntityId = lastEntity.FREQUENCY_TYPE_ID + 1;
+
+                aFrequencyType.FREQUENCY_TYPE_ID = nextEntityId;
+
+                Context.FREQUENCY_TYPE.AddObject(aFrequencyType);
+
+                Context.SaveChanges();
+            }// end using
+
+            // } end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = aFrequencyType };
+        }//end Post
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.POST, ForUriName = "CreateFrequencyTypeList")]
+        public OperationResult Post(List<FREQUENCY_TYPE> FrequencyTypes)
+        {
+            //Return BadRequest if missing required fields
+            if (FrequencyTypes.Count <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            //using (EasySecureString securedPassword = new EasySecureString(
+            //                      LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            //{
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+                 decimal nextEntityId = 0;
+                //get last key in repository
+                 FREQUENCY_TYPE lastEntity = Context.FREQUENCY_TYPE.OrderByDescending(f => f.FREQUENCY_TYPE_ID).FirstOrDefault();
+                 if (lastEntity != null) nextEntityId = lastEntity.FREQUENCY_TYPE_ID + 1;
+                
+                foreach (FREQUENCY_TYPE item in FrequencyTypes)
+                {
+                    //update database ID
+                    item.FREQUENCY_TYPE_ID = nextEntityId;
+
+                    Context.FREQUENCY_TYPE.AddObject(item);
+                    nextEntityId += 1;
+
+                }//next item
+
+                Context.SaveChanges();
+            }// end using
+
+            //} end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = FrequencyTypes };
+        }
+        #endregion
+
+        #region PutMethods
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.PUT, ForUriName = "UpdateFrequencyType")]
+        public OperationResult Post(Int32 frequencyTypeId, FREQUENCY_TYPE instance)
+        {
+            //Return BadRequest if missing required fields
+            if ((frequencyTypeId <= 0))
+            {
+                return new OperationResult.BadRequest();
+            }
+
+
+            //Get basic authentication password
+            //using (EasySecureString securedPassword = new EasySecureString(
+            //                      LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            //{
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+                //fetch the object to be updated (assuming that it exists)
+                FREQUENCY_TYPE ObjectToBeUpdated = Context.FREQUENCY_TYPE.Single(f => f.FREQUENCY_TYPE_ID == frequencyTypeId);
+
+                //FREQUENCY
+                ObjectToBeUpdated.FREQUENCY = (string.IsNullOrEmpty(instance.FREQUENCY) ?
+                    ObjectToBeUpdated.FREQUENCY : instance.FREQUENCY);
+
+                Context.SaveChanges();
+            }// end using
+
+            // } end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = instance };
+        }
+
+
+        #endregion
+
+        #region DeleteMethods
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.DELETE, ForUriName = "DeleteFrequencyType")]
+        public OperationResult Post(Int32 frequencyTypeId)
+        {
+            //Return BadRequest if missing required fields
+            if (frequencyTypeId <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+
+            //Get basic authentication password
+            //using (EasySecureString securedPassword = new EasySecureString(
+            //                      LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            //{
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+                //fetch the object to be updated (assuming that it exists)
+                FREQUENCY_TYPE ObjectToBeDeleted = Context.FREQUENCY_TYPE.Single(f => f.FREQUENCY_TYPE_ID == frequencyTypeId);
+
+                //delete it
+                Context.FREQUENCY_TYPE.DeleteObject(ObjectToBeDeleted);
+
+                Context.SaveChanges();
+
+            }// end using
+
+            // } end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { };
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Helper Methods
+        #endregion
+    }//end FrequencyTypehandler
+}//end namespace

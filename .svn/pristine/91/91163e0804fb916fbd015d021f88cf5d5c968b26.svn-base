@@ -1,0 +1,221 @@
+﻿@* Comments:
+04.09.13 - TR - Created 
+
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+ * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Display details of a Site 
+ */
+ *@
+@using LaMPServices;
+@using LaMPWeb.Assets.Resources;
+
+           
+@{
+    ViewBag.Title = "Site Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    PROJECT thisProject = ViewData["Project"] as PROJECT;
+
+    List<PARAMETER_TYPE> PhysicalPs = ViewData["PhysicalP"] as List<PARAMETER_TYPE>;
+    List<PARAMETER_TYPE> ChemicalPs = ViewData["ChemicalP"] as List<PARAMETER_TYPE>;
+    List<PARAMETER_TYPE> BiologicalPs = ViewData["BiologicalP"] as List<PARAMETER_TYPE>;
+    List<PARAMETER_TYPE> MicrobiolPs = ViewData["MicrobiolP"] as List<PARAMETER_TYPE>;
+    List<PARAMETER_TYPE> ToxicologicalPs = ViewData["ToxicologicalP"] as List<PARAMETER_TYPE>;
+    
+}
+
+@model LaMPServices.SITE
+           
+<div id="dataTitle">                                                        
+    <div class="title">Project: @Html.ActionLink(thisProject.NAME, "ProjectDetails", "Project", new { id = thisProject.PROJECT_ID }, new { onclick = "loading();" }), Site: @Model.NAME</div>
+    <span id="errorSection" class="failureNotification"><asp:Literal ID="ErrorMessage" runat="server"></asp:Literal></span>
+</div>
+<br clear="all" />
+
+<hr class="headerUnderline" />
+<div style="float:left">&nbsp;&nbsp;
+    @Html.ActionLink("Edit", "SiteEdit1", "Site", new { id = Model.SITE_ID, projID = thisProject.PROJECT_ID }, new { @class = "LaMPButton blue", @style = "margin-right:10px" })
+    @Html.ActionLink("Delete", "Delete", "Site", new { id = Model.SITE_ID, projID = thisProject.PROJECT_ID }, new { @style="margin-right:10px", @onclick = "return confirm('Are you sure you want to delete Site: " + Model.NAME + "?');", @class = "LaMPButton blue" })
+    @Html.ActionLink("Return to Project Details", "ProjectDetails", "Project", new { id = thisProject.PROJECT_ID }, new { @class = "LaMPButton blue", @onclick = "loading();" })
+</div>
+<br clear="all" />
+<br />
+
+<div class="detailDiv">
+    <span class="bold ui-label-a">Site Name:</span>
+    <label class="inline">@Model.NAME</label>
+</div>
+
+<div class="detailDiv">
+    <span class="bold ui-label-a">Latitude:</span>
+    <label class="inline">@Model.LATITUDE</label>
+</div>
+
+<div class="detailDiv">
+    <span class="bold ui-label-a">Longitude:</span>
+    <label class="inline">@Model.LONGITUDE</label>
+</div>
+
+<div class="detailDiv">
+    <span class="bold ui-label-a">Country:</span>
+    <label class="inline">@Model.COUNTRY</label>
+</div>
+
+<div class="detailDiv">
+    <span class="bold ui-label-a">State/Province:</span>
+    <label class="inline">@Model.STATE_PROVINCE</label>
+</div>
+
+<div class="detailDiv">
+    <span class="bold ui-label-a">Lake:</span>
+    <label class="inline">@ViewData["LakeType"]</label>
+</div>
+
+        
+<div class="detailDiv">
+    <span class="bold ui-label-a">Waterbody:</span>
+    <label class="inline">@Model.WATERBODY</label>
+</div>
+
+<div class="detailDiv">
+    <span class="bold ui-label-a">Watershed (8-digit HUC):</span>
+    <label class="inline">@Model.WATERSHED_HUC8</label>
+</div>
+
+<div class="detailDiv">
+    <span class="bold ui-label-a">Site Description:</span>
+    <label class="inline">@Model.DESCRIPTION</label>
+</div>      
+
+<div class="detailDiv">
+    <span class="bold ui-label-a">Status:</span>
+    <label class="inline">@ViewData["StatusType"]</label>
+</div>
+
+        
+<div class="detailDiv">
+    <span class="bold ui-label-a">Resource Component:</span>
+    <label class="inline">@foreach (RESOURCE_TYPE rt in ViewData["ResourceList"] as List<RESOURCE_TYPE>)
+                          {
+                                @string.Format("- {0}", rt.RESOURCE_NAME);<br />
+                          }
+    </label>
+</div>
+
+        
+<div class="detailDiv">
+    <span class="bold ui-label-a">Media:</span>
+    <label class="inline">@foreach (MEDIA_TYPE mt in ViewData["MediaList"] as List<MEDIA_TYPE>)
+                          {
+                                @string.Format("- {0}", mt.MEDIA);<br />
+                          }
+    </label>
+</div>
+
+<div class="detailDiv">
+    <span class="bold ui-label-a">Sampling Frequency:</span>
+    <label class="inline">@foreach (FREQUENCY_TYPE ft in ViewData["FrequencyList"] as List<FREQUENCY_TYPE>)
+                          {
+                                @string.Format("- {0}", ft.FREQUENCY);<br />
+                          }
+    </label>
+</div>
+
+<div class="detailDiv">
+    <span class="bold ui-label-a">Sampling Start Date:</span>
+    <label class="inline">@( Model.START_DATE != null ? ((DateTime)Model.START_DATE).ToShortDateString() : "")</label>
+</div>
+        
+<div class="detailDiv">
+    <span class="bold ui-label-a">Sampling End Date:</span>
+    <label class="inline">@( Model.END_DATE != null ? ((DateTime)Model.END_DATE).ToShortDateString() : "")</label>
+</div>
+
+<div class="detailDiv">
+    <span class="bold ui-label-a">Sampling Platform:</span>
+    <label class="inline">@Model.SAMPLE_PLATFORM</label>
+</div>
+
+<div class="detailDiv">
+    <span class="bold ui-label-a">Additional Site Information:</span>
+    <label class="inline">@Model.ADDITIONAL_INFO</label>
+</div>       
+
+<div class="detailDiv">
+    <span class="bold ui-label-a">Site URL:</span>
+    <label class="inline">@Model.URL</label>
+</div>
+       
+<br clear="all" />
+<hr />
+
+<div class="detailDiv">
+    <span class="bold ui-label-a">Parameters:</span>
+    <ul class="inline">
+        @if (PhysicalPs != null && PhysicalPs.Count >= 1)
+        {
+            <li>Physical
+                <ul>
+                    @foreach (PARAMETER_TYPE ph in PhysicalPs)
+                    {
+                        <li>@ph.PARAMETER</li>
+                    }
+                </ul>
+            </li>
+        }
+        @if (ChemicalPs != null && ChemicalPs.Count >= 1)
+        {
+            <li>Chemical
+                <ul>
+                    @foreach (PARAMETER_TYPE ch in ChemicalPs)
+                    {
+                        <li>@ch.PARAMETER</li>
+                    }
+                </ul>
+            </li>
+        }
+        @if (BiologicalPs != null && BiologicalPs.Count >= 1)
+        {
+            <li>Biological
+                <ul>
+                    @foreach (PARAMETER_TYPE bi in BiologicalPs)
+                    {
+                        <li>@bi.PARAMETER</li>
+                    }
+                </ul>
+            </li>
+        }
+        @if (MicrobiolPs != null && MicrobiolPs.Count >= 1)
+        {
+            <li>Microbiological
+                <ul>
+                    @foreach (PARAMETER_TYPE mb in MicrobiolPs)
+                    {
+                        <li>@mb.PARAMETER</li>
+                    }
+                </ul>
+            </li>
+        }
+        @if (ToxicologicalPs != null && ToxicologicalPs.Count >= 1)
+        {
+            <li>Toxicological
+                <ul>
+                    @foreach (PARAMETER_TYPE mb in ToxicologicalPs)
+                    {
+                        <li>@mb.PARAMETER</li>
+                    }
+                </ul>
+            </li>
+        }
+    </ul>
+    <br clear="all" />
+
+<br />
+</div>
+

@@ -1,0 +1,92 @@
+﻿@* Comments: 
+02.05.13 - TR - Created 
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+  * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Partial view for choosing Keywords
+ */
+ *@
+<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.1/themes/base/jquery-ui.css" />
+<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+<script src="http://code.jquery.com/ui/1.10.1/jquery-ui.js"></script>
+
+
+@using LaMPServices;
+@*@{ 
+    string [] terms = ViewData["terms"] as string []; }
+    
+<input type="hidden" id="terms" value="@terms" />*@
+
+    <div class="childrenColumn">
+        <div class="subSection softHeader">
+            <div class="bold">Choose Keywords:</div>
+            <br />
+            <input class="stnTextInput ui-shadow-inset" name="keywords" type="text" id="tags" />
+            <br />
+            <br />	
+        </div> 
+        <br />    
+    </div>
+
+ <script type="text/javascript">
+     $(document).ready(function () {
+         var availableTags = [];
+         var backYet = false;
+         var holdResponse;
+         $.ajax({
+             url: '/LaMPServices/keywords',
+             dataType: "xml",
+             success: test
+         });
+         function test (response) {
+                 backYet = true;
+                 $(response).find("TERM").each(function () {
+                     availableTags.push(this.textContent);
+                 });
+                 function split(val) {
+                     return val.split(/,\s*/);
+                 }
+
+                 function extractLast(term) {
+                     return split(term).pop();
+                 }
+
+                 $("#tags")
+                 // don't navigate away from the field on tab when selecting an item
+                    .bind("keydown", function (event) {
+                        if (event.keyCode === $.ui.keyCode.TAB && $(this).data("ui-autocomplete").menu.active) {
+                            event.preventDefault();
+                        }
+                    })
+                    .autocomplete({
+                        minLength: 0,
+                        source: function (request, response) {
+                            // delegate back to autocomplete, but extract the last term
+                            response($.ui.autocomplete.filter(
+                            availableTags, extractLast(request.term)));
+                        },
+                        focus: function () {
+                            // prevent value inserted on focus
+                            return false;
+                        },
+                        select: function (event, ui) {
+                            var terms = split(this.value);
+                            // remove the current input
+                            terms.pop();
+                            // add the selected item
+                            terms.push(ui.item.value);
+                            // add placeholder to get the comma-and-space at the end
+                            terms.push("");
+                            this.value = terms.join(", ");
+                            return false;
+                        }
+                    });
+
+             }
+         });
+</script>

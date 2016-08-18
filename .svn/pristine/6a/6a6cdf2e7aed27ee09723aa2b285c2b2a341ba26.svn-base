@@ -1,0 +1,186 @@
+﻿@* Comments: 
+03.29.13 - TR - Added loading logo
+03.28.13 - TR - Worked on use case (added buttons for where to go from here)
+03.26.13 - TR - Changed add another publication to button click instead of checkbox, added button for go to details
+02.28.13 - TR - Integrating the services
+02.06.13 - TR - Created 
+
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+  * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Project Publication
+ */
+ *@
+
+ @using LaMPServices;
+ @using LaMPWeb.Models;
+ @using LaMPWeb.Assets.Resources;
+ 
+<script src="@Url.Content("~/Assets/Scripts/jquery-ui-1.10.4.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Assets/Scripts/jquery.validate.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Assets/Scripts/require_from_group.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Assets/Scripts/jquery.unobtrusive-ajax.min.js")" type="text/javascript"></script>
+
+@{
+    ViewBag.Title = "Add Publications";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    
+    PROJECT thisProject = ViewData["project"] as PROJECT;
+    Boolean pubs = false;
+}
+<script type="text/javascript">
+    window.onload = function () {
+        var txtbox = document.getElementById("pubTitle");
+        txtbox.focus();
+    }
+
+</script>
+<div id="loading"><div id="loadingcontent"><p id="loadingspinner" style=""><img src="@Url.Content("~/Assets/Images/loading1.gif")"  /></p></div></div>
+
+@*model LaMPWeb.Models.ProjectPublication*@
+           
+<div id="dataTitle">
+    <div class="title">Project: @Html.ActionLink(thisProject.NAME, "ProjectDetails", "Project", new { id = thisProject.PROJECT_ID }, new { onclick = "loading();" }), Add Publication</div>
+</div>
+<br clear="all" />
+<hr class="headerUnderline" />
+
+<script src="@Url.Content("~/Assets/Scripts/jquery.unobtrusive-ajax.min.js")" type="text/javascript"></script>
+
+@using (Html.BeginForm("PublicationCreate", "Publication", FormMethod.Post, new { @id = "PubCreate" }))
+{
+    <div class="siteColumn">
+
+    @if (ViewData.ContainsKey("publications"))
+    { @* if (this project has publications) *@
+        <div class="ui-grid-a"> 
+            <div class="ui-block-a" style="width:20%">Existing Publications:</div>
+            <div class="ui-block-b">
+                <textarea style="width:100%" readonly="readonly" class="textarea ui-shadow-inset" name="Publication" rows="2" cols="30">
+                    @foreach (PUBLICATION pu in ViewData["publications"] as List<PUBLICATION>) 
+                    {
+                        if(pu.TITLE != "" && pu.TITLE != null) 
+                        { string p = "- " + pu.TITLE + "\n"; @p }
+                        else 
+                        { string useId = "- Publication: " + pu.PUBLICATION_ID + "\n"; @useId }
+                    }
+                </textarea>
+            </div>
+        </div>
+        pubs = true;
+    }
+
+       <input type="hidden" name="projId" id="projId" value="@thisProject.PROJECT_ID" />
+
+        @* Project Name *@
+        <div class="ui-grid-a">           
+            <div class="ui-block-a">Project Name:</div>
+            <div class="ui-block-b"><label>@thisProject.NAME</label></div>
+        </div>
+
+        @* Publication Title: *@
+        <div class="ui-grid-a">
+             <div class="ui-block-a">Publication Title:</div>
+             <div class="ui-block-b"><input type="text" id="pubTitle" name="Publication.TITLE" class="lampTextInput ui-shadow-inset pub-group" /></div>
+        </div>
+               
+        @* Publication Description: *@
+        <div class="ui-grid-a">
+             <div class="ui-block-a">Publication Description:</div>
+             <div class="ui-block-b"><textarea class="lampTextInput ui-shadow-inset pub-group" name="Publication.DESCRIPTION" rows="4" cols="30"></textarea></div>
+             <div class="ui-block-c notes">Briefly describe the content and format of the publication. Include publication number (if applicable).</div>
+        </div>
+        
+        @* Publication URL: *@
+        <div class="ui-grid-a">           
+            <div class="ui-block-a">Publication Website or Location:</div>
+            <div class="ui-block-b"><input type="text" id="pubURL" name="Publication.URL" class="lampTextInput ui-shadow-inset pub-group" /></div>
+            <div class="ui-block-c notes">If the publication is online, enter the URL. Otherwise, provide information on how to obtain a copy of the publication.</div>
+        </div>
+        
+        <input type="hidden" name="From" value="@ViewData["From"]" />
+    </div>
+        
+    <br clear="all" />
+    <br />
+    <div id="formSubmitDiv" class="formSection">
+        <div class="leftSideSubmit">
+            <div class="cancelDiv"><div class="lightButtonBorder"><input id="resetButton" type="reset" class="cancel" value="Cancel&#10; " onclick="stopClick();" /></div></div>
+            <div class="submitDiv" style="width:19%"><div class="darkButtonBorder"><input type="submit" name="Create" class="submit" value="Save & Add&#10; Another Publication" /></div></div>
+            @if (ViewData.ContainsKey("From"))
+            {<div class="submitDiv"><div class="darkButtonBorder"><input type="submit" name="Create" class="submit" value="Save & &#10; Add Sites" /></div></div>}
+            <div class="submitDiv"><div class="darkButtonBorder"><input type="submit" name="Create" class="submit" value="Save & Go To&#10; Project Details" /></div></div>
+            </div>
+    </div> 
+}
+
+
+<script type="text/javascript">
+    function loading() {
+        $("#loading").fadeIn();
+    }
+
+    //disable the enter key from submitting the form
+    $(window).keypress(function (e) {
+        if (e.which == 13) {
+            var $targ = $(e.target);
+
+            if (!$targ.is("textarea") && !$targ.is(":button,:submit")) {
+                var focusNext = false;
+                $(this).find(":input:visible:not([disabled],[readonly]), a").each(function () {
+                    if (this === e.target) {
+                        focusNext = true;
+                    }
+                    else if (focusNext) {
+                        $(this).focus();
+                        return false;
+                    }
+                });
+
+                return false;
+            }
+        }
+    });
+
+    $(document).ready(function () {
+        $("#PubCreate").validate();
+        $("#PubCreate").removeData("validator");
+        $("#PubCreate").removeData("unobtrusiveValidation");
+
+
+        //validate form on and submit
+        $("#PubCreate").validate({
+            rules: {
+                'Publication.TITLE': {
+                    require_from_group: [1, ".pub-group"]
+               },
+                'Publication.DESCRIPTION': {
+                    require_from_group: [1, ".pub-group"]
+                },
+                'Publication.URL': {
+                    require_from_group: [1, ".pub-group"]
+                }
+            },
+            submitHandler: function (form) {
+                $("#loading").fadeIn();
+                form.submit();
+            }
+        });
+    });
+
+    function stopClick() {
+        //cancel from a create page (contacts, publications), sent back to project details
+        var id = $("#projId").val();
+        var answer = confirm("Do you want to leave this page, and any unsaved additions, and go to the project details? ");
+        if (answer) {
+            $("#loading").fadeIn();
+            window.location.href = '../../Project/ProjectDetails/' + id;
+        }
+    }
+
+</script>

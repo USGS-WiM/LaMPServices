@@ -1,0 +1,257 @@
+﻿//------------------------------------------------------------------------------
+//----- FundingHandler -----------------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2012 WiM - USGS
+
+//    authors:  Jeremy K. Newson USGS Wisconsin Internet Mapping
+//              
+//  
+//   purpose:   Handles Funding resources through the HTTP uniform interface.
+//              Equivalent to the controller in MVC.
+//
+//discussion:   Handlers are objects which handle all interaction with resources in 
+//              this case the resources are POCO classes derived from the EF. 
+//               https://github.com/openrasta/openrasta/wiki/Handlers
+//
+//     
+#region Comments
+// 03.15.13 - jkn - Created
+#endregion
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+using LaMPServices.Authentication;
+using OpenRasta.Web;
+using OpenRasta.Security;
+
+namespace LaMPServices.Handlers
+{
+    public class FundingHandler : HandlerBase
+    {
+        #region Routed Methods
+
+        #region GetMethods
+
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get()
+        {
+            List<DATA_HOST> dataHostList;
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    dataHostList = aLaMPRDS.DATA_HOST.OrderBy(dh => dh.DATA_HOST_ID).ToList();
+
+                    if (dataHostList != null)
+                        dataHostList.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+
+                }//end using
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = dataHostList };
+        }//end httpMethod get
+
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get(Int32 dataHostId)
+        {
+            DATA_HOST aDataHost;
+
+            //return BadRequest if ther is no ID
+            if (dataHostId <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    aDataHost = aLaMPRDS.DATA_HOST.SingleOrDefault(dh => dh.DATA_HOST_ID == dataHostId);
+
+                    if (aDataHost != null)
+                        aDataHost.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+
+                }//end using
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = aDataHost };
+        }//end httpMethod get
+
+        [HttpOperation(HttpMethod.GET, ForUriName = "GetProjectFundingSources")]
+        public OperationResult GetProjectFundingSources(Int32 projectId)
+        {
+            List<FUNDING> fundingSourceList;
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    //return the list of contacts associated with project
+                    fundingSourceList = aLaMPRDS.PROJECTS.SingleOrDefault(p => p.PROJECT_ID == projectId).FUNDINGs.ToList();
+
+                    if (fundingSourceList != null)
+                        fundingSourceList.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+
+                }//end using
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = fundingSourceList };
+        }//end httpMethod get
+
+        #endregion
+
+        #region PostMethods
+        /// 
+        /// Force the user to provide authentication 
+        /// 
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.POST)]
+        public OperationResult Post(FUNDING aFunding)
+        {
+            //Return BadRequest if missing required fields
+            if (aFunding.PROJECT_ID <= 0 || string.IsNullOrEmpty(aFunding.SOURCE_NAME))
+            { return new OperationResult.BadRequest(); }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    //check if it exists
+                    if (!Exists(aLaMPRDS.FUNDINGs, ref aFunding))
+                    {
+                        aLaMPRDS.FUNDINGs.AddObject(aFunding);
+                        aLaMPRDS.SaveChanges();
+                    }
+
+                    if (aFunding != null)
+                        aFunding.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+
+                }// end using
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = aFunding };
+        }
+
+        #endregion
+
+        #region PutMethods
+
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.PUT)]
+        public OperationResult Put(Int32 fundingId, FUNDING instance)
+        {
+            //Return BadRequest if missing required fields
+            if ((fundingId <= 0))
+            { return new OperationResult.BadRequest(); }
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    FUNDING ObjectToBeUpdated = aLaMPRDS.FUNDINGs.SingleOrDefault(f => f.FUNDING_ID == fundingId);
+
+                    //Source
+                    ObjectToBeUpdated.SOURCE_NAME = (string.IsNullOrEmpty(instance.SOURCE_NAME) ?
+                         ObjectToBeUpdated.SOURCE_NAME : instance.SOURCE_NAME);
+                    //Project
+                    ObjectToBeUpdated.PROJECT_ID = (Decimal.Equals(instance.PROJECT_ID, ObjectToBeUpdated.PROJECT_ID) ?
+                         ObjectToBeUpdated.PROJECT_ID : instance.PROJECT_ID);
+                    //Percent
+                    ObjectToBeUpdated.PERCENT = (Decimal.Equals(instance.PERCENT, ObjectToBeUpdated.PERCENT) ?
+                      ObjectToBeUpdated.PERCENT : instance.PERCENT);
+
+                    aLaMPRDS.SaveChanges();
+
+                    if (instance != null)
+                        instance.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+                }// end using
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = instance };
+        }
+
+        #endregion
+
+        #region DeleteMethods
+        [RequiresRole(AdminRole)]
+        [HttpOperation(HttpMethod.DELETE)]
+        public OperationResult Delete(Int32 FundingId)
+        {
+            //Return BadRequest if missing required fields
+            if (FundingId <= 0)
+            { return new OperationResult.BadRequest(); }
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    FUNDING ObjectToBeDeleted = aLaMPRDS.FUNDINGs.SingleOrDefault(f => f.FUNDING_ID == FundingId);
+                    //delete it
+                    aLaMPRDS.FUNDINGs.DeleteObject(ObjectToBeDeleted);
+
+                    aLaMPRDS.SaveChanges();
+
+                }// end using
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { };
+        }
+
+        #endregion
+
+        #endregion
+        #region "Helper Methods"
+        private Boolean Exists(System.Data.Objects.IObjectSet<FUNDING> dataHosts, ref FUNDING aFunding)
+        {
+            FUNDING existingFunding;
+            FUNDING thisFunding = aFunding;
+            //check if it exists
+            try
+            {
+                existingFunding = dataHosts.FirstOrDefault(f => f.PROJECT_ID.Equals(thisFunding.PROJECT_ID) &&
+                                                                 (f.SOURCE_NAME.Equals(thisFunding.SOURCE_NAME) || string.IsNullOrEmpty(thisFunding.SOURCE_NAME)) &&
+                                                                 (f.PERCENT.Equals(thisFunding.PERCENT)));
+
+                if (existingFunding == null)
+                    return false;
+
+                //if exists then update ref contact
+                aFunding = existingFunding;
+                return true;
+
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }//end Exists
+
+        #endregion
+    }//end FundingHandler
+}//end namespace

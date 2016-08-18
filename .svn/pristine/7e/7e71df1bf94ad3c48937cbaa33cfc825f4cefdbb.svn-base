@@ -1,0 +1,94 @@
+﻿@* Comments:
+03.20.13 - TR - removed State, changed from PUT to POST for division addition and section addition.
+03.15.13 - TR - Created 
+
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+  * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Project Contact
+ */
+ *@
+@using LaMPServices;
+@using LaMPWeb.Assets.Resources;
+
+           
+<script src="@Url.Content("~/Assets/Scripts/Scripts.js")" type="text/javascript"></script>
+
+@using (Ajax.BeginForm("AddProjOrgs", "Project", null, new AjaxOptions { InsertionMode = InsertionMode.Replace, HttpMethod = "POST", OnSuccess = "updateSuccess" }, new { @id = "updateOrgForm" }))
+{
+    @Html.ValidationSummary(true)
+    <div id="update-message" class="error invisible"></div>
+    
+    <div>Select or add an Organization, division and Section (if applicable). Then, click 'Add Organization' button to display Shortname.</div>
+    <div>To remove an Organization, highlight the organization's shortname in the box and delete.</div>
+    <div>When finished adding, click 'Finished Adding Organizations' button to return to the project Summary page.</div>
+    <br />
+    if (ViewData.ContainsKey("orgs"))
+    {
+        <textarea rows="3" cols="80" id="organizationList" name="AddedOrgs">@foreach (string org in ViewData["orgs"] as string[]){if (org != ""){string o = org + "\n";@o}}</textarea>
+    }
+    else
+    {
+        <textarea rows="3" cols="80" class="hidden" id="organizationList" name="AddedOrgs"></textarea>
+    }
+    
+    @*<input type="hidden" name="ProjectOrgIDS" id="ProjectOrgs" />
+    <textarea rows="4" cols="30" name="ProjectOrgIDS" id="ProjectOrgs"></textarea>*@
+        <fieldset>
+
+        <table >
+            <tr>
+                <td>Organization:</td>
+                <td><select id="Orgdropdown" class="required lampSelectInput" name="ProjOrg">
+			            <option value="0">Choose Organization</option>
+                        @foreach (LaMPServices.ORGANIZATION o in ViewData["organizations"] as List<ORGANIZATION>)
+                        {
+                            <option value='@o.SHORTNAME'>@o.NAME</option> 
+                        }
+                    </select>
+                </td>
+                <td>Division:</td>
+                <td><select id="Divdropdown"class="lampSelectInput" name="Division">
+				    </select>
+                </td>
+                <td>Section:</td>
+                <td><select id="Secdropdown" class="lampSelectInput" name="Section">
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>Add Organization: <input type="checkbox" id="OtherOrg" name="OtherOrgCB" onclick="OtherClick();" /></td>
+                <td>
+                    <div id="otherOrgInput" class="hidden">
+                        @Html.Label(ProjectStrings.AddOrgName_Lbl)
+                        <input type="text" id="orgNmInput" name="addOrgName" class="lampTextInput ui-shadow-inset" />
+                        <div style="padding: 5px 0 0 5px"><input type="button" onclick="ConfirmAddOrg();" name="AddOrg" value="Add to Organizations" /></div>
+                    </div>
+                </td>
+                <td>Add Division/Office:  <input type="checkbox" id="OtherDiv" name="OtherDivCB" onclick="OtherDivClick();" /></td>
+                <td>
+                     <div id="otherDivInput" class="hidden">
+                        @Html.Label(ProjectStrings.AddDivName_Lbl)
+                        <input type="text" id="DivNameInput" name="addDivName" class="lampTextInput ui-shadow-inset" />
+                        <div style="padding: 5px 0 0 5px"><input type="button" onclick="ConfirmAddDiv();" name="addDivision" value="Add to Divisions" /></div>
+                    </div>
+                </td>
+                <td>Add Section:  <input type="checkbox" id="OtherSec" name="OtherSecCB" onclick="OtherSecClick();" /></td>
+                <td>
+                    <div id="otherSecInput" class="ui-grid-a hidden">
+                        @Html.Label(ProjectStrings.AddSectName_Lbl)
+                        <input type="text" id="SecInput" name="addSection" class="lampTextInput ui-shadow-inset" />
+                        <div style="padding: 5px 0 0 5px"><input type="button" onclick="ConfirmAddSec();" name="addSection" value="Add to Sections" /></div>
+                    </div>
+                </td>
+            </tr>        
+        </table>
+        
+    </fieldset>
+}
+ <div style="text-align:center"><input type="button" style="background:#4B6C9E; color:white" onclick="AddOrgToBox();" class="LaMPButton blue" value="Add Organization" /></div>

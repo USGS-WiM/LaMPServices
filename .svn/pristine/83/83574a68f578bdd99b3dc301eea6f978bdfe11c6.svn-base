@@ -1,0 +1,267 @@
+﻿//------------------------------------------------------------------------------
+//----- KeywordHandler -----------------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2012 WiM - USGS
+
+//    author:   Jeremy K. Newson  USGS Wisconsin Internet Mapping
+//  
+//   purpose:   Handles publication resources through the HTTP uniform interface.
+//              Equivalent to the controller in MVC.
+//
+//discussion:   Handlers are objects which handle all interaction with resources in 
+//              this case the resources are POCO classes derived from the EF. 
+//               https://github.com/openrasta/openrasta/wiki/Handlers
+//
+//     
+#region Comments
+// 04.15.12 - jkn - Created
+#endregion                          
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+using OpenRasta.Web;
+using OpenRasta.Security;
+
+using LaMPServices.Authentication;
+
+
+namespace LaMPServices.Handlers
+{
+    public class KeywordHandler: HandlerBase
+    {
+        #region Routed Methods
+
+        #region GetMethods
+
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get()
+        {
+            //KeywordList keywords = new KeywordList();
+            List<KEYWORD> kywrds;
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //Context.ContextOptions.ProxyCreationEnabled = false;
+                    kywrds = aLaMPRDS.KEYWORDS.OrderBy(k => k.KEYWORD_ID).ToList();
+
+                }//end using
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = kywrds };
+        }//end httpMethod get
+
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get(Int32 keywordId)
+        {
+            KEYWORD aKeyword;
+
+            //return BadRequest if ther is no ID
+            if (keywordId <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    aKeyword = aLaMPRDS.KEYWORDS.Single(k => k.KEYWORD_ID == keywordId);
+                }//end using
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = aKeyword };
+        }//end httpMethod get
+
+        #endregion
+
+        #region PostMethods
+       
+        /// 
+        /// Force the user to provide authentication 
+        /// 
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.POST)]
+        public OperationResult Post(KEYWORD aKeyword)
+        {
+            //Return BadRequest if missing required fields
+            if (String.IsNullOrEmpty(aKeyword.TERM))
+            {return new OperationResult.BadRequest();}
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                   
+                    if (!Exists(aLaMPRDS.KEYWORDS,ref aKeyword))
+                    {
+                        //set ID
+                        aKeyword.KEYWORD_ID = GetNextKeywordID(aLaMPRDS.KEYWORDS);
+
+                        aLaMPRDS.KEYWORDS.AddObject(aKeyword);
+                        aLaMPRDS.SaveChanges();
+                    }
+
+                }// end using
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = aKeyword };
+        }
+
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.POST, ForUriName = "AddKeywordList")]
+        public OperationResult Post(List<KEYWORD> aKeywordList)
+        {
+            //Return BadRequest if missing required fields
+            if (aKeywordList.Count <= 0)
+            { return new OperationResult.BadRequest();}
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    for (int i = 0; i < aKeywordList.Count; i++ )
+                    {
+                        KEYWORD item = aKeywordList[i];
+                        if (!Exists(aLaMPRDS.KEYWORDS, ref item))
+                        {
+                            item.KEYWORD_ID = GetNextKeywordID(aLaMPRDS.KEYWORDS);
+                            aLaMPRDS.KEYWORDS.AddObject(item);
+                            aLaMPRDS.SaveChanges();
+                            //update
+                        }
+                        //update keyword
+                        aKeywordList[i] = item;
+
+                    }//next item
+
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = aKeywordList };
+        }
+        #endregion
+
+        #region PutMethods
+
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.PUT)]
+        public OperationResult Put(Int32 keywordId, KEYWORD instance)
+        {
+            //Return BadRequest if missing required fields
+            if ((keywordId <=0 ) && string.IsNullOrEmpty(instance.TERM))
+            {return new OperationResult.BadRequest();}
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    KEYWORD ObjectToBeUpdated = aLaMPRDS.KEYWORDS.Single(k => k.KEYWORD_ID == keywordId);
+
+                    //term
+                    ObjectToBeUpdated.TERM = (string.IsNullOrEmpty(instance.TERM) ?
+                        ObjectToBeUpdated.TERM : instance.TERM);
+
+                    aLaMPRDS.SaveChanges();
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = instance };
+        }
+
+
+        #endregion
+
+        #region DeleteMethods
+
+        [RequiresRole(AdminRole)]
+        [HttpOperation(HttpMethod.DELETE)]
+        public OperationResult Delete(Int32 keywordId)
+        {
+            //Return BadRequest if missing required fields
+            if (keywordId <= 0)
+            {return new OperationResult.BadRequest();}
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    KEYWORD ObjectToBeDeleted = aLaMPRDS.KEYWORDS.Single(k => k.KEYWORD_ID == keywordId);
+                    //delete it
+                    aLaMPRDS.KEYWORDS.DeleteObject(ObjectToBeDeleted);
+                    aLaMPRDS.SaveChanges();
+
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK {};
+        }
+
+        #endregion
+
+        #endregion
+        #region Helper Methods
+        private Boolean Exists(System.Data.Objects.IObjectSet<KEYWORD> catalogs, ref KEYWORD akeyword)
+        {
+            KEYWORD existingKeyword;
+            KEYWORD thisKeyword = akeyword;
+            //check if it exists
+            try
+            {
+                existingKeyword = catalogs.FirstOrDefault(k => k.TERM.Trim().ToUpper() == thisKeyword.TERM.Trim().ToUpper());
+
+                if (existingKeyword == null)
+                    return false;
+
+                //if exists then update ref contact
+                akeyword = existingKeyword;
+                return true;
+
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        private decimal GetNextKeywordID(System.Data.Objects.IObjectSet<KEYWORD> keywords)
+        {
+            decimal nextKey = 1;
+            if (keywords.Count() > 0)
+            {
+                nextKey = keywords.OrderByDescending(k =>k.KEYWORD_ID).First().KEYWORD_ID + 1;
+            }
+
+            return nextKey;
+        }
+        #endregion
+    }// end KeywordHandler
+
+}// end namespace

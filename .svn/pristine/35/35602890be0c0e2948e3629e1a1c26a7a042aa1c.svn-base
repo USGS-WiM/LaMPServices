@@ -1,0 +1,32 @@
+﻿@* Comments: 
+02.07.13 - TR - Created 
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+  * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Partial view for choosing an Descriptors
+ */
+ *@
+
+@using LaMPServices;
+
+<div class="childrenColumn">
+    <div class="subSection softHeader">
+        <div class="bold">Choose Descriptors:</div>
+        <br />
+        <span>Select the project objective(s) that most closely match your project.</span>
+        <select id="Orgdropdown" multiple="multiple" class="required stnSelectInput" name="ProjDescriptors">
+			@foreach (string d in ViewData["descriptors"] as List<string>)
+            {
+                <option value='@d'>@d</option> 
+            }
+        </select>
+        <br />
+        <br />	
+        </div> 
+        <br />    
+    </div>

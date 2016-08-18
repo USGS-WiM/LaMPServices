@@ -1,0 +1,12 @@
+﻿@{
+    ViewBag.Title = "Finish";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Finish</h2>
+<div>Thank you for submitting your project to the SiGL mapper. </div>
+<div>If you have entered at least one site, your project should be visible on the SiGL mapper in  X minutes. </div>
+<div>You can edit or update your project at any time from the My Projects page.</div>
+<br />
+<br />
+@Html.ActionLink("Finish", "Index", null, new { @class = "LaMPButton blue" })

@@ -1,0 +1,31 @@
+﻿@* Comments: 
+02.04.13 - TR - Created 
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+  * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Partial view for choosing an Organization
+ */
+ *@
+
+@using LaMPServices;
+
+<div class="childrenColumn">
+    <div class="subSection softHeader">
+        <div class="bold">Choose Organizations:</div>
+        <br />
+        <select id="Orgdropdown" size="3" multiple="multiple" class="required stnSelectInput" name="ProjOrg">
+			@foreach (LaMPServices.ORGANIZATION o in ViewData["organizations"] as List<ORGANIZATION>)
+            {
+                <option title='@o.NAME @o.DIVISION' value='@o.ORGANIZATION_ID'>@o.SHORTNAME</option> 
+            }
+        </select>
+        <br />
+        <br />	
+        </div> 
+        <br />    
+    </div>

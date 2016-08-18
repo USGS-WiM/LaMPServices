@@ -1,0 +1,184 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2008/09/mapping/cs">
+  <EntityContainerMapping StorageEntityContainer="LaMPDSModelStoreContainer" CdmEntityContainer="LaMPDSEntities">
+    <EntitySetMapping Name="CATALOG_S">
+      <EntityTypeMapping TypeName="LaMPDSModel.CATALOG_">
+        <MappingFragment StoreEntitySet="CATALOG_">
+          <ScalarProperty Name="CATALOG_ID" ColumnName="CATALOG_ID" />
+          <ScalarProperty Name="LOCATION_ID" ColumnName="LOCATION_ID" />
+          <ScalarProperty Name="START_DATE" ColumnName="START_DATE" />
+          <ScalarProperty Name="END_DATE" ColumnName="END_DATE" />
+          <ScalarProperty Name="PARAMETER_TYPE_ID" ColumnName="PARAMETER_TYPE_ID" />
+          <ScalarProperty Name="RESOURCE_TYPE_ID" ColumnName="RESOURCE_TYPE_ID" />
+          <ScalarProperty Name="MEDIA_TYPE_ID" ColumnName="MEDIA_TYPE_ID" />
+          <ScalarProperty Name="PROJECT_ID" ColumnName="PROJECT_ID" />
+          <ScalarProperty Name="FREQUENCY_TYPE_ID" ColumnName="FREQUENCY_TYPE_ID" />
+          <ScalarProperty Name="SAMPLE_PLATFORM" ColumnName="SAMPLE_PLATFORM" />
+          <ScalarProperty Name="COMMENTS" ColumnName="COMMENTS" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="CONTACTS">
+      <EntityTypeMapping TypeName="LaMPDSModel.CONTACT">
+        <MappingFragment StoreEntitySet="CONTACT">
+          <ScalarProperty Name="CONTACT_ID" ColumnName="CONTACT_ID" />
+          <ScalarProperty Name="NAME" ColumnName="NAME" />
+          <ScalarProperty Name="EMAIL" ColumnName="EMAIL" />
+          <ScalarProperty Name="PHONE" ColumnName="PHONE" />
+          <ScalarProperty Name="ORGANIZATION_ID" ColumnName="ORGANIZATION_ID" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="FREQUENCY_TYPE">
+      <EntityTypeMapping TypeName="LaMPDSModel.FREQUENCY_TYPE">
+        <MappingFragment StoreEntitySet="FREQUENCY_TYPE">
+          <ScalarProperty Name="FREQUENCY_TYPE_ID" ColumnName="FREQUENCY_TYPE_ID" />
+          <ScalarProperty Name="FREQUENCY" ColumnName="FREQUENCY" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="LAMP_GROUP_TYPE">
+      <EntityTypeMapping TypeName="LaMPDSModel.LAMP_GROUP_TYPE">
+        <MappingFragment StoreEntitySet="LAMP_GROUP_TYPE">
+          <ScalarProperty Name="LAMP_GROUP_TYPE_ID" ColumnName="LAMP_GROUP_TYPE_ID" />
+          <ScalarProperty Name="LAMP_GROUP" ColumnName="LAMP_GROUP" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="MEDIA_TYPE">
+      <EntityTypeMapping TypeName="LaMPDSModel.MEDIA_TYPE">
+        <MappingFragment StoreEntitySet="MEDIA_TYPE">
+          <ScalarProperty Name="MEDIA_TYPE_ID" ColumnName="MEDIA_TYPE_ID" />
+          <ScalarProperty Name="MEDIA" ColumnName="MEDIA" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="ORGANIZATIONS">
+      <EntityTypeMapping TypeName="LaMPDSModel.ORGANIZATION">
+        <MappingFragment StoreEntitySet="ORGANIZATION">
+          <ScalarProperty Name="ORGANIZATION_ID" ColumnName="ORGANIZATION_ID" />
+          <ScalarProperty Name="NAME" ColumnName="NAME" />
+          <ScalarProperty Name="STATE" ColumnName="STATE" />
+          <ScalarProperty Name="SHORTNAME" ColumnName="SHORTNAME" />
+          <ScalarProperty Name="DIVISION" ColumnName="DIVISION" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="PARAMETER_TYPE">
+      <EntityTypeMapping TypeName="LaMPDSModel.PARAMETER_TYPE">
+        <MappingFragment StoreEntitySet="PARAMETER_TYPE">
+          <ScalarProperty Name="PARAMETER_GROUP" ColumnName="PARAMETER_GROUP" />
+          <ScalarProperty Name="PARAMETER_TYPE_ID" ColumnName="PARAMETER_TYPE_ID" />
+          <ScalarProperty Name="PARAMETER" ColumnName="PARAMETER" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="PROJECTS">
+      <EntityTypeMapping TypeName="LaMPDSModel.PROJECT">
+        <MappingFragment StoreEntitySet="PROJECT">
+          <ScalarProperty Name="PROJECT_ID" ColumnName="PROJECT_ID" />
+          <ScalarProperty Name="NAME" ColumnName="NAME" />
+          <ScalarProperty Name="START_DATE" ColumnName="START_DATE" />
+          <ScalarProperty Name="END_DATE" ColumnName="END_DATE" />
+          <ScalarProperty Name="OBJECTIVE" ColumnName="OBJECTIVE" />
+          <ScalarProperty Name="DATA_MANAGEMENT_SYSTEM" ColumnName="DATA_MANAGEMENT_SYSTEM" />
+          <ScalarProperty Name="URL" ColumnName="URL" />
+          <ScalarProperty Name="COMMENTS" ColumnName="COMMENTS" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="PROJECT_CONTACTS">
+      <EntityTypeMapping TypeName="LaMPDSModel.PROJECT_CONTACTS">
+        <MappingFragment StoreEntitySet="PROJECT_CONTACTS">
+          <ScalarProperty Name="PROJECT_CONTACTS_ID" ColumnName="PROJECT_CONTACTS_ID" />
+          <ScalarProperty Name="PROJECT_ID" ColumnName="PROJECT_ID" />
+          <ScalarProperty Name="CONTACT_ID" ColumnName="CONTACT_ID" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="PROJECT_COOPERATORS">
+      <EntityTypeMapping TypeName="LaMPDSModel.PROJECT_COOPERATORS">
+        <MappingFragment StoreEntitySet="PROJECT_COOPERATORS">
+          <ScalarProperty Name="PROJECT_COOPERATOR_ID" ColumnName="PROJECT_COOPERATOR_ID" />
+          <ScalarProperty Name="PROJECT_ID" ColumnName="PROJECT_ID" />
+          <ScalarProperty Name="ORGANIZATION_ID" ColumnName="ORGANIZATION_ID" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="PROJECT_KEYWORDS">
+      <EntityTypeMapping TypeName="LaMPDSModel.PROJECT_KEYWORDS">
+        <MappingFragment StoreEntitySet="PROJECT_KEYWORDS">
+          <ScalarProperty Name="PROJECT_KEYWORDS_ID" ColumnName="PROJECT_KEYWORDS_ID" />
+          <ScalarProperty Name="PROJECT_ID" ColumnName="PROJECT_ID" />
+          <ScalarProperty Name="KEYWORD_ID" ColumnName="KEYWORD_ID" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="PROJECT_PUBLICATIONS">
+      <EntityTypeMapping TypeName="LaMPDSModel.PROJECT_PUBLICATIONS">
+        <MappingFragment StoreEntitySet="PROJECT_PUBLICATIONS">
+          <ScalarProperty Name="PROJECT_PUBLICATION_ID" ColumnName="PROJECT_PUBLICATION_ID" />
+          <ScalarProperty Name="PROJECT_ID" ColumnName="PROJECT_ID" />
+          <ScalarProperty Name="PUBLICATION_ID" ColumnName="PUBLICATION_ID" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="PUBLICATIONS">
+      <EntityTypeMapping TypeName="LaMPDSModel.PUBLICATION">
+        <MappingFragment StoreEntitySet="PUBLICATION">
+          <ScalarProperty Name="PUBLICATION_ID" ColumnName="PUBLICATION_ID" />
+          <ScalarProperty Name="CITATION" ColumnName="CITATION" />
+          <ScalarProperty Name="URL" ColumnName="URL" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="RESOURCE_TYPE">
+      <EntityTypeMapping TypeName="LaMPDSModel.RESOURCE_TYPE">
+        <MappingFragment StoreEntitySet="RESOURCE_TYPE">
+          <ScalarProperty Name="RESOURCE_NAME" ColumnName="RESOURCE_NAME" />
+          <ScalarProperty Name="RESOURCE_TYPE_ID" ColumnName="RESOURCE_TYPE_ID" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="STATUS_TYPE">
+      <EntityTypeMapping TypeName="LaMPDSModel.STATUS_TYPE">
+        <MappingFragment StoreEntitySet="STATUS_TYPE">
+          <ScalarProperty Name="STATUS_ID" ColumnName="STATUS_ID" />
+          <ScalarProperty Name="STATUS" ColumnName="STATUS" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="LOCATIONS">
+      <EntityTypeMapping TypeName="LaMPDSModel.LOCATION">
+        <MappingFragment StoreEntitySet="LOCATION">
+          <ScalarProperty Name="LAMP_GROUP_ID" ColumnName="LAMP_GROUP_ID" />
+          <ScalarProperty Name="STATUS_TYPE_ID" ColumnName="STATUS_TYPE_ID" />
+          <ScalarProperty Name="LAKE_NAME" ColumnName="LAKE_NAME" />
+          <ScalarProperty Name="LONGITUDE" ColumnName="LONGITUDE" />
+          <ScalarProperty Name="LATITUDE" ColumnName="LATITUDE" />
+          <ScalarProperty Name="DESCRIPTION" ColumnName="DESCRIPTION" />
+          <ScalarProperty Name="NAME" ColumnName="NAME" />
+          <ScalarProperty Name="PROJECT_NAME" ColumnName="PROJECT_NAME" />
+          <ScalarProperty Name="LOCATION_ID" ColumnName="LOCATION_ID" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="KEYWORDS">
+      <EntityTypeMapping TypeName="LaMPDSModel.KEYWORD">
+        <MappingFragment StoreEntitySet="KEYWORD">
+          <ScalarProperty Name="TERM" ColumnName="TERM" />
+          <ScalarProperty Name="KEYWORD_ID" ColumnName="KEYWORDS_ID" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="CATALOG_PARAMETERS">
+      <EntityTypeMapping TypeName="LaMPDSModel.CATALOG_PARAMETERS">
+        <MappingFragment StoreEntitySet="CATALOG_PARAMETERS">
+          <ScalarProperty Name="PARAMETER_TYPE_ID" ColumnName="PARAMETER_TYPE_ID" />
+          <ScalarProperty Name="CATALOG_ID" ColumnName="CATALOG_ID" />
+          <ScalarProperty Name="ID" ColumnName="ID" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+  </EntityContainerMapping>
+</Mapping>

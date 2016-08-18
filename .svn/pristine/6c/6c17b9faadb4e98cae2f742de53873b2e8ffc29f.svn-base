@@ -1,0 +1,373 @@
+﻿/*----------------------------------------------------------
+The base color for this template is #5c87b2. If you'd like
+to use a different color start by replacing all instances of
+#5c87b2 with your new color.
+----------------------------------------------------------*/
+html, body 
+{
+    height:100%;
+}
+
+body 
+{
+    background-image: url("../Images/bg-texture1.jpg");
+    font-size: .90em;
+    font-family: "Trebuchet MS", Verdana, Helvetica, Sans-Serif;
+    margin: 0px;
+    padding: 0px;
+    color: #696969;
+}
+a img {
+	border: none;
+	vertical-align: middle;
+}
+
+a:link {
+    color: #034af3;
+    text-decoration: none;
+}
+
+a:visited {
+    color: #034af3;
+}
+
+a:hover {
+    text-decoration: underline;
+	cursor:pointer;
+}
+
+a:active {
+    color: #034af3;
+}
+
+p, ul {
+    margin-bottom: 20px;
+    line-height: 1.6em;
+}
+
+
+/* HEADINGS   
+----------------------------------------------------------*/
+h1, h2, h3, h4, h5, h6 {
+    font-size: 1.5em;
+    color: #000;
+}
+
+h1 {
+    font-size: 2em;
+    padding-bottom: 0;
+    margin-bottom: 0;
+}
+
+h2 {
+    padding: 0 0 10px 0;
+}
+
+h3 {
+    font-size: 1.2em;
+}
+
+h4 {
+    font-size: 1.1em;
+}
+
+h5, h6 {
+    font-size: 1em;
+}
+
+/* PRIMARY LAYOUT ELEMENTS   
+----------------------------------------------------------*/
+
+/* you can specify a greater or lesser percentage for the 
+page width. Or, you can specify an exact pixel width. */
+.page {
+    width: 960px;
+    margin: 20px auto 0px auto;
+}
+
+header, #header {
+    position: relative;
+    margin: 0px;
+    padding: 0px;
+    background: #4b6c9e;
+    width: 100%;
+}
+
+header h1, #header h1 {
+    font-weight: bold;
+    margin: 0px;
+    padding: 0px 0px 0px 20px;
+    color: #f9f9f9;
+    border: none;
+    line-height: 2em;
+    font-size: 32px !important;
+    
+}
+
+#main {
+    padding: 12px;
+    min-height: 420px;
+    background-color: White;
+    /*background-image: linear-gradient(bottom, rgb(255,255,255) 99.2%, rgb(30,41,51) 100%);
+    background-image: -o-linear-gradient(bottom, rgb(255,255,255) 99.2%, rgb(30,41,51) 100%);
+    background-image: -moz-linear-gradient(bottom, rgb(255,255,255) 99.2%, rgb(30,41,51) 100%);
+    background-image: -webkit-linear-gradient(bottom, rgb(255,255,255) 99.2%, rgb(30,41,51) 100%);
+    background-image: -ms-linear-gradient(bottom, rgb(255,255,255) 99.2%, rgb(30,41,51) 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr='#ffffff', endColorstr='#000000');/*For IE8-9
+    background-image: -webkit-gradient(
+	    linear,
+	    left bottom,
+	    left top,
+	    color-stop(0.996, rgb(255,255,255)),
+	    color-stop(1, rgb(30,41,51))
+    );
+    */
+}
+
+
+footer, 
+#footer {
+    color: #4e5766;
+    padding: 10px 0;
+    text-align: center;
+    line-height: normal;
+    margin: 0 0 30px 0;
+    font-size: .9em;
+    border-radius: 0 0 4px 4px;
+    -webkit-border-radius: 0 0 4px 4px;
+    -moz-border-radius: 0 0 4px 4px;
+}
+
+/* TAB MENU   
+----------------------------------------------------------*/
+
+div.hideSkiplink
+{
+    background-color:#3a4f63;
+    width:100%;
+}
+
+#NavigationMenu 
+{    
+    float:left;
+}
+
+div.menu
+{
+    padding: 4px 0px 4px 8px;
+}
+
+div.menu ul
+{
+    position: relative; 
+    width: auto; 
+    float: left;
+    list-style: none;
+    margin: 0px;
+    padding: 0px;
+    width: auto;
+}
+
+div.menu ul li
+{
+    position: relative; 
+    float: left;
+}
+
+div.menu ul li a, div.menu ul li a:visited
+{
+    background-color: #465c71;
+    background-repeat: no-repeat;
+    background-position: 8px;
+    border: 1px #4e667d solid;
+    color: #dde4ec;
+    padding: 6px 20px 4px 36px;
+    padding-left: 36px;
+    height: 26px;
+    display:table-cell;
+    vertical-align: middle;
+    line-height: 1.35em;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+div.menu ul li a img 
+{
+    padding-right:5px;    
+}
+
+div.menu ul li a:hover
+{
+    background-color: #bfcbd6;
+    color: #465c71;
+    text-decoration: none;
+}
+
+div.menu ul li a:active
+{
+    background-color: #465c71;
+    color: #cfdbe6;
+    text-decoration: none;
+}
+
+
+ul#menu li.selected a {
+    background-color: #fff;
+    color: #000;
+}
+
+/* FORM LAYOUT ELEMENTS   
+----------------------------------------------------------*/
+
+fieldset {
+    border: 1px solid #ddd;
+    padding: 0 1.4em 1.4em 1.4em;
+    margin: 0 0 1.5em 0;
+}
+
+legend {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+textarea {
+    min-height: 75px;
+}
+/*
+input[type="text"], 
+input[type="password"] {
+    border: 1px solid #ccc;
+    padding: 6px;
+    font-size: 1.2em;
+    color: #444;
+    width: 80%;
+}
+
+select {
+    border: 1px solid #ccc;
+    padding: 2px;
+    font-size: 1.2em;
+    color: #444;
+}
+*/
+input[type="submit"] {
+    font-size: 1.2em;
+    padding: 5px;
+}
+.bold
+{
+    font-weight: bold;
+}
+.Lpadded
+{
+    padding-left: 5px;
+}
+
+/* TABLE
+----------------------------------------------------------*/
+
+table {
+    border: solid 1px #e8eef4;
+    border-collapse: collapse;
+    table-layout: fixed;
+    width:100%;
+}
+
+table td {
+    padding: 5px;
+    border: solid 1px #e8eef4;
+}
+
+table th {
+    padding: 6px 5px;
+    text-align: left;
+    background-color: #e8eef4;
+    border: solid 1px #e8eef4;
+}
+
+/* MISC  
+----------------------------------------------------------*/
+.clear {
+    clear: both;
+}
+.bigAndBold
+{
+    font-weight: bold;
+    font-size: 1.1em;
+}
+.error {
+    color: Red;
+}
+
+div#title {
+    display: block;
+    float: left;
+    text-align: left;
+}
+
+#logindisplay {
+    font-size: 1.1em;
+    display: block;
+    text-align: right;
+    margin: 10px;
+    color: White;
+}
+
+#logindisplay a:link {
+    color: white;
+    text-decoration: underline;
+}
+
+#logindisplay a:visited {
+    color: white;
+    text-decoration: underline;
+}
+
+#logindisplay a:hover {
+    color: white;
+    text-decoration: none;
+}
+
+/* Styles for validation helpers
+-----------------------------------------------------------*/
+.field-validation-error {
+    color: #ff0000;
+}
+
+.field-validation-valid {
+    display: none;
+}
+
+.input-validation-error {
+    border: 1px solid #ff0000;
+    background-color: #ffeeee;
+}
+
+
+.validation-summary-valid {
+    display: none;
+}
+
+/* Styles for editor and display helpers
+----------------------------------------------------------*/
+.display-label, 
+.editor-label {
+    margin: 1em 0 0 0;
+}
+
+.display-field, 
+.editor-field {
+    margin: 0.5em 0 0 0;
+}
+
+.text-box {
+    width: 30em;
+}
+
+.text-box.multi-line {
+    height: 6.5em;
+}
+
+.tri-state {
+    width: 6em;
+}

@@ -1,0 +1,63 @@
+﻿@* Comments:
+04.02.13 - TR - Created 
+
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+ * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Display details of a Publication 
+ */
+ *@
+@using LaMPServices;
+@using LaMPWeb.Assets.Resources;
+
+@model LaMPServices.PUBLICATION
+           
+
+@{
+    ViewBag.Title = "Publication Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    PROJECT thisProject = ViewData["Project"] as PROJECT;
+}
+
+
+<div id="dataTitle">                                                        
+    <div class="title">Project: @Html.ActionLink(thisProject.NAME, "ProjectDetails", "Project", new { id = thisProject.PROJECT_ID }, new { onclick = "loading();" }),<br /> Publication: @Model.TITLE</div>
+    
+    <span id="errorSection" class="failureNotification"><asp:Literal ID="ErrorMessage" runat="server"></asp:Literal></span>
+</div>
+<br clear="all" />
+
+<hr class="headerUnderline" />
+<div style="float:left">&nbsp;&nbsp;
+    @Html.ActionLink("Edit", "PublicationEdit", "Publication", new { id = Model.PUBLICATION_ID, projID = thisProject.PROJECT_ID}, new {@class = "LaMPButton blue" })
+</div>
+
+    <br clear="all" />
+    <br />
+@* Publication Title: *@
+    <div class="detailDiv">          
+        <span class="bold ui-label-a">Publication Title:</span>
+        <label class="bold">@Model.TITLE</label>
+    </div>
+
+    @* Description: *@
+    <div class="detailDiv">
+        <span class="bold ui-label-a">Publication Description:</span>
+        <textarea class="textAreaDetails" cols="30" rows="4" style="width:50%" readonly="readonly">@Model.DESCRIPTION</textarea>
+    </div>
+
+    @* URL: *@
+    <div class="detailDiv">
+        <span class="bold ui-label-a">Publication Website/Location:</span>
+        <label>@Model.URL</label>
+    </div>
+
+    
+    <br />
+    @Html.ActionLink("Return to Project Details", "ProjectDetails", "Project", new { id = thisProject.PROJECT_ID }, new { @class = "LaMPButton blue", onclick = "loading();" })
+    

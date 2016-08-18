@@ -1,0 +1,417 @@
+﻿@* Comments:
+02.28.13 - TR - Integrating the services 
+02.06.13 - TR - Created 
+
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+  * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Project Contact
+ */
+ *@
+
+ @using LaMPServices;
+ @using LaMPWeb.Models;
+
+@{
+    ViewBag.Title = "Project Contacts";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@model LaMPServices.CONTACT
+           
+@*<div id="loading"><div id="loadingcontent"><p id="loadingspinner" style=""><img src="@Url.Content("~/Assets/Images/loading1.gif")"  /></p></div></div>*@
+
+
+<script type="text/javascript">
+    $(function () {
+        $('input').filter('.datepicker').datepicker({
+            changeMonth: true,
+            changeYear: true
+        });
+    });
+</script>
+
+
+<div id="dataTitle">
+    <div class="title">Project Contacts</div>
+</div>
+<br clear="all" />
+<hr class="headerUnderline" />
+@{
+    Boolean contact1 = false;
+    
+    if (Session["Contact"] != null) 
+    {
+        <div class="ui-grid-a">           
+            <div class="ui-block-a">Contacts:</div>
+            <div class="ui-block-b"><textarea readonly="readonly" class="textarea ui-shadow-inset" name="Contact" rows="2" cols="30">@Session["Contact"]</textarea></div>
+        </div>
+        contact1 = true;
+    }
+}
+@using (Html.BeginForm("ProjContacts2", "Project", FormMethod.Post))
+{
+    <div class="siteColumn">
+       <input type="hidden" name="ProjName" value='@Session["projectName"]' />
+
+        @* Project Name: *@
+        <div class="ui-grid-a">           
+            <div class="ui-block-a">Project Name:</div> @* store Viewdata[project]..then use thisProj.Name *@
+            <div class="ui-block-b"><label>@Session["projectName"]</label></div>
+        </div>
+        
+        @* Contact Name: *@
+        <div class="ui-grid-a">
+             <div class="ui-block-a"><span class="required">Contact Name:</span></div>
+             <div class="ui-block-b"><input type="text" id="contactName" name="NAME" class="required stnTextInput ui-shadow-inset" /></div>
+        </div>
+        
+        @* Organization: *@
+        <div class="ui-grid-a">
+            <div data-role="fieldcontain">
+                <div class="ui-block-a"><span class="required">Organizations:</span></div>
+                <div class="ui-block-b">
+                    <select id="Orgdropdown" size="3" class="required stnSelectInput" name="ORGANIZATION_ID">
+					    @foreach (LaMPServices.ORGANIZATION o in ViewData["organizations"] as List<ORGANIZATION>)
+                        {
+                            <option value='@o.ORGANIZATION_ID'>@o.NAME</option> 
+                        }
+                    </select>
+                    <br />	
+                </div>
+            </div>
+        </div>
+        
+         @* Add Organization (checkbox): *@
+         <div class="ui-grid-a">
+            <div data-role="fieldcontain">
+                <div class="ui-block-a">Add Organization:</div>
+                <div class="ui-block-b"><input type="checkbox" id="OtherOrg" name="OtherOrgCB" onclick="OtherClick();" />                    
+                </div>
+            </div>
+        </div>
+        
+         @* Hidden New Organization input: *@
+        <div id="otherOrgInput" class="ui-grid-a hidden">
+            <div data-role="fieldcontain">
+                <div class="ui-block-a"><span class="padding">Name:</span></div>
+                <div  class="ui-block-b" ><input type="text" id="orgNmInput" name="addOrgName" class="stnTextInput ui-shadow-inset" /></div>
+                <div class="ui-block-a"><span  class="padding">State:</span></div>
+                <div  class="ui-block-b" ><input type="text" id="orgSTInput" name="addOrgState" class="stnTextInput ui-shadow-inset" /></div>
+                <div class="ui-block-a"><span  class="padding">Short Name:</span></div>
+                <div  class="ui-block-b" ><input type="text" id="orgShortNmInput" name="addOrgShortName" class="stnTextInput ui-shadow-inset" /></div>
+                <div class="padding"><input type="button" onclick="ConfirmAddOrg();" name="AddOrg" value="Add to Organizations" /></div>
+                <br />
+           </div>
+        </div>
+
+        @* Divisions: *@
+        <div class="ui-grid-a">
+            <div data-role="fieldcontain">
+                <div class="ui-block-a">Divisions:</div>
+                <div class="ui-block-b">
+                    <select id="Divdropdown" size="3" class="stnSelectInput" name="Division">
+				    </select>
+                    <br />	
+                </div>
+            </div>
+        </div>
+
+         @* Add Division (checkbox): *@
+        <div class="ui-grid-a">
+            <div data-role="fieldcontain">
+                <div class="ui-block-a">Add Division:</div>
+                <div class="ui-block-b"><input type="checkbox" id="OtherDiv" name="OtherDivCB" onclick="OtherDivClick();" /></div>
+            </div>
+        </div>
+
+         @* Hidden New Division Input: *@
+        <div id="otherDivInput" class="ui-grid-a hidden">
+            <div data-role="fieldcontain">
+                <div class="ui-block-a"><span class="padding">Division Name:</span></div>
+                <div  class="ui-block-b" ><input type="text" id="DivInput" name="addDivision" class="stnTextInput ui-shadow-inset" /></div>
+                <div class="padding"><input type="button" onclick="ConfirmAddDiv();" name="addDivision" value="Add to Divisions" /></div>
+                <br />
+           </div>
+        </div>
+
+         @* Sections: *@
+        <div class="ui-grid-a">
+            <div data-role="fieldcontain">
+                <div class="ui-block-a">Sections:</div>
+                <div class="ui-block-b">
+                    <select id="Secdropdown" size="3" class="stnSelectInput" name="Section">
+					    @*@foreach (string s in ViewData["sections"] as List<string>)
+                            {
+                            <option>@s</option> 
+                            }
+                        *@
+                    </select>
+                    <br />	
+                </div>
+            </div>
+        </div>       
+
+         @* Add Section (checkbox): *@
+        <div class="ui-grid-a">
+            <div data-role="fieldcontain">
+                <div class="ui-block-a">Add Section:</div>
+                <div class="ui-block-b"><input type="checkbox" id="OtherSec" name="OtherSecCB" onclick="OtherSecClick();" /></div>
+            </div>
+        </div>
+        
+         @* Hidden New Section Input: *@
+        <div id="otherSecInput" class="ui-grid-a hidden">
+            <div data-role="fieldcontain">
+                <div class="ui-block-a"><span class="padding">Section Name:</span></div>
+                <div  class="ui-block-b" ><input type="text" id="SecInput" name="addSection" class="stnTextInput ui-shadow-inset" /></div>
+                <div class="padding"><input type="button" onclick="ConfirmAddSec();" name="addSection" value="Add to Sections" /></div>
+                <br />
+           </div>
+        </div>
+
+        @* Email Address: *@
+        <div class="ui-grid-a">
+             <div class="ui-block-a"><span class="required">Email Address:</span></div>
+             <div class="ui-block-b"><input type="text" name="EMAIL" class="required stnTextInput ui-shadow-inset" /></div>
+        </div>
+        
+        @* Phone Number: *@
+        <div class="ui-grid-a">           
+            <div class="ui-block-a">Phone number:</div>
+            <div class="ui-block-b"><input type="text" name="PHONE" class="stnTextInput ui-shadow-inset" /></div>
+        </div>
+        
+        @* Add Another Contact? (checkbox) *@
+        <div class="ui-grid-a">
+            <div data-role="fieldcontain">
+                <div class="ui-block-a">Add Another Contact? (will post & refresh page)</div>
+                <div class="ui-block-b"><input type="checkbox" id="OtherContact" onclick="ContactClick();" /></div>
+           </div>
+       </div>
+    </div>
+        
+    <br clear="all" />
+    <br />
+    <div id="formSubmitDiv" class="formSection">
+        <div class="leftSideSubmit">
+            <div class="submitDiv"><div class="darkButtonBorder"><input type="submit" name="Create" class="submit" value="Proceed to Publications" /></div></div>
+            <div class="cancelDiv"><div class="lightButtonBorder"><input id="resetButton" type="reset" class="cancel" value="Go Back to Summary" onclick="location.href='@Url.Action("ProjSummary1", "Project")' " /></div></div>
+            <span id="errorSection" class="failureNotification"><asp:Literal ID="ErrorMessage" runat="server"></asp:Literal></span>
+        </div>
+    </div> 
+}
+<script type="text/javascript">
+    function cancelClick() {
+        $("#loading").fadeIn();
+        window.location.href = '@Url.Action("Details", "Sites", new { id = ViewData["SiteId"] })'
+    };
+</script>
+<script type="text/javascript">
+    function loading() {
+        $("#loading").fadeIn();
+    }
+</script>
+<script type="text/javascript">
+    //want to add another contact. post this one, come back here with empty fields except project
+    function ContactClick() {
+
+        var ContactName = document.getElementById("contactName").value;
+        var checkBoxCntrl = document.getElementById("OtherContact");
+        if ('@contact1' == 'True') {
+
+        }
+        if (checkBoxCntrl.checked == true) {
+            $.ajax({
+                url: '@Url.Action("PostAndReturnContacts", "Project")',
+                type: 'GET',
+                data: { CName: ContactName },
+                success: function (response) {
+                    if (response) {
+                        window.location.href = '@Url.Action("ProjContacts2", "Project")'
+                    }
+                }
+            });
+        }
+    }
+</script>
+
+<script type="text/javascript">
+    // Organizations: "other" checkbox. when clicked, clear selected val from dropdown (if one is selected), show empty textinput to add value to list
+    function OtherClick() {
+        var checkBoxCntrl = document.getElementById("OtherOrg");
+        if (checkBoxCntrl.checked == true) {
+            $("#Orgdropdown").val('');
+            $("#otherOrgInput").show();
+            $("#orgNmInput").val('');
+            $("#orgSTInput").val('');
+            $("#orgShortNmInput").val('');
+        }
+        else {
+            $("#otherOrgInput").hide();
+        }
+    }
+</script>
+
+<script type="text/javascript">
+    // Organizations: show alert, ADD TO dropdown, hide text input and uncheck box
+    function ConfirmAddOrg() {
+        //get new org values
+        var orgName = $("#orgNmInput").val();
+        var orgState = $("#orgSTInput").val();
+        var orgShortNm = $("#orgShortNmInput").val();
+        //hide the input area and uncheck the checkbox
+        alert("Organization Added");
+        $("#otherOrgInput").hide();
+        var checkboxCntrl = document.getElementById("OtherOrg");
+        checkboxCntrl.checked = false;
+        //post the new organization to db
+        $.post("AddOrganization/", { newOrgName: orgName, newOrgState: orgState, newOrgShName: orgShortNm }, function (data) {
+            populateOrgDD($("#Orgdropdown"), data);
+        });
+    }
+    function populateOrgDD(select, data) {
+        select.empty();
+        if (data == null) {
+            alert("Invalid, please try again");
+        }
+        else {
+            $.each(data, function (id, option) {
+                select.append($('<option/>', {
+                    value: id,
+                    text: option.NAME
+                }));
+            });
+        }
+    }
+</script>
+
+
+<script type="text/javascript">
+    //Adjust contents of Divisions dropdown based on Organization choice
+    $("#Orgdropdown").change(function () {
+        var thisName = $("#Orgdropdown option:selected").text();
+        $.post("../Project/GetDivisionsList/", { name: thisName }, function (data) {
+            populateDD($("#Divdropdown"), data);
+        });
+    });
+
+    function populateDD(select, data) {
+        select.empty();
+        $.each(data, function (id, option) {
+            select.append($('<option/>', {
+                value: id,
+                text: option
+            }));
+        });
+    }     
+</script>
+
+
+<script type="text/javascript">
+    // Divisions: "other" checkbox. when clicked, clear selected val from dropdown (if one is selected), show empty textinput to add value to list
+    function OtherDivClick() {
+        var checkBoxCntrl = document.getElementById("OtherDiv");
+        if (checkBoxCntrl.checked == true) {
+            $("#Divdropdown").val('');
+            $("#otherDivInput").show();
+            $("#DivInput").val('');
+        }
+        else {
+            $("#otherDivInput").hide();
+        }
+    }
+</script>
+<script type="text/javascript">
+    // Divisions: show alert, ADD TO dropdown, hide text input and uncheck box
+    function ConfirmAddDiv() {
+        alert("Division Added");
+        $("#otherDivInput").hide();
+        var checkboxCntrl = document.getElementById("OtherDiv");
+        checkboxCntrl.checked = false;
+    }
+</script>
+
+<script type="text/javascript">
+    // Section: "other" checkbox. when clicked, clear selected val from dropdown (if one is selected), show empty textinput to add value to list
+    function OtherSecClick() {
+        var checkBoxCntrl = document.getElementById("OtherSec");
+        if (checkBoxCntrl.checked == true) {
+            $("#Secdropdown").val('');
+            $("#otherSecInput").show();
+            $("#SecInput").val('');
+        }
+        else {
+            $("#otherSecInput").hide();
+        }
+    }
+</script>
+<script type="text/javascript">
+    // Section: show alert, ADD TO dropdown, hide text input and uncheck box
+    function ConfirmAddSec() {
+        alert("Section Added");
+        $("#otherSecInput").hide();
+        var checkboxCntrl = document.getElementById("OtherSec");
+        checkboxCntrl.checked = false;
+    }
+</script>
+
+<script type="text/javascript">
+
+    $("#form0").submit(function () {
+        var MISSING = "ui-req";
+
+        var requiredInput = $('input[class*="required"]');
+        var requiredSelect = $('select[class*="required"]');
+        var Ierr = false;
+        var Serr = false;
+        var missingMsg = "The highlighted fields are required.";
+
+        // Reset the previously highlighted form elements  
+        requiredInput.each(function (index) {
+            $(this).removeClass(MISSING);
+            $(this).addClass("ui-shadow-inset");
+        });
+        // Reset the previously highlighted form elements  
+        requiredSelect.each(function (index) {
+            $(this).removeClass(MISSING);
+            $(this).addClass("ui-shadow-inset");
+        });
+        // Perform form validation  
+        requiredInput.each(function (index) {
+            if ($(this).val() == null || $(this).val() == "") {
+                $(this).addClass(MISSING);
+                $(this).removeClass("ui-shadow-inset");
+                Ierr = true;
+//                $("#errorSection").append(missingMsg);
+            }
+        });
+        // Perform form validation  
+        requiredSelect.each(function (index) {
+            var ind = $(this).context.selectedIndex;
+            if (ind == -1) {
+                $(this).addClass(MISSING);
+                Serr = true;
+//                $("#errorSection").append(missingMsg);
+            }
+        });
+        if (Ierr == true || Serr == true) {
+            $("#errorSection").append(missingMsg); 
+        }
+        // Check if validation fails
+        if (Ierr == true) {
+            return false;
+        }
+        // Check if validation fails
+        if (Serr == true) {
+            return false;
+        }
+        
+    });
+
+</script>

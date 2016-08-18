@@ -1,0 +1,13 @@
+﻿@model System.Web.Mvc.HandleErrorInfo
+
+@{
+    ViewBag.Title = "Error";
+}
+
+<h2>
+    Sorry, an error occurred while processing your request.
+</h2>
+
+<br />
+
+@Html.ActionLink("Home", "Index", "Home", null, new { @class = "LaMPButton blue", onclick = "loading();" })

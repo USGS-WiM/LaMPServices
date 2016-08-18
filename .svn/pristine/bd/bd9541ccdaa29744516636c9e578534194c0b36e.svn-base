@@ -1,0 +1,204 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+
+namespace LaMPWeb.Controllers
+{
+    public class SiteController : Controller
+    {
+        //
+        // GET: /Site/
+
+        public ActionResult SiteSummary1()
+        {
+            ViewData["Lakes"] = GetLakes();
+            ViewData["Waterbodies"] = GetWaterbodies();
+            ViewData["Resources"] = GetResources();
+            ViewData["Media"] = GetMedia();
+            ViewData["SampleFreq"] = GetSampleFreq();
+
+            return View();
+        }
+
+        public ActionResult SiteSummary2()
+        {
+            ViewData["Lakes"] = GetLakes();
+            ViewData["Waterbodies"] = GetWaterbodies();
+            ViewData["Resources"] = GetResources();
+            ViewData["Media"] = GetMedia();
+            ViewData["SampleFreq"] = GetSampleFreq();
+
+            return View();
+        }
+
+        //going from input site to grid copy/paste site..grab site that was entered and put it in grid
+        public ActionResult Post4Grid(string SiteName, string SiteLat, string SiteLong, string SiteDesc, string Lakedropdown, 
+            string Waterdropdown, string newWaterbody, string wbInput, string startDate, string endDate, string Resourcedropdown, string mediadropdown, string sfdropdown,
+            string samplePlatform, string parameters, string siteUrl, string additionalInfo, string OtherSite)
+        {
+            
+            List<string> aSite = new List<string>();
+            if (SiteName != null && SiteName != "")
+            {                
+                aSite.Add(SiteName);
+                aSite.Add(SiteLat);
+                aSite.Add(SiteLong);
+                aSite.Add(SiteDesc);
+                aSite.Add(Lakedropdown);
+                aSite.Add(Waterdropdown);
+                aSite.Add(newWaterbody);
+                aSite.Add(wbInput);
+                aSite.Add(startDate);
+                aSite.Add(endDate);
+                aSite.Add(Resourcedropdown);
+                aSite.Add(mediadropdown);
+                aSite.Add(sfdropdown);
+                aSite.Add(samplePlatform);
+                aSite.Add(parameters);
+                aSite.Add(siteUrl);
+                aSite.Add(additionalInfo);
+                aSite.Add(OtherSite);
+
+                ViewData["aSite"] = aSite;
+            }
+                return View("SiteSummary2");
+        }
+
+
+        [HttpPost]
+        public ActionResult Review(FormCollection fc)
+        {
+            string SiteName = fc["SiteName"];
+            string SiteLat = fc["SiteLat"];
+            string SiteLong = fc["SiteLong"];
+            string SiteDesc = fc["SiteDesc"];
+            string Lakes = fc["Lakes"];
+            string Waterbodies = fc["Waterbodies"];
+            string SiteStartDate = fc["SiteStartDate"];
+            string SiteEndDate = fc["SiteEndDate"];
+            string resources = fc["resources"];
+            string Media = fc["Media"];
+            string SamplingFr = fc["SamplingFr"];
+            string samplePlatform = fc["samplePlatform"];
+            string parameters = fc["parameters"];
+            string siteUrl = fc["siteUrl"];
+            string additionalInfo = fc["additionalInfo"];
+            
+            return View("Review", "Project");
+
+        }
+
+        //add waterbody to dropdown list from checkbox click
+        public JsonResult AddWaterbody(string newWaterbody)
+        {
+            List<string> waterbodies = GetWaterbodies();
+            waterbodies.Add(newWaterbody);
+            
+            return Json(waterbodies);
+        }
+
+        //Holder for now. want to add multiple contacts. checkbox onclick - post the contact then go back and add another
+        public Boolean PostAndReturnSites(string SName)
+        {
+            Session["Sites"] = Session["Sites"] + SName + ", ";
+            return true;
+        }
+
+        public List<string> GetLakes()
+        {
+            List<string> Lakes = new List<string>();
+            Lakes.Add("Erie");
+            Lakes.Add("Huron");
+            Lakes.Add("Michigan");
+            Lakes.Add("Ontario");
+            Lakes.Add("Superior");
+            return Lakes;
+        }
+
+        public List<string> GetWaterbodies()
+        {
+            List<string> Waterbodies = new List<string>();
+            Waterbodies.Add("East River");
+            Waterbodies.Add("Fox River");
+            Waterbodies.Add("Green Bay");
+            Waterbodies.Add("Lake St. Clair");
+            Waterbodies.Add("Niagara River");
+            Waterbodies.Add("Upper St. Lawrence River");
+            return Waterbodies;
+        }
+
+        public List<string> GetResources()
+        {
+            List<string> Resources = new List<string>();
+            Resources.Add("Beaches");
+            Resources.Add("Benthos");
+            Resources.Add("Harbor");
+            Resources.Add("Lake");
+            Resources.Add("Nearshore");
+            Resources.Add("Offshore");
+            Resources.Add("Pelagic");
+            Resources.Add("River Mouths");
+            Resources.Add("River/Stream");
+            Resources.Add("Shoreline");
+            Resources.Add("Stormwater Conveyance System");
+            Resources.Add("Surface Water");
+            Resources.Add("Surrounding Lakes");
+            Resources.Add("Tributary");
+            Resources.Add("Water Treatment Facility Intake");
+            Resources.Add("Wetland");
+            return Resources;
+        }
+
+        public List<string> GetMedia()
+        {
+            List<string> Media = new List<string>();
+            Media.Add("Algae");
+            Media.Add("Biological"); 
+            Media.Add("Birds");
+            Media.Add("Carcasses");
+            Media.Add("Fish");
+            Media.Add("Invertebrates");
+            Media.Add("Nutrients");
+            Media.Add("Particulates");
+            Media.Add("Physical");
+            Media.Add("Sediment");
+            Media.Add("Suspended Sediment");
+            Media.Add("Tissue");
+            Media.Add("Vegetation");
+            Media.Add("Viruses");
+            Media.Add("Water");
+            Media.Add("Water Quality");
+            Media.Add("Watershed Model");
+            Media.Add("Zooplankton");
+            return Media;
+        }
+
+        public List<string> GetSampleFreq()
+        {
+            List<string> SampleF = new List<string>();
+            SampleF.Add("Annual");
+            SampleF.Add("As Needed");
+            SampleF.Add("Biennial");
+            SampleF.Add("Bimonthly");
+            SampleF.Add("Biweekly");
+            SampleF.Add("Continuous");
+            SampleF.Add("Event-Based");
+            SampleF.Add("Fall");
+            SampleF.Add("Monthly");
+            SampleF.Add("Once");
+            SampleF.Add("Quarterly");
+            SampleF.Add("Seasonal");
+            SampleF.Add("Spring");
+            SampleF.Add("Spring/Fall");
+            SampleF.Add("Summer");
+            SampleF.Add("Triennial");
+            SampleF.Add("Twice");
+            SampleF.Add("Variable");
+            SampleF.Add("Weekly");
+            return SampleF;
+        }
+
+    }
+}

@@ -1,0 +1,263 @@
+﻿//------------------------------------------------------------------------------
+//----- MediaTypeHandler -----------------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2012 WiM - USGS
+
+//    authors:  Jeremy K. Newson USGS Wisconsin Internet Mapping
+//              
+//  
+//   purpose:   Handles media type resources through the HTTP uniform interface.
+//              Equivalent to the controller in MVC.
+//
+//discussion:   Handlers are objects which handle all interaction with resources in 
+//              this case the resources are POCO classes derived from the EF. 
+//               https://github.com/openrasta/openrasta/wiki/Handlers
+//
+//     
+#region Comments
+// 05.02.12 - jkn - Created
+#endregion  
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+using LaMPServices.Authentication;
+using OpenRasta.Web;
+using OpenRasta.Security;
+
+namespace LaMPServices.Handlers
+{
+    public class MediaTypeHandler
+    {
+        #region Properties
+
+        // will be automatically injected by DI in OpenRasta
+        public ICommunicationContext Context { get; set; }
+
+        private string connectionString = @"metadata=res://*/LaMPDSModel.csdl|res://*/LaMPDSModel.ssdl|res://*/LaMPDSModel.msl;provider=Oracle.DataAccess.Client;provider connection string=""DATA SOURCE=LAMPRDS;USER ID={0};PASSWORD={1}""";
+
+        #endregion
+
+        #region Routed Methods
+
+        #region GetMethods
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get()
+        {
+            List<MEDIA_TYPE> mediaTypes;
+
+            //Get basic authentication password
+            // using (EasySecureString securedPassword = new EasySecureString(
+            //                        LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            /// {
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+
+                mediaTypes = Context.MEDIA_TYPE.OrderBy(m => m.MEDIA_TYPE_ID).ToList();
+
+            }//end using
+            //  }//end using
+
+            return new OperationResult.OK { ResponseResource = mediaTypes };
+        }//end httpMethod get
+
+
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get(Int32 mediaTypeID)
+        {
+            MEDIA_TYPE aMediaType;
+
+            //return BadRequest if ther is no ID
+            if (mediaTypeID <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            // using (EasySecureString securedPassword = new EasySecureString(
+            //                        LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            /// {
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+
+                aMediaType = Context.MEDIA_TYPE.Single(m => m.MEDIA_TYPE_ID == mediaTypeID);
+
+
+            }//end using
+            //  }//end using
+
+            return new OperationResult.OK { ResponseResource = aMediaType };
+        }//end httpMethod get
+
+        #endregion
+
+        #region PostMethods
+        /// 
+        /// Force the user to provide authentication 
+        /// 
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.POST, ForUriName = "CreateMediaType")]
+        public OperationResult Post(MEDIA_TYPE aMediaType)
+        {
+            //Return BadRequest if missing required fields
+            if (String.IsNullOrEmpty(aMediaType.MEDIA))
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            //using (EasySecureString securedPassword = new EasySecureString(
+            //                      LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            //{
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+                decimal nextEntityId = 0;
+                //Increment Key
+                MEDIA_TYPE lastEntity = Context.MEDIA_TYPE.OrderByDescending(m => m.MEDIA_TYPE_ID).FirstOrDefault();
+                if (lastEntity != null) nextEntityId = lastEntity.MEDIA_TYPE_ID + 1;
+
+                aMediaType.MEDIA_TYPE_ID = nextEntityId;
+
+                Context.MEDIA_TYPE.AddObject(aMediaType);
+
+                Context.SaveChanges();
+            }// end using
+
+            // } end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = aMediaType };
+        }//end Post
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.POST, ForUriName = "CreateMediaTypeList")]
+        public OperationResult Post(List<MEDIA_TYPE> MediaTypes)
+        {
+            //Return BadRequest if missing required fields
+            if (MediaTypes.Count <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            //using (EasySecureString securedPassword = new EasySecureString(
+            //                      LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            //{
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+                decimal nextEntityId = 0;
+                //Increment Key
+                MEDIA_TYPE lastEntity = Context.MEDIA_TYPE.OrderByDescending(m => m.MEDIA_TYPE_ID).FirstOrDefault();
+                if (lastEntity != null) nextEntityId = lastEntity.MEDIA_TYPE_ID + 1;
+
+                foreach (MEDIA_TYPE item in MediaTypes)
+                {
+                    //update database ID
+                    item.MEDIA_TYPE_ID = nextEntityId;
+
+                    Context.MEDIA_TYPE.AddObject(item);
+                    nextEntityId += 1;
+
+                }//next item
+
+                Context.SaveChanges();
+            }// end using
+
+            //} end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = MediaTypes };
+        }
+        #endregion
+
+        #region PutMethods
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.PUT, ForUriName = "UpdateMediaType")]
+        public OperationResult Post(Int32 mediaTypeId, MEDIA_TYPE instance)
+        {
+            //Return BadRequest if missing required fields
+            if ((mediaTypeId <= 0))
+            {
+                return new OperationResult.BadRequest();
+            }
+
+
+            //Get basic authentication password
+            //using (EasySecureString securedPassword = new EasySecureString(
+            //                      LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            //{
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+                //fetch the object to be updated (assuming that it exists)
+                MEDIA_TYPE ObjectToBeUpdated = Context.MEDIA_TYPE.Single(m => m.MEDIA_TYPE_ID == mediaTypeId);
+
+                //MEDIA
+                ObjectToBeUpdated.MEDIA = (string.IsNullOrEmpty(instance.MEDIA) ?
+                    ObjectToBeUpdated.MEDIA : instance.MEDIA);
+
+                Context.SaveChanges();
+            }// end using
+
+            // } end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = instance };
+        }
+
+
+        #endregion
+
+        #region DeleteMethods
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.DELETE, ForUriName = "DeleteMediaType")]
+        public OperationResult Post(Int32 mediaTypeId)
+        {
+            //Return BadRequest if missing required fields
+            if (mediaTypeId <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+
+            //Get basic authentication password
+            //using (EasySecureString securedPassword = new EasySecureString(
+            //                      LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            //{
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+                //fetch the object to be updated (assuming that it exists)
+                MEDIA_TYPE ObjectToBeDeleted = Context.MEDIA_TYPE.Single(m => m.MEDIA_TYPE_ID == mediaTypeId);
+
+                //delete it
+                Context.MEDIA_TYPE.DeleteObject(ObjectToBeDeleted);
+
+                Context.SaveChanges();
+
+            }// end using
+
+            // } end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { };
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Helper Methods
+
+        #endregion
+
+    }//end MediaTypeHandler
+}//end namespace

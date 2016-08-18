@@ -1,0 +1,450 @@
+﻿//------------------------------------------------------------------------------
+//----- OrganizationHandler -----------------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2012 WiM - USGS
+
+//    authors:  Jeremy K. Newson USGS Wisconsin Internet Mapping
+//              
+//  
+//   purpose:   Handles Organizations resources through the HTTP uniform interface.
+//              Equivalent to the controller in MVC.
+//
+//discussion:   Handlers are objects which handle all interaction with resources in 
+//              this case the resources are POCO classes derived from the EF. 
+//               https://github.com/openrasta/openrasta/wiki/Handlers
+//
+//     
+#region Comments
+// 04.26.12 - jkn - Created
+#endregion                          
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+using LaMPServices.Authentication;
+using OpenRasta.Web;
+using OpenRasta.Security;
+
+namespace LaMPServices.Handlers
+{
+    public class OrganizationHandler:HandlerBase
+    {
+
+        #region Routed Methods
+        #region GetMethods
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get()
+        {
+            List<ORGANIZATION> orgs;
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    orgs = aLaMPRDS.ORGANIZATIONS.OrderBy(o => o.ORGANIZATION_ID).ToList();
+
+                }//end using
+            }//end using
+
+            if (orgs != null)
+                orgs.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+
+            return new OperationResult.OK { ResponseResource = orgs };
+        }//end httpMethod get
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get(Int32 organizationId)
+        {
+            ORGANIZATION aOrg;
+
+            //return BadRequest if ther is no ID
+            if (organizationId <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    aOrg = aLaMPRDS.ORGANIZATIONS.SingleOrDefault(o => o.ORGANIZATION_ID == organizationId);
+
+                }//end using
+            }//end using
+
+            if (aOrg != null)
+                aOrg.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+
+            return new OperationResult.OK { ResponseResource = aOrg };
+        }//end httpMethod get
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.GET, ForUriName = "GetProjectOrganizations")]
+        public OperationResult GetProjectOrganizations(Int32 projectId)
+        {
+            List<ORGANIZATION> orgs;
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    orgs = aLaMPRDS.ORGANIZATIONS.Where(o=>o.PROJECT.Any(p=>p.PROJECT_ID== projectId))
+                                                 .OrderBy(o=>o.ORGANIZATION_ID).ToList();
+
+                }//end using
+            }//end using
+
+            if (orgs != null)
+                orgs.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+
+            return new OperationResult.OK { ResponseResource = orgs };
+        }//end httpMethod get
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.GET, ForUriName = "GetOrganizationByShortName")]
+        public OperationResult GetOrganizationByShortName(string shortName)
+        {
+            ORGANIZATION aOrg;
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    aOrg = aLaMPRDS.ORGANIZATIONS.FirstOrDefault(o => string.Equals(o.SHORTNAME.ToUpper(),shortName.ToUpper()));
+
+                }//end using
+            }//end using
+
+            if (aOrg != null)
+                    aOrg.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+
+            return new OperationResult.OK { ResponseResource = aOrg };
+        }//end httpMethod get
+
+        #endregion
+
+        #region PostMethods
+        /// 
+        /// Force the user to provide authentication 
+        /// 
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.POST)]
+        public OperationResult Post(ORGANIZATION aOrg)
+        {
+            //Return BadRequest if missing required fields
+            if (String.IsNullOrEmpty(aOrg.NAME))
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //check if it exists
+                    if (!Exists(aLaMPRDS.ORGANIZATIONS,ref aOrg))
+	                {
+                        //Format entry
+                        aOrg.SHORTNAME = GenerateShortName(aOrg.NAME, aOrg.DIVISION, aOrg.SECTION);
+                        //Save
+                        aLaMPRDS.ORGANIZATIONS.AddObject(aOrg);
+                        aLaMPRDS.SaveChanges();
+	                }
+               
+                }// end using
+            }// end using
+
+            if (aOrg != null)
+                aOrg.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = aOrg };
+        }
+
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.POST, ForUriName = "AddProjectOrganization")]
+        public OperationResult AddProjectOrganization(Int32 projectId, ORGANIZATION aOrganization)
+        {
+            PROJECT_COOPERATORS aProjectCooperators = null;
+            List<ORGANIZATION> CooperatorList = null;
+            //Return BadRequest if missing required fields
+            if (projectId <= 0 || String.IsNullOrEmpty(aOrganization.NAME))
+            { return new OperationResult.BadRequest(); }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    //check if valid project
+                    if (aLaMPRDS.PROJECTS.First(p => p.PROJECT_ID == projectId) == null)
+                        return new OperationResult.BadRequest { Description = "Project does not exist" };
+
+                    //check authorization
+                    if (!IsAuthorizedToEdit(aLaMPRDS.PROJECTS.First(p => p.PROJECT_ID == projectId).DATA_MANAGER.USERNAME))
+                        return new OperationResult.Forbidden { Description = "Not Authorized" };
+
+                    if (!Exists(aLaMPRDS.ORGANIZATIONS, ref aOrganization))
+                    {
+                        //Format entry
+                        aOrganization.SHORTNAME = GenerateShortName(aOrganization.NAME, aOrganization.DIVISION, aOrganization.SECTION);
+                        aLaMPRDS.ORGANIZATIONS.AddObject(aOrganization);
+                        aLaMPRDS.SaveChanges();
+                    }//end if
+
+                    //add to project
+
+                    //first check if Project already contains organization
+                    if (aLaMPRDS.PROJECT_COOPERATORS.FirstOrDefault(pc => pc.ORGANIZATION_ID == aOrganization.ORGANIZATION_ID &&
+                                                                          pc.PROJECT_ID == projectId) == null)
+
+                    {//create one
+                        aProjectCooperators = new PROJECT_COOPERATORS();
+                        //set ID and create ProjectContact
+                        //aProjectCooperators.PROJECT_COOPERATOR_ID = GetNextProjectCooperatorID(aLaMPRDS.PROJECT_COOPERATORS);
+
+                        aProjectCooperators.PROJECT_ID = projectId;
+                        aProjectCooperators.ORGANIZATION_ID = aOrganization.ORGANIZATION_ID;
+
+                        aLaMPRDS.PROJECT_COOPERATORS.AddObject(aProjectCooperators);
+                        aLaMPRDS.SaveChanges();
+                    }//end if
+
+                    //return the list of contacts associated with project
+                    CooperatorList = aLaMPRDS.ORGANIZATIONS.Where(o => o.PROJECT.Any(pc => pc.PROJECT_ID == projectId)).ToList();
+
+                    if (CooperatorList != null)
+                        CooperatorList.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = CooperatorList };
+        }
+        #endregion
+
+        #region PutMethods
+
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.PUT)]
+        public OperationResult Put(Int32 organizationId, ORGANIZATION instance)
+        {
+            //Return BadRequest if missing required fields
+            if ((organizationId <= 0))
+            {return new OperationResult.BadRequest();}
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    ORGANIZATION ObjectToBeUpdated = aLaMPRDS.ORGANIZATIONS.SingleOrDefault(o => o.ORGANIZATION_ID == organizationId);
+
+                    //Name
+                    ObjectToBeUpdated.NAME = (string.IsNullOrEmpty(instance.NAME) ?
+                        ObjectToBeUpdated.NAME : instance.NAME);
+           
+                    //Division
+                    ObjectToBeUpdated.DIVISION = (string.IsNullOrEmpty(instance.DIVISION) ?
+                        ObjectToBeUpdated.DIVISION : instance.DIVISION);
+
+                    //Section
+                    ObjectToBeUpdated.SECTION = (string.IsNullOrEmpty(instance.SECTION) ?
+                        ObjectToBeUpdated.SECTION : instance.SECTION);
+
+                    //generate new shortname
+                    ObjectToBeUpdated.SHORTNAME = GenerateShortName(ObjectToBeUpdated.NAME, ObjectToBeUpdated.DIVISION, ObjectToBeUpdated.SECTION);
+                
+                    aLaMPRDS.SaveChanges();
+                }// end using
+            }// end using
+
+            if (instance != null)
+                instance.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = instance };
+        }
+
+
+        #endregion
+
+        #region DeleteMethods
+
+        [RequiresRole(AdminRole)]
+        [HttpOperation(HttpMethod.DELETE)]
+        public OperationResult Delete(Int32 organizationId)
+        {
+            //Return BadRequest if missing required fields
+            if (organizationId <= 0)
+            { return new OperationResult.BadRequest();}
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    ORGANIZATION ObjectToBeDeleted = aLaMPRDS.ORGANIZATIONS.SingleOrDefault(o => o.ORGANIZATION_ID == organizationId);
+                    //delete it
+                    aLaMPRDS.ORGANIZATIONS.DeleteObject(ObjectToBeDeleted);
+
+                    aLaMPRDS.SaveChanges();
+
+                }// end using
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { };
+        }
+
+        #endregion
+
+        #endregion
+        #region "Helper Methods"
+
+        private Boolean Exists(System.Data.Objects.IObjectSet<ORGANIZATION> organizations, ref ORGANIZATION aOrganization)
+        {
+            ORGANIZATION existingOrganization;
+            ORGANIZATION thisOrganization = aOrganization;
+            //check if it exists
+            try
+            {
+                existingOrganization = organizations.FirstOrDefault(o => string.Equals(o.NAME.ToUpper(),thisOrganization.NAME.ToUpper()) &&
+                                                                        (string.Equals(o.SECTION.ToUpper(), thisOrganization.SECTION.ToUpper()) || string.IsNullOrEmpty(thisOrganization.SECTION)) &&
+                                                                        (string.Equals(o.DIVISION.ToUpper(),thisOrganization.DIVISION.ToUpper()) || string.IsNullOrEmpty(thisOrganization.DIVISION)));
+                    
+
+                if (existingOrganization == null)
+                    return false;
+
+                //if exists then update ref contact
+                aOrganization = existingOrganization;
+                return true;
+
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }//end Exists
+
+        //private decimal GetNextOrganizationID(System.Data.Objects.IObjectSet<ORGANIZATION> organizations)
+        //{
+        //    decimal nextKey = 1;
+        //    if (organizations.Count() > 0)
+        //    {
+        //        nextKey = organizations.OrderByDescending(o => o.ORGANIZATION_ID).First().ORGANIZATION_ID + 1;
+        //    }
+
+        //    return nextKey;
+        //}//end GetNextOrganizationID
+        //private decimal GetNextProjectCooperatorID(System.Data.Objects.IObjectSet<PROJECT_COOPERATORS> projectCooperators)
+        //{
+        //    decimal nextKey = 1;
+        //    if (projectCooperators.Count() > 0)
+        //    {
+        //        nextKey = projectCooperators.OrderByDescending(pc=> pc.PROJECT_COOPERATOR_ID).First().PROJECT_COOPERATOR_ID + 1;
+        //    }
+
+        //    return nextKey;
+        //}//end GetNextProjectCooperatorID
+
+        private string GenerateShortName(string orgName, string orgDiv, string orgSec)
+        {
+            string shrtNm = string.Empty;
+            string shrtDiv = string.Empty;
+            string shrtSec = string.Empty;
+          
+            if(! string.IsNullOrEmpty(orgName))
+                shrtNm = BuildAcronym(orgName);
+
+            if(!string.IsNullOrEmpty(orgDiv))
+                shrtDiv= "_" + BuildAcronym(orgDiv);
+
+            if(!string.IsNullOrEmpty(orgSec))
+                shrtSec = "_" + BuildAcronym(orgSec);
+
+            return shrtNm + shrtDiv + shrtSec;
+        }//end GenerateShortName
+
+        private string BuildAcronym(string str)
+        {
+            string acr = string.Empty;
+            Int32 wrdLgth = 3;
+            char[] delimiterChars = { ' ', ',', '.', ':', '\t' };
+            try
+            {
+                string[] words = str.Split(delimiterChars);
+
+                foreach (string wrd in words)
+                {
+                    if (ExcludeWord(wrd)) continue; //next s
+
+                    string result = wrd.Length < wrdLgth ? wrd : wrd.Substring(0, wrdLgth);
+                    
+                    //add to acr
+                    acr = acr + ToCapital(result);
+                }//next
+
+                return acr;
+            }
+            catch (Exception)
+            {
+                return string.Empty;
+            }
+        
+        }//end GetAcronym
+
+        private Boolean ExcludeWord(string s)
+        {
+            switch (s.ToUpper())
+            {
+                case "THE":
+                case "OF":
+                case "AND":
+                case "&":
+                   return true;
+
+                default:
+                    return false;
+            }//end switch
+          }//end exlude
+
+        private string ToCapital(string wrd)
+        {
+            if (string.IsNullOrEmpty(wrd))
+                return string.Empty;
+         
+            char[] a = wrd.ToCharArray();
+            a[0] = char.ToUpper(a[0]);
+            return new string(a);
+        }
+        #endregion
+    }//end OrganizationHandler
+}//end namespace

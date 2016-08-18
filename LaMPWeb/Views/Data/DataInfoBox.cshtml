@@ -1,0 +1,34 @@
+﻿@* Comments: 
+02.17.15 - TR - Created 
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+  * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Partial view for Viewing list of data hosts for a project
+ */
+ *@
+
+@using LaMPServices;
+@{ PROJECT thisProj = ViewData["project"] as PROJECT; }
+
+@model LaMPServices.DATA_HOST
+
+<div class="subSection softHeader">
+    <label class="bold Lpadded">DATA</label>
+    <hr class="infoUnderline" />
+        
+    <ul>
+        @foreach (DATA_HOST dh in ViewData["data"] as List<DATA_HOST>)
+        {
+            <li><div>@Html.ActionLink((dh.DESCRIPTION==null? "Data: (untitled)" : dh.DESCRIPTION), "DataDetails", "Data", new { id = dh.DATA_HOST_ID, projId = ViewData["projectId"] }, new { onclick = "loading();" })</div></li>
+        }
+    </ul>
+                    	
+    <div style="padding-left:5px">@Html.ActionLink("Add New Data", "DataCreate", "Data", new { id = ViewData["projectId"], From = "Details" }, new {@class="LaMPButton blue", onclick="loading();"})</div>
+    <br />
+</div>
+<br />

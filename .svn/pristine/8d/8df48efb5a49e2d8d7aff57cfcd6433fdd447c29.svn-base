@@ -1,0 +1,117 @@
+﻿@*
+Comments:
+01.28.15 - TR - Created
+
+*@
+
+@*
+/* Authors:
+*      Tonia Roddick (troddick@usgs.gov)
+* Copyright:
+*      2015 USGS - WiM
+* Purpose:
+*      Edit Project Duration
+*/
+*@
+
+@using LaMPServices;
+
+@model LaMPServices.PROJ_DURATION
+
+@{
+    ViewBag.Title = "Edit Project Length";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="@Url.Content("~/Assets/Scripts/jquery.validate.js")" type="text/javascript"></script>
+
+<div id="loading"><div id="loadingcontent"><p id="loadingspinner" style=""><img src="@Url.Content("~/Assets/Images/loading1.gif")"  /></p></div></div>
+
+
+    <div id="dataTitle">
+        <div class="title">Edit Project Length</div>
+        <span id="errorSection" class="failureNotification"></span>
+    </div>
+    <br clear="all" />
+    <hr class="headerUnderline" />
+
+    @using (Ajax.BeginForm("ProjDurationEdit", "Lookups", new { id = Model.PROJ_DURATION_ID }, new AjaxOptions() { HttpMethod = "POST" }, new { @id = "DurationForm" }))
+    {
+        <div class="siteColumn">   
+            <input type="hidden" name="PROJ_DURATION_ID" value="@Model.PROJ_DURATION_ID" />
+                  
+            <div class="ui-grid-a">
+                <div class="ui-block-a"><span class="required">Project Length:</span></div>
+                <div class="ui-block-b" style="width:37%">
+                    <input type="text" class="lampTextInput" id="dur" name="DURATION_VALUE" data-mini="true" value="@Model.DURATION_VALUE" />
+                </div>
+            </div>
+                
+        </div>
+    
+         <div id="formSubmitDiv" class="formSection">
+            <div class="leftSideSubmit">
+                <div class="cancelDiv"><div class="lightButtonBorder"><input id="resetButton" type="reset" class="cancel" value="Cancel" onclick="cancelClick();" /></div></div>
+                <div class="submitDiv"><div class="darkButtonBorder"><input type="submit" class="submit" value="Submit" /></div></div>
+
+            </div>
+    
+        </div>
+    
+    }
+
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        //validate form on and submit
+        $("#DurationForm").validate({
+            rules: {
+                DURATION_VALUE: "required"
+            },
+            messages: {
+                DURATION_VALUE: "Required"
+            },
+            submitHandler: function (form) {
+                $("#loading").fadeIn();
+                form.submit();
+            }
+        });
+    });
+
+    //disable the enter key from submitting the form
+    $(window).keypress(function (e) {
+        if (e.which == 13) {
+            var $targ = $(e.target);
+
+            if (!$targ.is("textarea") && !$targ.is(":button,:submit")) {
+                var focusNext = false;
+                $(this).find(":input:visible:not([disabled],[readonly]), a").each(function () {
+                    if (this === e.target) {
+                        focusNext = true;
+                    }
+                    else if (focusNext) {
+                        $(this).focus();
+                        return false;
+                    }
+                });
+
+                return false;
+            }
+        }
+    });
+
+    window.onload = function () {
+        var txtbox = document.getElementById("dur");
+        txtbox.focus();
+    }
+
+    function cancelClick() {
+        $("#loading").fadeIn();
+        window.location.href = '@Url.Action("Index", "Lookups")'
+    };
+
+    function loading() {
+        $("#loading").fadeIn();
+    }
+
+</script>

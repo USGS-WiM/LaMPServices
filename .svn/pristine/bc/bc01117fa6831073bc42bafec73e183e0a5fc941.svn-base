@@ -1,0 +1,84 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Globalization;
+using System.Web.Mvc;
+using System.Web.Security;
+using System.ComponentModel.DataAnnotations;
+using LaMPServices;
+
+namespace LaMPWeb.Models
+{   
+    //used for index to show information related to project
+    public class ProjectDetails
+    {
+        public decimal ProjId { get; set; }
+        public string ProjName { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        public int NoSites { get; set; }
+    }
+
+    //post a project summary (with all it's parts)
+    public class ProjectModel
+    {
+        public PROJECT project { get; set; }
+        public string projOrgs { get; set; }
+        public string projOrgsToRemove { get; set; }
+        public string projObjectives { get; set; }
+        public string projObjToRemove { get; set; }
+        public string projKeywords { get; set; }
+        public string projKeywordsToRemove { get; set; }
+        public DATA_HOST dataHost { get; set; }
+    }
+
+    //post a project contact (with all it's parts)
+    public class ProjectContact
+    {
+        public CONTACT Contact { get; set; }
+        public decimal projId { get; set; }
+        public int division { get; set; }
+        public int section { get; set; }
+    }
+
+    //used for contact Infobox to show contact name and organization name
+    public class ContactInfo
+    {
+        public decimal ContactId { get; set; }
+        public string Name { get; set; }
+        public string OrgName { get; set; }
+    }
+
+    //post a project publication
+    public class ProjectPublication
+    {
+        public PUBLICATION Publication { get; set; }
+        public decimal projId { get; set; }
+    }
+
+    //used for Sites. need catalog info and location info
+    public class Site
+    {
+        public decimal? ProjectId { get; set; }
+        public decimal CatalogId { get; set; }
+        public decimal? LocationId { get; set; }
+        public string LocationName { get; set; }
+    }
+
+    //store all the pieces to POST to a site
+    public class SiteModel
+    {
+        public PROJECT Project { get; set; }
+        public CATALOG_ Catalog { get; set; }
+        public LOCATION Location { get; set; }
+        public string ResourceTypes { get; set; }
+        public string ResourcesToRemove { get; set; }
+        public string MediaTypes { get; set; }
+        public string MediaToRemove {get;set;} 
+        public string FrequencyTypes { get; set; }
+        public string FrequencyToRemove {get;set;}
+        public string SiteParameters { get; set; }
+        public string From { get; set; }
+    }
+}

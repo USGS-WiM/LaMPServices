@@ -1,0 +1,323 @@
+﻿//------------------------------------------------------------------------------
+//----- ContactController.cs-----------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2013 WiM - USGS
+
+//    authors:  Tonia Roddick USGS Wisconsin Internet Mapping
+//              
+//  
+//   purpose:   Display master pages
+//
+//discussion:   
+//
+//     
+
+#region Comments
+// 07.17.13 - TR - Created 
+#endregion
+
+
+using System;
+using System.Collections.Generic;
+using System.Data.Objects.DataClasses;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+using System.Text.RegularExpressions;
+
+using LaMPWeb.Utilities;
+using RestSharp;
+
+using LaMPServices;
+using LaMPServices.Resources;
+using LaMPWeb.Models;
+using System;
+
+namespace LaMPWeb.Controllers
+{
+    [Authorize]
+    public class ContactController : Controller
+    {
+        //GET: infobox containing contacts for a project
+        public PartialViewResult ContactInfoBox(int id)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "projects/{projectId}/contacts";
+            request.RootElement = "ArrayOfCONTACT";
+            request.AddParameter("projectId", id, ParameterType.UrlSegment);
+            List<CONTACT> ContactList = serviceCaller.Execute<List<CONTACT>>(request);
+
+            //add to the model to pass back to view
+            List<ContactInfo> Contacts = new List<ContactInfo>();
+            foreach (CONTACT c in ContactList)
+            {
+                ContactInfo thisContact = new ContactInfo();
+                thisContact.ContactId = c.CONTACT_ID;
+                thisContact.Name = c.NAME;
+                thisContact.OrgName = GetAnOrganization(Convert.ToInt32(c.ORGANIZATION_ID)).NAME;
+                Contacts.Add(thisContact);
+            }
+
+            ViewData["contacts"] = Contacts;
+            ViewData["projectId"] = id;
+
+            return PartialView();
+        }
+
+        //GET: Contact Details page for a contact
+        public ActionResult ContactDetails(int id, int projId)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/contacts/{contactId}";
+            request.RootElement = "CONTACT";
+            request.AddParameter("contactId", id, ParameterType.UrlSegment);
+            CONTACT thisContact = serviceCaller.Execute<CONTACT>(request);
+            //get this organization
+            ViewData["ContactOrg"] = GetAnOrganization(thisContact.ORGANIZATION_ID);
+
+            //pass this project
+            ViewData["project"] = GetThisProject(projId);
+
+            return View(thisContact);
+        }
+                        
+        //GET: Contact edit page
+        public ActionResult ContactEdit(int id, int projID)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/contacts/{contactId}";
+            request.RootElement = "CONTACT";
+            request.AddParameter("contactId", id, ParameterType.UrlSegment);
+            CONTACT thisContact = serviceCaller.Execute<CONTACT>(request);
+            
+            //get this project
+            ViewData["Project"] = GetThisProject(projID);
+
+            //get all orgs
+            List<ORGANIZATION> allOrgs = GetAllOrganizations();
+            List<ORGANIZATION> filteredOrgs = allOrgs.GroupBy(d => d.NAME).Select(x => x.First()).OrderBy(x => x.NAME).ToList();
+            ViewData["Organizations"] = filteredOrgs;
+
+            //get contact org
+            ORGANIZATION contactOrg = GetAnOrganization(thisContact.ORGANIZATION_ID);
+            ViewData["contactOrg"] = contactOrg;
+
+            
+            return View(thisContact);
+        }
+
+        //POST: post the edit
+        [HttpPost]
+        public ActionResult ContactEdit(int id, FormCollection fc, int projId)
+        {
+            try
+            {
+                LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+                var request = new RestRequest(Method.POST);
+
+                //build COntact from fc.. need to see if Division or Section changed...
+                CONTACT editingContact = new CONTACT();
+                editingContact.CONTACT_ID = id;
+                editingContact.NAME = fc["NAME"];
+                editingContact.EMAIL = fc["EMAIL"];
+                editingContact.PHONE = fc["PHONE"];
+                
+                //existing org id
+                int orgId = Convert.ToInt32(fc["ORGANIZATION_ID"]);
+                
+                //if they changed org, these will be populated and use these instead of existing
+                int newOrgId = Convert.ToInt32(fc["ProjOrg"]);
+                int newDivOrgId = Convert.ToInt32(fc["division"]);
+                int newSecOrgId = Convert.ToInt32(fc["section"]);
+                
+                if (newSecOrgId > 0)
+                { editingContact.ORGANIZATION_ID = newSecOrgId; }
+                else if (newDivOrgId > 0)
+                { editingContact.ORGANIZATION_ID = newDivOrgId; }
+                else if (newOrgId > 0)
+                { editingContact.ORGANIZATION_ID = orgId; }
+                else
+                { editingContact.ORGANIZATION_ID = orgId; }
+
+                request.Resource = "/contacts/{contactId}";
+                request.RequestFormat = DataFormat.Xml;
+                request.AddParameter("contactId", id, ParameterType.UrlSegment);
+                request.AddHeader("X-HTTP-Method-Override", "PUT");
+                request.AddHeader("Content-Type", "application/xml");
+                request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+                request.AddBody(editingContact);
+                CONTACT updatedContact = serviceCaller.Execute<CONTACT>(request);
+                return RedirectToAction("ContactDetails", new { id = updatedContact.CONTACT_ID, projId = projId });
+            }
+            catch (Exception e)
+            {
+                return View(e.ToString());
+            }
+        }
+        
+        //GET: Project Contacts Details page
+        public ActionResult ContactCreate(int id, string From)
+        {
+            ViewData["project"] = GetThisProject(id);
+            //get any contacts for this project
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/projects/{projectId}/contacts";
+            request.RootElement = "ArrayOfCONTACT";
+            request.AddParameter("projectId", id, ParameterType.UrlSegment);
+            List<CONTACT> projContacts = serviceCaller.Execute<List<CONTACT>>(request);
+            if (projContacts.Count >= 1)
+            {
+                ViewData["contacts"] = projContacts;
+            }
+
+            List<ORGANIZATION> ListOrganizations = GetAllOrganizations();
+            ViewData["organizations"] = (ListOrganizations).GroupBy(x => x.NAME).Select(x => x.First()).OrderBy(x => x.NAME).ToList();
+            if (From == "Summary")
+            {
+                ViewData["From"] = From;
+            }
+            return View();
+        }
+        
+        //POST: post the contact info, and send to the Project publications page
+        [HttpPost]
+        public ActionResult ContactCreate(FormCollection fc, string Create)
+        {
+            try
+            {
+                decimal projId = Convert.ToDecimal(fc["projId"]);
+                string From = fc["From"];
+
+                CONTACT aContact = new CONTACT();
+                aContact.NAME = fc["Contact.NAME"];
+                aContact.EMAIL = fc["Contact.EMAIL"];
+                aContact.PHONE = fc["Contact.PHONE"];
+
+                int Section = Convert.ToInt32(fc["section"]);
+                int Division = Convert.ToInt32(fc["division"]);
+                if (Section != 0 && Section != null)
+                { aContact.ORGANIZATION_ID = Section; }
+                else if (Division != 0 && Division != null)
+                { aContact.ORGANIZATION_ID = Division; }
+                
+                LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+                var request = new RestRequest(Method.POST);
+                request.Resource = "/projects/{projectId}/AddContact";
+                request.AddParameter("projectId", projId, ParameterType.UrlSegment);
+                request.RequestFormat = DataFormat.Xml;
+                request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+                request.AddBody(aContact);
+                List<CONTACT> createdContact = serviceCaller.Execute<List<CONTACT>>(request);
+
+                if (Create == "Save & Add\r\n Another Contact")
+                {
+                    return RedirectToAction("ContactCreate", new { id = projId, From = From });
+                }
+                else if (Create == "Save & Go To\r\n Project Details")
+                {
+                    return RedirectToAction("ProjectDetails", "Project", new { id = projId });
+                }
+                else
+                {
+                    return RedirectToAction("PublicationCreate", "Publication", new { id = projId, From = "Contacts" });
+                }
+            }
+            catch (Exception e)
+            {
+                return View(e.ToString());
+            }
+        }
+
+        //Methods called from above ///////////////////////
+
+        public ORGANIZATION GetAnOrganization(decimal? id)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "organizations/{orgId}";
+            request.RootElement = "organization";
+            request.AddParameter("orgId", id, ParameterType.UrlSegment);
+            ORGANIZATION thisOrg = serviceCaller.Execute<ORGANIZATION>(request);
+            return thisOrg;
+        }
+        
+        //GET: get this particular project based on id
+        public PROJECT GetThisProject(int id)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/projects/{projectId}";
+            request.RootElement = "projects";
+            request.AddParameter("projectId", id, ParameterType.UrlSegment);
+            PROJECT thisProject = serviceCaller.Execute<PROJECT>(request);
+            return thisProject;
+        }
+
+        public List<ORGANIZATION> GetAllOrganizations()
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "organizations";
+            request.RootElement = "ArrayOfORGANIZATION";
+            List<ORGANIZATION> organizationList = serviceCaller.Execute<List<ORGANIZATION>>(request);
+
+            return organizationList;
+        }
+
+        //GET: Get a list of the divisions to return to populate division dropdown based on organization selection
+        public List<ORGANIZATION> GetDivisionsList(string name)
+        {
+            List<ORGANIZATION> OrganizationList = GetAllOrganizations();
+            List<ORGANIZATION> holderList = new List<ORGANIZATION>();
+            List<ORGANIZATION> OrgDivisionsList = new List<ORGANIZATION>();
+
+            //get organizations that have incoming name to show org divisions
+            holderList = OrganizationList.Where(ol => ol.NAME == name).ToList();
+            OrgDivisionsList = (holderList).GroupBy(dl => dl.DIVISION).Select(x => x.First()).ToList();
+
+            return OrgDivisionsList;
+        }
+
+        //Called from ContactCreate and ContactEdit to get the divisions for a given Org on dropdown change()
+        public JsonResult GetOrgDivisions(int id)
+        {
+            //get the organization
+            ORGANIZATION thisOrg = GetAnOrganization(id);
+
+            //get all organizations
+            List<ORGANIZATION> allOrgs = GetAllOrganizations();
+
+            //store those that have the same name as organization name
+            List<ORGANIZATION> OrgDivisions = allOrgs.Where(o => o.NAME == thisOrg.NAME).ToList();
+            //remove duplicate division names
+            List<ORGANIZATION> filteredDivs = (OrgDivisions).GroupBy(od => od.DIVISION).Select(x => x.First()).ToList();
+            return Json(filteredDivs);
+        }
+
+        //called from ContactCreate and ContactEdit to get the sections for a given Org on dropdown change()
+        public JsonResult GetDivSections(int id)
+        {
+            //get the organization
+            ORGANIZATION thisOrg = GetAnOrganization(id);
+
+            //get all organizations
+            List<ORGANIZATION> allOrgs = GetAllOrganizations();
+
+            //store those that have the same name as division name
+            List<ORGANIZATION> OrgSections = allOrgs.Where(o => o.DIVISION == thisOrg.DIVISION).ToList();
+
+            return Json(OrgSections);
+        }
+
+        //add the organization entered to Or
+    }
+}

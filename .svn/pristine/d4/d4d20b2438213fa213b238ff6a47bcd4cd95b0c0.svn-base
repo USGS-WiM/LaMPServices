@@ -1,0 +1,96 @@
+﻿@* Comments:
+04.02.13 - TR - Created 
+
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+ * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Display details of a Contact 
+ */
+ *@
+@using LaMPServices;
+@using LaMPWeb.Assets.Resources;
+
+@model LaMPServices.CONTACT
+           
+
+@{
+    ViewBag.Title = "Contact Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ORGANIZATION thisOrg = ViewData["ContactOrg"] as ORGANIZATION;
+    PROJECT thisProject = ViewData["Project"] as PROJECT;
+}
+
+
+<div id="dataTitle">                                                        
+    <div class="title">Project: @Html.ActionLink(thisProject.NAME, "ProjectDetails", "Project", new { id = thisProject.PROJECT_ID }, new { onclick = "loading();" }), Contact: @Model.NAME</div>
+</div>
+<br clear="all" />
+
+<hr class="headerUnderline" />
+
+<div style="float: left;margin-top:1em;margin-bottom:1em;">
+    &nbsp;&nbsp;
+    @Html.ActionLink("Edit", "ContactEdit", "Contact", new { id = Model.CONTACT_ID, projID = thisProject.PROJECT_ID}, new {@class = "LaMPButton blue", @onclick = "loading();", @style = "margin-right:10px" })
+    @Html.ActionLink("Delete", "Delete", "Contact", new { id = Model.CONTACT_ID, projID = thisProject.PROJECT_ID}, new { @style = "margin-right:10px", @onclick = "return confirm('Are you sure you want to delete Contact: " + Model.NAME + "?');", @class = "LaMPButton blue" })
+    @Html.ActionLink("Return to Project Details", "ProjectDetails", "Project", new { id = thisProject.PROJECT_ID }, new { @class = "LaMPButton blue", @onclick = "loading();" })
+</div>
+
+<br clear="all" />
+<input type="hidden" name="CONTACT_ID" value="@Model.CONTACT_ID" id="contactId" />
+<input type="hidden" name="NAME" value="@Model.NAME" id="contactName" />
+<input type="hidden" value="@thisProject.PROJECT_ID" id="projId" />
+
+<div style="margin:1em">
+    @* Contact Name: *@
+        <div class="detailDiv">          
+            <span class="bold ui-label-a">Contact Name:</span>
+            <label class="bold">@Model.NAME</label>
+        </div>
+
+        @* Organizations: (PROJECT_COOPERATORS)*@
+        <div class="detailDiv">
+            <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjOrg_Lbl)</span>
+            @{
+                    if (thisOrg.NAME != null && thisOrg.NAME != "")
+                    {
+                        if (thisOrg.DIVISION != null && thisOrg.DIVISION != "")
+                        {
+                            if (thisOrg.SECTION != null && thisOrg.SECTION != "")
+                            {
+                                <label>@thisOrg.NAME, @thisOrg.DIVISION, @thisOrg.SECTION</label>
+                            }
+                            else
+                            {
+                                <label>@thisOrg.NAME, @thisOrg.DIVISION</label>         
+                            }
+                        }
+                        else
+                        {
+                            <label>@thisOrg.NAME</label>
+                        }
+                    }
+                    else
+                    {
+                        <label></label>
+                    }
+                }
+        </div>
+
+        @* Contact Email: *@
+        <div class="detailDiv">
+            <span class="bold ui-label-a">Email</span>
+            <label>@Model.EMAIL</label>
+        </div>
+    
+        @* Contact Phone: *@
+        <div class="detailDiv">
+            <span class="bold ui-label-a">Phone</span>
+            <label>@Model.PHONE</label>
+        </div>
+        <br />
+</div>    

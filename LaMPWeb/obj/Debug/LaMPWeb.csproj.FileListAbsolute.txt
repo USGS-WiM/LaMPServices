@@ -1,0 +1,16 @@
+D:\TMRData\testingApps\LaMPWeb\LaMPWeb\obj\Debug\ResolveAssemblyReference.cache
+D:\TMRData\WIMprojects\LaMPWeb\LaMPWeb\bin\LaMPWeb.dll
+D:\TMRData\WIMprojects\LaMPWeb\LaMPWeb\bin\LaMPWeb.pdb
+D:\TMRData\WIMprojects\LaMPWeb\LaMPWeb\bin\EntityFramework.dll
+D:\TMRData\WIMprojects\LaMPWeb\LaMPWeb\bin\LaMPServices.dll
+D:\TMRData\WIMprojects\LaMPWeb\LaMPWeb\bin\OpenRasta.dll
+D:\TMRData\WIMprojects\LaMPWeb\LaMPWeb\bin\RestSharp.dll
+D:\TMRData\WIMprojects\LaMPWeb\LaMPWeb\bin\LaMPServices.pdb
+D:\TMRData\WIMprojects\LaMPWeb\LaMPWeb\bin\OpenRasta.pdb
+D:\TMRData\WIMprojects\LaMPWeb\LaMPWeb\bin\EntityFramework.xml
+D:\TMRData\WIMprojects\LaMPWeb\LaMPWeb\obj\Debug\ResolveAssemblyReference.cache
+D:\TMRData\WIMprojects\LaMPWeb\LaMPWeb\obj\Debug\LaMPWeb.dll
+D:\TMRData\WIMprojects\LaMPWeb\LaMPWeb\obj\Debug\LaMPWeb.pdb
+D:\TMRData\WIMprojects\LAMPServices\LaMPWeb\obj\Debug\LaMPWeb.csprojResolveAssemblyReference.cache
+D:\TMRData\WIMprojects\LAMPServices\LaMPWeb\obj\Debug\LaMPWeb.Assets.Resources.ProjectStrings.resources
+D:\TMRData\WIMprojects\LAMPServices\LaMPWeb\obj\Debug\LaMPWeb.csproj.GenerateResource.Cache

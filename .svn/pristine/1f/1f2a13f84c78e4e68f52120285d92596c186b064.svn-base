@@ -1,0 +1,38 @@
+﻿@* Comments: 
+03.11.13 - TR - Created 
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+  * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Partial view for Viewing list of contacts for a project
+ */
+ *@
+
+@using LaMPServices;
+
+@model LaMPServices.CONTACT
+           
+<div class="childrenColumn">
+    <div class="subSection">
+        <div class="subSectionHeader"><span class="bold Lpadded">Contacts</span></div>
+        <div class="subSectionContent">
+            <div class="ui-grid-a">
+                 <div data-role="fieldcontain">
+                    <ul>
+                    @foreach (CONTACT c in ViewData["contacts"] as List<CONTACT>)
+                    {
+                        <li>@c.NAME</li>
+                    }
+                    </ul>
+                    <br />	
+                    <div>@Html.ActionLink("Add New Contact", "ProjContacts", "Project", new { id = ViewData["projectId"] }, new {@class="LaMPButton blue"})</div>
+                    <br />
+                 </div>
+            </div>
+        </div> 
+    </div>
+</div>

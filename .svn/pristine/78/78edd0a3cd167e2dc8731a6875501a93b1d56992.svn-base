@@ -1,0 +1,539 @@
+﻿
+using System;
+using System.Collections.Generic;
+using System.Data.Objects.DataClasses;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+using System.Text.RegularExpressions;
+
+using LaMPWeb.Utilities;
+using RestSharp;
+
+using LaMPServices;
+using LaMPServices.Resources;
+using LaMPWeb.Models;
+
+namespace LaMPWeb.Controllers
+{
+    [Authorize]
+    public class SiteController : Controller
+    {
+        //
+        // GET: /Site/
+
+        //get list of sites to show in infobox
+        public PartialViewResult SiteInfoBox(int id)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "projects/{projectId}/catalogs";
+            request.RootElement = "ArrayOfCATALOG";
+            request.AddParameter("projectId", id, ParameterType.UrlSegment);
+            //ViewData["sites"] = serviceCaller.Execute<List<CATALOG_>>(request);
+            List<CATALOG_> CatList = serviceCaller.Execute<List<CATALOG_>>(request);
+            List<Site> SiteList = new List<Site>();
+            foreach (CATALOG_ c in CatList)
+            {
+                Site thisSite = new Site();
+                thisSite.CatalogId = c.CATALOG_ID;
+                thisSite.ProjectId = id;
+                //get the location
+                request = new RestRequest();
+                request.Resource = "/sites/{siteId}";
+                request.RootElement = "LOCATION";
+                request.AddParameter("siteId", c.LOCATION_ID, ParameterType.UrlSegment);
+                thisSite.LocationId = c.LOCATION_ID;
+                thisSite.LocationName = serviceCaller.Execute<LOCATION>(request).NAME;
+                SiteList.Add(thisSite);
+            }
+
+            ViewData["SiteList"] = SiteList;
+            ViewData["SiteCount"] = SiteList.Count();
+            ViewData["project"] = GetThisProject(id);
+            return PartialView("Details/SiteInfoBox");
+        }
+        
+        //GET: popup partial view containing parameter checkboxes
+        public ActionResult AddParameters()
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/parameters";
+            request.RootElement = "ArrayOfPARAMETER_TYPE";
+            List<PARAMETER_TYPE> Parameters = serviceCaller.Execute<List<PARAMETER_TYPE>>(request);
+            ViewData["Chemical"] = Parameters.Where(p => p.PARAMETER_GROUP == "CHEMICAL").OrderBy(po => po.PARAMETER_TYPE_ID).ToList();
+            ViewData["Physical"] = Parameters.Where(p => p.PARAMETER_GROUP == "PHYSICAL").OrderBy(po => po.PARAMETER_TYPE_ID).ToList();
+            ViewData["Biological"] = Parameters.Where(p => p.PARAMETER_GROUP == "BIOLOGICAL").OrderBy(po => po.PARAMETER_TYPE_ID).ToList();
+            ViewData["Microbiological"] = Parameters.Where(p => p.PARAMETER_GROUP == "MICROBIOLOGICAL").OrderBy(po => po.PARAMETER_TYPE_ID).ToList();
+            ViewData["Toxicological"] = Parameters.Where(p => p.PARAMETER_GROUP == "TOXICOLOGICAL").OrderBy(po => po.PARAMETER_TYPE_ID).ToList();
+
+            return PartialView("Create/AddParameters");
+        }
+        
+        //POST: SiteParameter popup post
+        [HttpPost]
+        public JsonResult AddSiteParameters(FormCollection fc)
+        {
+            List<string> paramIDs = new List<string>();
+            foreach (var key in fc.AllKeys)
+            {
+                if (key != "X-Requested-With")
+                {
+                    paramIDs.Add(key);
+                }
+            }
+
+            return Json(JsonResponseFactory.SuccessResponse(paramIDs), JsonRequestBehavior.DenyGet);
+        }
+
+        //GET: SiteCreate page, manually 1 by 1 entry form
+        public ActionResult SiteSummary1(int id, string From)
+        {
+            ViewData["project"] = GetThisProject(id);
+            //get any sites that may already exist for this project
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/projects/{projectId}/catalogs";
+            request.RootElement = "ArrayOfCATALOG";
+            request.AddParameter("projectId", id, ParameterType.UrlSegment);
+            List<CATALOG_> projCatalogs = serviceCaller.Execute<List<CATALOG_>>(request);
+            List<Site> ProjSites = new List<Site>();
+
+            if (projCatalogs.Count >= 1)
+            {
+                foreach (CATALOG_ c in projCatalogs)
+                {
+                    Site thisSite = new Site();
+                    thisSite.CatalogId = c.CATALOG_ID;
+                    thisSite.LocationId = c.LOCATION_ID;
+                    request = new RestRequest();
+                    request.Resource = "/sites/{siteId}";
+                    request.RootElement = "Location";
+                    request.AddParameter("siteId", c.LOCATION_ID, ParameterType.UrlSegment);
+                    thisSite.LocationName = serviceCaller.Execute<LOCATION>(request).NAME;
+                    thisSite.ProjectId = c.PROJECT_ID;
+                    ProjSites.Add(thisSite);
+                }
+                ViewData["sites"] = ProjSites;
+            }
+            ViewData["states"] = GetStates();
+            ViewData["countries"] = GetCountries();
+            ViewData["Lakes"] = GetLakes();
+            ViewData["statusTypes"] = GetStatusTypes();
+            ViewData["resourceTypes"] = GetResources();
+            ViewData["mediaTypes"] = GetMedia();
+            ViewData["frequencyTypes"] = GetSampleFreq();
+
+            if (From == "Publications")
+            {
+                ViewData["From"] = From;
+            }
+            return View("Create/SiteSummary1");
+        }
+
+        //GET: copy/paste data grid view opttion
+        public ActionResult SiteSummary2()
+        {
+            ViewData["Lakes"] = GetLakes();
+            ViewData["Resources"] = GetResources();
+            ViewData["Media"] = GetMedia();
+            ViewData["SampleFreq"] = GetSampleFreq();
+
+            return View();
+        }
+
+        //going from input site to grid copy/paste site..grab site that was entered and put it in grid
+        public ActionResult Post4Grid(string SiteName, string SiteLat, string SiteLong, string SiteDesc, string Lakedropdown, 
+            string Waterdropdown, string newWaterbody, string wbInput, string startDate, string endDate, string Resourcedropdown, string mediadropdown, string sfdropdown,
+            string samplePlatform, string parameters, string siteUrl, string additionalInfo, string OtherSite)
+        {
+            
+            List<string> aSite = new List<string>();
+            if (SiteName != null && SiteName != "")
+            {                
+                aSite.Add(SiteName);
+                aSite.Add(SiteLat);
+                aSite.Add(SiteLong);
+                aSite.Add(SiteDesc);
+                aSite.Add(Lakedropdown);
+                aSite.Add(Waterdropdown);
+                aSite.Add(newWaterbody);
+                aSite.Add(wbInput);
+                aSite.Add(startDate);
+                aSite.Add(endDate);
+                aSite.Add(Resourcedropdown);
+                aSite.Add(mediadropdown);
+                aSite.Add(sfdropdown);
+                aSite.Add(samplePlatform);
+                aSite.Add(parameters);
+                aSite.Add(siteUrl);
+                aSite.Add(additionalInfo);
+                aSite.Add(OtherSite);
+
+                ViewData["aSite"] = aSite;
+            }
+                return View("SiteSummary2");
+        }
+
+        
+        //POST: Post the site
+        [HttpPost]
+        public ActionResult SiteSummary(FormCollection fc, string Create)
+        {
+            try
+            {
+                string From = fc["From"];
+
+                LOCATION aLocation = new LOCATION();
+                aLocation.NAME = fc["NAME"];
+                aLocation.STATE_PROVINCE = fc["STATE_PROVINCE"];
+                aLocation.COUNTRY = fc["COUNTRY"];
+                aLocation.LATITUDE = Convert.ToDecimal(fc["LATITUDE"]);
+                decimal longitude = Convert.ToDecimal(fc["LONGITUDE"]);
+                decimal l;
+                if (longitude > 0)
+                { l = decimal.Negate(longitude); }
+                else
+                { l = longitude; }
+                aLocation.LONGITUDE = l;
+                aLocation.DESCRIPTION = fc["DESCRIPTION"];
+                aLocation.LAKE_TYPE_ID = Convert.ToDecimal(fc["LAKE_TYPE_ID"]); //single select
+                aLocation.WATERBODY = fc["WATERBODY"];
+                aLocation.WATERSHED_HUC8 = fc["WATERSHED_HUC8"];
+                aLocation.URL = fc["URL"];
+                aLocation.STATUS_TYPE_ID = Convert.ToDecimal(fc["STATUS_TYPE_ID"]); //single select
+
+                //POST aLocation post the alocation, get the alocationID add it to catalog.locationId then post the catalog
+                LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+                var request = new RestRequest(Method.POST);
+                request.Resource = "/sites";
+                request.RequestFormat = DataFormat.Xml;
+                request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+                request.AddBody(aLocation);
+                LOCATION postedSite = serviceCaller.Execute<LOCATION>(request);
+
+                CATALOG_ aCatalog = new CATALOG_();
+                aCatalog.START_DATE = Convert.ToDateTime(fc["START_DATE"]);
+                string endDate = fc["END_DATE"];
+                if (endDate != "")
+                { aCatalog.END_DATE = Convert.ToDateTime(fc["END_DATE"]); }
+                aCatalog.LOCATION_ID = postedSite.LOCATION_ID;
+                aCatalog.PROJECT_ID = Convert.ToDecimal(fc["projId"]);
+                aCatalog.SAMPLE_PLATFORM = fc["SAMPLE_PLATFORM"];
+                aCatalog.ADDITIONAL_INFO = fc["ADDITIONAL_INFO"];
+
+                request = new RestRequest(Method.POST);
+                request.Resource = "/catalogs";
+                request.RequestFormat = DataFormat.Xml;
+                request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+                request.AddBody(aCatalog);
+                CATALOG_ postedCatalog = serviceCaller.Execute<CATALOG_>(request);
+
+                string resources = fc["RESOURCE_TYPE_ID"]; //multiple select
+                if (resources != "" && resources != null)
+                {
+                    List<RESOURCE_TYPE> siteResources = new List<RESOURCE_TYPE>();
+                    //parse and post
+                    string[] res = Regex.Split(resources, ",");
+                    foreach (string r in res)
+                    {
+                        //get it
+                        request = new RestRequest();
+                        request.Resource = "/resourcetypes/{resourceTypeId}";
+                        request.RootElement = "RESOURCE_TYPE";
+                        request.AddParameter("resourceTypeId", r, ParameterType.UrlSegment);
+                        RESOURCE_TYPE thisResource = serviceCaller.Execute<RESOURCE_TYPE>(request);
+
+                        //now post it   "/catalogs/1/addResourcetype"
+                        request = new RestRequest(Method.POST);
+                        request.Resource = "/catalogs/{catalogId}/addResourcetype";
+                        request.AddParameter("catalogId", postedCatalog.CATALOG_ID, ParameterType.UrlSegment);
+                        request.RequestFormat = DataFormat.Xml;
+                        request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+                        request.AddBody(thisResource);
+                        siteResources = serviceCaller.Execute<List<RESOURCE_TYPE>>(request);
+                    }
+                }
+
+                string medias = fc["MEDIA_TYPE_ID"];
+                if (medias != "" && medias != null)
+                {
+                    List<MEDIA_TYPE> siteMedia = new List<MEDIA_TYPE>();
+                    //parse and post
+                    string[] med = Regex.Split(medias, ",");
+                    foreach (string m in med)
+                    {
+                        //get it
+                        request = new RestRequest();
+                        request.Resource = "/media/{mediaId}";
+                        request.RootElement = "MEDIA_TYPE";
+                        request.AddParameter("mediaId", m, ParameterType.UrlSegment);
+                        MEDIA_TYPE thisMedia = serviceCaller.Execute<MEDIA_TYPE>(request);
+
+                        //now post it   "/catalogs/1/addMedium"
+                        request = new RestRequest(Method.POST);
+                        request.Resource = "/catalogs/{catalogId}/addMedium";
+                        request.AddParameter("catalogId", postedCatalog.CATALOG_ID, ParameterType.UrlSegment);
+                        request.RequestFormat = DataFormat.Xml;
+                        request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+                        request.AddBody(thisMedia);
+                        siteMedia = serviceCaller.Execute<List<MEDIA_TYPE>>(request);
+                    }
+                }
+
+                string freq = fc["FREQUENCY_TYPE_ID"];
+                if (freq != "" && freq != null)
+                {
+                    List<FREQUENCY_TYPE> siteFreq = new List<FREQUENCY_TYPE>();
+                    //parse and post
+                    string[] fre = Regex.Split(freq, ",");
+                    foreach (string f in fre)
+                    {
+                        //get it
+                        request = new RestRequest();
+                        request.Resource = "/frequencies/{frequencyId}";
+                        request.RootElement = "FREQUENCY_TYPE";
+                        request.AddParameter("frequencyId", f, ParameterType.UrlSegment);
+                        FREQUENCY_TYPE thisFrequency = serviceCaller.Execute<FREQUENCY_TYPE>(request);
+
+                        //now post it  "/catalogs/1/addFrequency"        
+                        request = new RestRequest(Method.POST);
+                        request.Resource = "/catalogs/{catalogId}/addFrequency";
+                        request.AddParameter("catalogId", postedCatalog.CATALOG_ID, ParameterType.UrlSegment);
+                        request.RequestFormat = DataFormat.Xml;
+                        request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+                        request.AddBody(thisFrequency);
+                        siteFreq = serviceCaller.Execute<List<FREQUENCY_TYPE>>(request);
+                    }
+                }
+
+                string parameters = fc["SiteParameters"]; //comma separated strings, convert to int first
+                if (parameters != "" & parameters != null)
+                {
+                    List<PARAMETER_TYPE> siteParameters = new List<PARAMETER_TYPE>();
+                    //parse and post
+                    string[] param = Regex.Split(parameters, ",");
+                    foreach (string p in param)
+                    {
+                        if (p != " ")
+                        {
+                            //get it
+                            request = new RestRequest();
+                            request.Resource = "/parameters/{parameterId}";
+                            request.RootElement = "PARAMETER_TYPE";
+                            request.AddParameter("parameterId", p, ParameterType.UrlSegment);
+                            PARAMETER_TYPE thisParam = serviceCaller.Execute<PARAMETER_TYPE>(request);
+
+                            //now post it  "/catalogs/1/addParameter"        
+                            request = new RestRequest(Method.POST);
+                            request.Resource = "/catalogs/{catalogId}/addParameter";
+                            request.AddParameter("catalogId", postedCatalog.CATALOG_ID, ParameterType.UrlSegment);
+                            request.RequestFormat = DataFormat.Xml;
+                            request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+                            request.AddBody(thisParam);
+                            siteParameters = serviceCaller.Execute<List<PARAMETER_TYPE>>(request);
+                        }
+                    }
+                }
+                if (Create == "Save & Add\r\n Another Site")
+                {
+                    return RedirectToAction("SiteSummary1", new { id = postedCatalog.PROJECT_ID, From = From });
+                }
+                else if (Create == "Save & Return To\r\n Project Details")
+                {
+                    return RedirectToAction("ProjectDetails", "Project", new { id = postedCatalog.PROJECT_ID });
+                }
+                else
+                {
+                    return RedirectToAction("Finish", "Home");
+                }
+            }
+            catch(Exception e)
+            {
+                return View(e.ToString());
+            }
+        }
+
+        //
+        //GET: get this particular project based on id
+        public PROJECT GetThisProject(int id)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/projects/{projectId}";
+            request.RootElement = "projects";
+            request.AddParameter("projectId", id, ParameterType.UrlSegment);
+            PROJECT thisProject = serviceCaller.Execute<PROJECT>(request);
+            return thisProject;
+        }
+
+        //GET: details page for a Site/Location (Catalog)
+        public ActionResult SiteDetails(int id, int projId)
+        {
+            //pass this project
+            ViewData["project"] = GetThisProject(projId);
+            
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/catalogs/{catalogId}";
+            request.RootElement = "CATALOG_";
+            request.AddParameter("catalogId", id, ParameterType.UrlSegment);
+            CATALOG_ thisCat = serviceCaller.Execute<CATALOG_>(request);
+
+            //get the Location
+            request = new RestRequest();
+            request.Resource = "/catalogs/{catalogId}/site";
+            request.RootElement = "LOCATION";
+            request.AddParameter("catalogId", thisCat.CATALOG_ID, ParameterType.UrlSegment);
+            LOCATION thisLocation = serviceCaller.Execute<LOCATION>(request);
+
+            
+            if (thisLocation != null)
+            {
+                //make sure longitude is negative (need to store it first because of decimal? format)
+                decimal longi = Convert.ToDecimal(thisLocation.LONGITUDE);
+                if (longi > 0)
+                {
+                    longi = decimal.Negate(longi);
+                    thisLocation.LONGITUDE = longi;
+                }
+
+                ViewData["Location"] = thisLocation;
+
+                if (thisLocation.LAKE_TYPE_ID != null)
+                {
+                    request = new RestRequest();
+                    request.Resource = "/lakes/{lakeId}";
+                    request.RootElement = "LAKE_TYPE";
+                    request.AddParameter("lakeId", thisLocation.LAKE_TYPE_ID, ParameterType.UrlSegment);
+                    ViewData["LakeType"] = serviceCaller.Execute<LAKE_TYPE>(request).LAKE;
+                }
+                if (thisLocation.STATUS_TYPE_ID != null)
+                {
+                    request = new RestRequest();
+                    request.Resource = "/status/{statusId}";
+                    request.RootElement = "STATUS_TYPE";
+                    request.AddParameter("statusId", thisLocation.STATUS_TYPE_ID, ParameterType.UrlSegment);
+                    ViewData["StatusType"] = serviceCaller.Execute<STATUS_TYPE>(request).STATUS;
+                }
+            }
+
+            request = new RestRequest();
+            request.Resource = "/catalogs/{catalogId}/resourcetypes";
+            request.RootElement = "ArrayOfResource_type";
+            request.AddParameter("catalogId", thisCat.CATALOG_ID, ParameterType.UrlSegment);
+            ViewData["ResourceList"] = serviceCaller.Execute<List<RESOURCE_TYPE>>(request);
+
+            request = new RestRequest();
+            request.Resource = "/catalogs/{catalogId}/media";
+            request.RootElement = "ArrayOfMedia_type";
+            request.AddParameter("catalogId", thisCat.CATALOG_ID, ParameterType.UrlSegment);
+            ViewData["MediaList"] = serviceCaller.Execute<List<MEDIA_TYPE>>(request);
+
+            request = new RestRequest();
+            request.Resource = "/catalogs/{catalogId}/frequencies";
+            request.RootElement = "ArrayOfFrequency_type";
+            request.AddParameter("catalogId", thisCat.CATALOG_ID, ParameterType.UrlSegment);
+            ViewData["FrequencyList"] = serviceCaller.Execute<List<FREQUENCY_TYPE>>(request);
+
+            request = new RestRequest();
+            request.Resource = "/catalogs/{catalogId}/parameters";
+            request.RootElement = "ArrayOfParameter_type";
+            request.AddParameter("catalogId", thisCat.CATALOG_ID, ParameterType.UrlSegment);
+            List<PARAMETER_TYPE> parameters = serviceCaller.Execute<List<PARAMETER_TYPE>>(request);
+
+            if (parameters.Count >= 1)
+            {
+                ViewData["ChemicalP"] = parameters.Where(p => p.PARAMETER_GROUP == "CHEMICAL").OrderBy(po => po.PARAMETER_TYPE_ID).ToList();
+                ViewData["PhysicalP"] = parameters.Where(p => p.PARAMETER_GROUP == "PHYSICAL").OrderBy(po => po.PARAMETER_TYPE_ID).ToList();
+                ViewData["BiologicalP"] = parameters.Where(p => p.PARAMETER_GROUP == "BIOLOGICAL").OrderBy(po => po.PARAMETER_TYPE_ID).ToList();
+                ViewData["MicrobiolP"] = parameters.Where(p => p.PARAMETER_GROUP == "MICROBIOLOGICAL").OrderBy(po => po.PARAMETER_TYPE_ID).ToList();
+                ViewData["ToxicologicalP"] = parameters.Where(p => p.PARAMETER_GROUP == "TOXICOLOGICAL").OrderBy(po => po.PARAMETER_TYPE_ID).ToList();
+            }
+
+            return View("Details/SiteDetails", thisCat);            
+        }
+
+        public List<string> GetStates()
+        {
+            List<string> States = new List<string>();
+            States.Add("Illinois");
+            States.Add("Indiana");
+            States.Add("Michigan");
+            States.Add("Minnesota");
+            States.Add("New York");
+            States.Add("Ohio");
+            States.Add("Ontario");
+            States.Add("Pennsylvania");
+            States.Add("Quebec");
+            States.Add("Wisconsin");
+            return States;
+        }
+
+        public List<string> GetCountries()
+        {
+            List<string> Countries = new List<string>();
+            Countries.Add("Canada");
+            Countries.Add("United States");
+            return Countries;
+        }
+
+        public List<LAKE_TYPE> GetLakes()
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "lakes/";
+            request.RootElement = "ArrayOfLAKE_TYPE";
+            List<LAKE_TYPE> Lakes = serviceCaller.Execute<List<LAKE_TYPE>>(request);
+                      
+            return Lakes;
+        }
+
+        public List<STATUS_TYPE> GetStatusTypes()
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "status/";
+            request.RootElement = "ArrayOfSTATUS_TYPE";
+            List<STATUS_TYPE> status = serviceCaller.Execute<List<STATUS_TYPE>>(request);
+
+            return status;
+        
+        }
+
+        public List<RESOURCE_TYPE> GetResources()
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/resourcetypes";
+            request.RootElement = "ArrayOfRESOURCE_TYPE";
+            List<RESOURCE_TYPE> Resources = serviceCaller.Execute<List<RESOURCE_TYPE>>(request);
+
+            return Resources;
+        }
+
+        public List<MEDIA_TYPE> GetMedia()
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/media";
+            request.RootElement = "ArrayOfMEDIA_TYPE";
+            List<MEDIA_TYPE> Media = serviceCaller.Execute<List<MEDIA_TYPE>>(request);
+
+            return Media;
+        }
+
+        public List<FREQUENCY_TYPE> GetSampleFreq()
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/frequencies";
+            request.RootElement = "ArrayOfFREQUENCY_TYPE";
+            List<FREQUENCY_TYPE> frequency = serviceCaller.Execute<List<FREQUENCY_TYPE>>(request);
+
+            return frequency;
+        }
+
+    }
+}

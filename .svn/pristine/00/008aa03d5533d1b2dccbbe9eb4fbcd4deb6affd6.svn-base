@@ -1,0 +1,246 @@
+﻿//------------------------------------------------------------------------------
+//----- MediaTypeHandler -----------------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2012 WiM - USGS
+
+//    authors:  Jeremy K. Newson USGS Wisconsin Internet Mapping
+//              
+//  
+//   purpose:   Handles media type resources through the HTTP uniform interface.
+//              Equivalent to the controller in MVC.
+//
+//discussion:   Handlers are objects which handle all interaction with resources in 
+//              this case the resources are POCO classes derived from the EF. 
+//               https://github.com/openrasta/openrasta/wiki/Handlers
+//
+//     
+#region Comments
+// 05.02.12 - jkn - Created
+#endregion  
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+using LaMPServices.Authentication;
+using OpenRasta.Web;
+using OpenRasta.Security;
+
+namespace LaMPServices.Handlers
+{
+    public class MediaTypeHandler: HandlerBase
+    {
+        
+        #region Routed Methods
+
+        #region GetMethods
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get()
+        {
+            List<MEDIA_TYPE> mediaTypes;
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    mediaTypes = aLaMPRDS.MEDIA_TYPE.OrderBy(m => m.MEDIA_TYPE_ID).ToList();
+
+                }//end using
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = mediaTypes };
+        }//end httpMethod get
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get(Int32 mediaTypeID)
+        {
+            MEDIA_TYPE aMediaType;
+
+            //return BadRequest if ther is no ID
+            if (mediaTypeID <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    aMediaType = aLaMPRDS.MEDIA_TYPE.Single(m => m.MEDIA_TYPE_ID == mediaTypeID);
+
+                }//end using
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = aMediaType };
+        }//end httpMethod get
+
+        #endregion
+
+        #region PostMethods
+        /// 
+        /// Force the user to provide authentication 
+        /// 
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.POST, ForUriName = "CreateMediaType")]
+        public OperationResult Post(MEDIA_TYPE aMediaType)
+        {
+            //Return BadRequest if missing required fields
+            if (String.IsNullOrEmpty(aMediaType.MEDIA))
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    decimal nextKey = 1;
+                    if (aLaMPRDS.MEDIA_TYPE.Count() > 0)
+                    {
+                        nextKey = aLaMPRDS.MEDIA_TYPE.OrderByDescending(m => m.MEDIA_TYPE_ID).First().MEDIA_TYPE_ID + 1;
+                    }
+
+                    //set ID
+                    aMediaType.MEDIA_TYPE_ID = nextKey;
+
+                    aLaMPRDS.MEDIA_TYPE.AddObject(aMediaType);
+
+                    aLaMPRDS.SaveChanges();
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = aMediaType };
+        }//end Post
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.POST, ForUriName = "CreateMediaTypeList")]
+        public OperationResult Post(List<MEDIA_TYPE> MediaTypes)
+        {
+            //Return BadRequest if missing required fields
+            if (MediaTypes.Count <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    decimal nextKey = 1;
+                    if (aLaMPRDS.MEDIA_TYPE.Count() > 0)
+                    {
+                        nextKey = aLaMPRDS.MEDIA_TYPE.OrderByDescending(m => m.MEDIA_TYPE_ID).First().MEDIA_TYPE_ID + 1;
+                    }
+
+                    foreach (MEDIA_TYPE item in MediaTypes)
+                    {
+                        //update database ID
+                        item.MEDIA_TYPE_ID = nextKey;
+
+                        aLaMPRDS.MEDIA_TYPE.AddObject(item);
+                        nextKey += 1;
+
+                    }//next item
+
+                    aLaMPRDS.SaveChanges();
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = MediaTypes };
+        }
+        #endregion
+
+        #region PutMethods
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.PUT, ForUriName = "UpdateMediaType")]
+        public OperationResult Post(Int32 mediaTypeId, MEDIA_TYPE instance)
+        {
+            //Return BadRequest if missing required fields
+            if ((mediaTypeId <= 0))
+            {return new OperationResult.BadRequest();}
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    MEDIA_TYPE ObjectToBeUpdated = aLaMPRDS.MEDIA_TYPE.Single(m => m.MEDIA_TYPE_ID == mediaTypeId);
+
+                    //MEDIA
+                    ObjectToBeUpdated.MEDIA = (string.IsNullOrEmpty(instance.MEDIA) ?
+                        ObjectToBeUpdated.MEDIA : instance.MEDIA);
+
+                    aLaMPRDS.SaveChanges();
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = instance };
+        } 
+
+
+        #endregion
+
+        #region DeleteMethods
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.DELETE, ForUriName = "DeleteMediaType")]
+        public OperationResult Post(Int32 mediaTypeId)
+        {
+            //Return BadRequest if missing required fields
+            if (mediaTypeId <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    MEDIA_TYPE ObjectToBeDeleted = aLaMPRDS.MEDIA_TYPE.Single(m => m.MEDIA_TYPE_ID == mediaTypeId);
+
+                    //delete it
+                    aLaMPRDS.MEDIA_TYPE.DeleteObject(ObjectToBeDeleted);
+
+                    aLaMPRDS.SaveChanges();
+
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { };
+        }
+
+        #endregion
+
+        #endregion
+
+    }//end MediaTypeHandler
+}//end namespace

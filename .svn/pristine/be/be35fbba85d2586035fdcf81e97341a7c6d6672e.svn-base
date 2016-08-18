@@ -1,0 +1,111 @@
+﻿@* Comments: 
+02.28.13 - TR - Integrating the services
+02.25.13 - TR - Created 
+
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+  * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Project Sites GridView (copy/paste
+ */
+ *@
+ @{
+     ViewBag.Title = "Site Summary";
+     List<string> aSite = ViewData["aSite"] as List<string>;
+}
+
+<script type="text/javascript" src="http://handsontable.com/jquery.handsontable.js"></script>
+<script type="text/javascript" src="http://handsontable.com/lib/bootstrap-typeahead.js"></script>
+<script type="text/javascript" src="http://handsontable.com/lib/jQuery-contextMenu/jquery.contextMenu.js"></script>
+<script type="text/javascript" src="http://handsontable.com/lib/jQuery-contextMenu/jquery.ui.position.js"></script>
+<link rel="stylesheet" type="text/css" href="http://handsontable.com/lib/jQuery-contextMenu/jquery.contextMenu.css">
+<link rel="stylesheet" type="text/css" href="http://handsontable.com/jquery.handsontable.css">
+
+<div id="dataTitle">
+    <div class="title">Site Summary</div>
+    <div class="submitDiv" style="float:left">
+        <div>@Html.ActionLink("Site Summary - Form View", "SiteSummary1", null, new { @class = "LaMPButton blue" })</div>
+    </div>
+    <span id="errorSection" class="failureNotification"><asp:Literal ID="ErrorMessage" runat="server"></asp:Literal></span>
+    <br />
+    <div style="clear:left; padding-top:15px"><label>@Session["projectName"]</label></div>
+ </div>
+
+<br clear="all" />
+<hr class="headerUnderline" style="margin: 0 0 25px 0" />
+
+@using (Html.BeginForm("Review", "Project", FormMethod.Post, new { id = "form0" }))
+{
+    <div class="siteColumn" style="width:90%">
+        <div>Copy/paste or manually type in values. Use comma separators where multiple values may be entered.</div>
+        <br />
+       <div id="exampleGrid" class="datatable handsontable"></div>
+
+    </div>
+    <br clear="all" />
+    <br />
+    <div id="formSubmitDiv" class="formSection">
+        <div class="leftSideSubmit">
+            <div class="submitDiv"><div class="darkButtonBorder"><input type="submit" name="Create" class="submit" value="Review" /></div></div>
+            @*<div class="cancelDiv"><div class="lightButtonBorder"><input id="resetButton" type="reset" class="cancel" value="Cancel" onclick="location.href='@Url.Action("ProjSummary1", "Project")' " /></div></div>*@
+            <span id="errorSection" class="failureNotification"><asp:Literal ID="ErrorMessage" runat="server"></asp:Literal></span>
+        </div>
+    </div>  
+
+}
+<script type="text/javascript">
+    $(window).load(function () {
+        var data = [
+                { isActive: false, SiteName: "site 1", Latitude: "44", Longitude: "-87", Description: "Test Site", Lake: "Huron", Waterbody: "East River", StartDate: "05/20/2010", EndDate: "06/20/2010", ResourceComponent: "Beaches", Media: "Algae", SampleFreq: "Annual", SamplePlatform: "sample", Parameters: "some parameters", SiteURL: "www.test.com", AdditionalInfo: "this is a test to see if it shows up in grid" }
+        ];
+        $("#exampleGrid").handsontable({
+                data: data,
+                colWidths: [42, 76, 60, 60, 160, 60, 90, 120, 120, 140, 80, 130, 130, 120, 120, 120],
+                startRows: 3,
+                //always keep at least 1 spare row at the bottom,
+                rowHeaders: false,
+                contextMenu: true,
+                colHeaders: ["Select", "Site Name", "Latitude", "Longitude", "Description", "Lake", "Waterbody", "Sample Start Date", "Sample End Date", "Resource Component", "Media", "Sampling Frequency", "Sampling Platform", "Parameters", "Site URL", "Additional Info"],
+                columns: [
+                    { data: "isActive", type: Handsontable.CheckboxCell },
+                    { data: "SiteName" },
+                    { data: "Latitude" },
+                    { data: "Longitude" },
+                    { data: "Description" },
+                    { data: "Lake" },
+                    { data: "Waterbody" },
+                    { data: "StartDate" },
+                    { data: "EndDate" },
+                    { data: "ResourceComponent" },
+                    { data: "Media" },
+                    { data: "SampleFreq" },
+                    { data: "SamplePlatform" },
+                    { data: "Parameters" },
+                    { data: "SiteURL" },
+                    { data: "AdditionalInfo" }
+                ]
+            });
+        });
+</script>
+@*
+...example how to do object data source
+
+var objectData = [
+  {id: 1, name: "Ted Right", address: ""},
+  {id: 2, name: "Frank Honest", address: ""},
+  {id: 3, name: "Joan Well", address: ""}
+];
+
+var $container = $("#example3");
+$container.handsontable({
+  data: objectData,
+  startRows: 5,
+  startCols: 3,
+  colHeaders: true,
+  minSpareRows: 1
+});
+*@

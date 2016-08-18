@@ -1,0 +1,33 @@
+﻿@* Comments: 
+03.11.13 - TR - Created 
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+  * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Partial view for Viewing list of sites for a project
+ */
+ *@
+
+@using LaMPServices;
+
+<div class="childrenColumn">
+    <div class="subSection">
+        <div class="subSectionHeader"><span class="bold Lpadded">Sites</span></div>
+        <div class="subSectionContent">
+            <div class="ui-grid-a">
+                 <div data-role="fieldcontain">
+                    <ul>
+                        <li>Site 1</li>
+                        <li>Site 2</li>
+                        <li>Site 3</li>
+                    </ul>
+                    <br />	
+                 </div>
+            </div>
+        </div> 
+    </div>
+</div>

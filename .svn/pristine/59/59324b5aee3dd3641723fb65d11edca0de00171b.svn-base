@@ -1,0 +1,56 @@
+﻿@* Comments:
+04.02.13 - TR - Created 
+
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+ * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Display details of a Publication 
+ */
+ *@
+@using LaMPServices;
+@using LaMPWeb.Assets.Resources;
+
+@model LaMPServices.PUBLICATION
+           
+
+@{
+    ViewBag.Title = "Publication Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    PROJECT thisProject = ViewData["Project"] as PROJECT;
+}
+
+
+<div id="dataTitle">                                                        
+    <div class="title">Project: @Html.ActionLink(thisProject.NAME, "ProjectDetails", "Project", new { id = thisProject.PROJECT_ID }, new { onclick = "loading();" }), Publication: @Model.TITLE</div>
+    <span id="errorSection" class="failureNotification"><asp:Literal ID="ErrorMessage" runat="server"></asp:Literal></span>
+</div>
+<br clear="all" />
+
+<hr class="headerUnderline" />
+
+@* Publication Title: *@
+    <div class="detailDiv">          
+        <span class="bold ui-label-a">Publication Title:</span>
+        <label class="inline bold">@Model.TITLE</label>
+    </div>
+
+    @* URL: *@
+    <div class="detailDiv">
+        <span class="bold ui-label-a">Publication Website/Location:</span>
+        <label class="inline">@Model.URL</label>
+    </div>
+
+    @* Description: *@
+    <div class="detailDiv">
+        <span class="bold ui-label-a">Description:</span>
+        <label class="inline">@Model.DESCRIPTION</label>
+    </div>
+
+    <br />
+    @Html.ActionLink("Return to Project Details", "ProjectDetails", "Project", new { id = thisProject.PROJECT_ID }, new { @class = "LaMPButton blue", onclick = "loading();" })
+    

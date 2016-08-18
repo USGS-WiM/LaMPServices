@@ -1,0 +1,53 @@
+﻿
+/*Comments:
+ 03.10.13 - TR - Changed index to list of projects for manager signed in
+*/
+
+using System;
+using System.Collections.Generic;
+using System.Data.Objects.DataClasses;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+
+using LaMPWeb.Utilities;
+using RestSharp;
+
+using LaMPServices;
+using LaMPServices.Resources;
+using LaMPWeb.Models;
+
+namespace LaMPWeb.Controllers
+{
+    [Authorize]
+    public class HomeController : Controller
+    {
+
+        public ActionResult Index()
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/projects/managed";
+            request.RootElement = "projects";            
+            List<PROJECT> ProjectList = serviceCaller.Execute<List<PROJECT>>(request);
+
+            ViewData["ProjectList"] = ProjectList;
+            return View();
+        }
+
+        public ActionResult About()
+        {
+            return View();
+        }
+
+        public ActionResult Mapper()
+        {
+            return View();
+        }
+
+        public ActionResult Finish()
+        {
+            return View();
+        }
+    }
+}

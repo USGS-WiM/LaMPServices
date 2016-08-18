@@ -1,0 +1,348 @@
+﻿//------------------------------------------------------------------------------
+//----- LocationHandler -----------------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2012 WiM - USGS
+
+//    authors:  Jeremy K. Newson USGS Wisconsin Internet Mapping
+//              
+//  
+//   purpose:   Handles Location resources through the HTTP uniform interface.
+//              Equivalent to the controller in MVC.
+//
+//discussion:   Handlers are objects which handle all interaction with resources in 
+//              this case the resources are POCO classes derived from the EF. 
+//              https://github.com/openrasta/openrasta/wiki/Handlers
+//
+//     
+#region Comments
+// 04.27.12 - jkn - Created
+#endregion                          
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+using LaMPServices.Authentication;
+using OpenRasta.Web;
+using OpenRasta.Security;
+
+namespace LaMPServices.Handlers
+{
+    public class SiteHandler:HandlerBase
+    {
+
+        #region Routed Methods
+
+        #region GetMethods
+        
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get()
+        {
+            List<LOCATION> siteList;
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    siteList = aLaMPRDS.LOCATIONS.OrderBy(l => l.LOCATION_ID).ToList();
+
+                }//end using
+            }//end using
+
+            if (siteList != null)
+                siteList.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+
+            return new OperationResult.OK { ResponseResource = siteList };
+        }//end httpMethod get
+
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get(Int32 siteId)
+        {
+            LOCATION aSite;
+
+            //return BadRequest if ther is no ID
+            if (siteId <= 0)
+            { return new OperationResult.BadRequest();}
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    aSite = aLaMPRDS.LOCATIONS.SingleOrDefault(l => l.LOCATION_ID == siteId);
+                    
+                }//end using
+            }//end using
+
+            if (aSite != null)
+                aSite.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+ 
+            return new OperationResult.OK { ResponseResource = aSite };
+        }//end httpMethod get
+
+        [HttpOperation(HttpMethod.GET, ForUriName = "GetCatalogSite")]
+        public OperationResult GetCatalogSite(Int32 catalogId)
+        {
+            LOCATION aSite;
+
+            //return BadRequest if ther is no ID
+            if (catalogId <= 0)
+            { return new OperationResult.BadRequest(); }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    aSite = aLaMPRDS.CATALOG_S.SingleOrDefault(c => c.CATALOG_ID == catalogId).LOCATION;
+
+                }//end using
+            }//end using
+
+            if (aSite != null)
+                aSite.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+
+            return new OperationResult.OK { ResponseResource = aSite };
+        }//end httpMethod get
+
+        [HttpOperation(HttpMethod.GET, ForUriName = "GetLakeSites")]
+        public OperationResult GetLakeSites(Int32 lakeId)
+        {
+            List<LOCATION> siteList;
+
+            //return BadRequest if ther is no ID
+            if (lakeId <= 0)
+            { return new OperationResult.BadRequest(); }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    siteList = aLaMPRDS.LAKE_TYPE.SingleOrDefault(lt => lt.LAKE_TYPE_ID == lakeId).LOCATIONs.ToList();
+
+                }//end using
+            }//end using
+            if (siteList != null)
+                siteList.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+
+            return new OperationResult.OK { ResponseResource = siteList };
+        }//end httpMethod get
+
+        [HttpOperation(HttpMethod.GET, ForUriName = "GetStatusSites")]
+        public OperationResult GetStatusSites(Int32 statusId)
+        {
+            List<LOCATION> siteList;
+
+            //return BadRequest if ther is no ID
+            if (statusId <= 0)
+            { return new OperationResult.BadRequest(); }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    siteList = aLaMPRDS.STATUS_TYPE.SingleOrDefault(s => s.STATUS_ID == statusId).LOCATIONs.ToList();
+
+                }//end using
+            }//end using
+
+            if (siteList != null)
+                siteList.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+
+            return new OperationResult.OK { ResponseResource = siteList };
+        }//end httpMethod get
+        #endregion
+
+        #region PostMethods
+        /// 
+        /// Force the user to provide authentication 
+        /// 
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.POST)]
+        public OperationResult Post(LOCATION aSite)
+        {
+            //Return BadRequest if missing required fields
+            if (string.IsNullOrEmpty(aSite.NAME) || (!aSite.LATITUDE.HasValue) || (!aSite.LONGITUDE.HasValue))
+            { return new OperationResult.BadRequest();}
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    
+                    if (!Exists(aLaMPRDS.LOCATIONS,ref aSite))
+                    {
+                        //set ID
+                        //aSite.LOCATION_ID = GetNextLocationID(aLaMPRDS.LOCATIONS);
+
+                        aLaMPRDS.LOCATIONS.AddObject(aSite);
+                        aLaMPRDS.SaveChanges(); 
+                    }
+                }// end using
+            }// end using
+
+            if (aSite != null)
+                aSite.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = aSite };
+        }
+
+        #endregion
+
+        #region PutMethods
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.PUT)]
+        public OperationResult Put(Int32 siteId, LOCATION instance)
+        {
+            //Return BadRequest if missing required fields
+            if ((siteId <= 0))
+            {return new OperationResult.BadRequest(); }
+
+            if (!instance.CATALOG_.Any(c => c.PROJECT.DATA_MANAGER.USERNAME.Equals(username, StringComparison.OrdinalIgnoreCase)) || !IsAuthorized(AdminRole))
+                return new OperationResult.Forbidden { Description = "Not Authorized" };
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    LOCATION ObjectToBeUpdated = aLaMPRDS.LOCATIONS.SingleOrDefault(l => l.LOCATION_ID == siteId);
+
+                    //Name
+                    ObjectToBeUpdated.NAME = (string.IsNullOrEmpty(instance.NAME) ?
+                        ObjectToBeUpdated.NAME : instance.NAME);
+
+                    //Description
+                    ObjectToBeUpdated.DESCRIPTION = (string.IsNullOrEmpty(instance.DESCRIPTION) ?
+                        ObjectToBeUpdated.DESCRIPTION : instance.DESCRIPTION);
+                
+                    //Latitude
+                    ObjectToBeUpdated.LATITUDE = (Decimal.Equals(instance.LATITUDE, ObjectToBeUpdated.LATITUDE) ?
+                         ObjectToBeUpdated.LATITUDE : instance.LATITUDE);
+
+                    //Longitude
+                    ObjectToBeUpdated.LONGITUDE = (Decimal.Equals(instance.LONGITUDE, ObjectToBeUpdated.LONGITUDE) ?
+                         ObjectToBeUpdated.LONGITUDE : instance.LONGITUDE);
+
+                    //Lake Name
+                    ObjectToBeUpdated.LAKE_NAME = (string.IsNullOrEmpty(instance.LAKE_NAME) ?
+                        ObjectToBeUpdated.LAKE_NAME : instance.LAKE_NAME);
+
+                    //Status Type
+                    ObjectToBeUpdated.STATUS_TYPE_ID = (Decimal.Equals(instance.STATUS_TYPE_ID, ObjectToBeUpdated.STATUS_TYPE_ID) ?
+                         ObjectToBeUpdated.STATUS_TYPE_ID : instance.STATUS_TYPE_ID);
+
+                    //Lake_Type
+                    ObjectToBeUpdated.LAKE_TYPE_ID = (Decimal.Equals(instance.LAKE_TYPE_ID, ObjectToBeUpdated.LAKE_TYPE_ID) ?
+                         ObjectToBeUpdated.LAKE_TYPE_ID : instance.LAKE_TYPE_ID);
+
+                    aLaMPRDS.SaveChanges();
+                }// end using
+            }// end using
+
+            if (instance != null)
+                instance.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = instance };
+        }
+
+        #endregion
+
+        #region DeleteMethods
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.DELETE)]
+        public OperationResult Delete(Int32 siteId)
+        {
+            //Return BadRequest if missing required fields
+            if (siteId <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    LOCATION ObjectToBeDeleted = aLaMPRDS.LOCATIONS.SingleOrDefault(l => l.LOCATION_ID == siteId);
+
+                    if (!ObjectToBeDeleted.CATALOG_.Any(c => c.PROJECT.DATA_MANAGER.USERNAME.Equals(username, StringComparison.OrdinalIgnoreCase)) || !IsAuthorized(AdminRole))
+                        return new OperationResult.Forbidden { Description = "Not Authorized" };
+
+                    //delete it
+                    aLaMPRDS.LOCATIONS.DeleteObject(ObjectToBeDeleted);
+                    aLaMPRDS.SaveChanges();
+
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { };
+        }
+
+        #endregion
+
+        #endregion
+        #region "Helper Methods"
+        private Boolean Exists(System.Data.Objects.IObjectSet<LOCATION> locations, ref LOCATION aLocation)
+        {
+            LOCATION existingLocation;
+            LOCATION thisLocation = aLocation;
+            //check if it exists
+            try
+            {
+                existingLocation = locations.FirstOrDefault(l => l.NAME.Equals(thisLocation.NAME,StringComparison.OrdinalIgnoreCase) &&
+                                                                 l.LATITUDE == thisLocation.LATITUDE &&
+                                                                 l.LONGITUDE == thisLocation.LONGITUDE &&
+                                                                (l.LAKE_NAME.Equals(thisLocation.LAKE_NAME,StringComparison.OrdinalIgnoreCase)|| string.IsNullOrEmpty(thisLocation.LAKE_NAME)) &&
+                                                                (l.STATUS_TYPE_ID == thisLocation.STATUS_TYPE_ID || !thisLocation.STATUS_TYPE_ID.HasValue) &&
+                                                                (l.LAKE_TYPE_ID == thisLocation.LAKE_TYPE_ID || !thisLocation.LAKE_TYPE_ID.HasValue));
+
+                if (existingLocation == null)
+                    return false;
+
+                //if exists then update ref contact
+                aLocation = existingLocation;
+                return true;
+
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        //private decimal GetNextLocationID(System.Data.Objects.IObjectSet<LOCATION> locations)
+        //{
+        //    decimal nextKey = 1;
+        //    if (locations.Count() > 0)
+        //    {
+        //        nextKey = locations.OrderByDescending(l => l.LOCATION_ID).First().LOCATION_ID + 1;
+        //    }
+
+        //    return nextKey;
+        //}
+        #endregion
+    }//end LocationHandler
+}//end namespace

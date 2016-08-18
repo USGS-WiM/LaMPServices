@@ -1,0 +1,416 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Schema Namespace="LaMPDSModel.Store" Alias="Self" Provider="Oracle.DataAccess.Client" ProviderManifestToken="11.2" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns="http://schemas.microsoft.com/ado/2009/02/edm/ssdl">
+  <EntityContainer Name="LaMPDSModelStoreContainer">
+    <EntitySet Name="CONTACT" EntityType="LaMPDSModel.Store.CONTACT" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="DATA_HOST" EntityType="LaMPDSModel.Store.DATA_HOST" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="DATA_MANAGER" EntityType="LaMPDSModel.Store.DATA_MANAGER" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="DIVISION" EntityType="LaMPDSModel.Store.DIVISION" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="FREQUENCY_TYPE" EntityType="LaMPDSModel.Store.FREQUENCY_TYPE" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="KEYWORD" EntityType="LaMPDSModel.Store.KEYWORD" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="LAKE_TYPE" EntityType="LaMPDSModel.Store.LAKE_TYPE" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="MEDIA_TYPE" EntityType="LaMPDSModel.Store.MEDIA_TYPE" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="OBJECTIVE_TYPE" EntityType="LaMPDSModel.Store.OBJECTIVE_TYPE" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="ORGANIZATION" EntityType="LaMPDSModel.Store.ORGANIZATION" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="ORGANIZATION_SYSTEM" EntityType="LaMPDSModel.Store.ORGANIZATION_SYSTEM" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="PARAMETER_TYPE" EntityType="LaMPDSModel.Store.PARAMETER_TYPE" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="PROJ_DURATION" EntityType="LaMPDSModel.Store.PROJ_DURATION" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="PROJ_STATUS" EntityType="LaMPDSModel.Store.PROJ_STATUS" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="PROJECT" EntityType="LaMPDSModel.Store.PROJECT" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="PROJECT_CONTACTS" EntityType="LaMPDSModel.Store.PROJECT_CONTACTS" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="PROJECT_COOPERATORS" EntityType="LaMPDSModel.Store.PROJECT_COOPERATORS" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="PROJECT_KEYWORDS" EntityType="LaMPDSModel.Store.PROJECT_KEYWORDS" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="PROJECT_OBJECTIVES" EntityType="LaMPDSModel.Store.PROJECT_OBJECTIVES" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="PROJECT_PUBLICATIONS" EntityType="LaMPDSModel.Store.PROJECT_PUBLICATIONS" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="PUBLICATION" EntityType="LaMPDSModel.Store.PUBLICATION" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="RESOURCE_TYPE" EntityType="LaMPDSModel.Store.RESOURCE_TYPE" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="ROLE" EntityType="LaMPDSModel.Store.ROLE" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="SECTION" EntityType="LaMPDSModel.Store.SECTION" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="SITE" EntityType="LaMPDSModel.Store.SITE" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="SITE_FREQUENCY" EntityType="LaMPDSModel.Store.SITE_FREQUENCY" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="SITE_MEDIA" EntityType="LaMPDSModel.Store.SITE_MEDIA" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="SITE_PARAMETERS" EntityType="LaMPDSModel.Store.SITE_PARAMETERS" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="SITE_RESOURCE" EntityType="LaMPDSModel.Store.SITE_RESOURCE" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="STATUS_TYPE" EntityType="LaMPDSModel.Store.STATUS_TYPE" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="DM_LIST_VIEW" EntityType="LaMPDSModel.Store.DM_LIST_VIEW" store:Type="Views" store:Schema="LAMPADMIN" store:Name="DM_LIST_VIEW">
+      <DefiningQuery>SELECT 
+      "DM_LIST_VIEW"."DATA_MANAGER_ID" AS "DATA_MANAGER_ID", 
+      "DM_LIST_VIEW"."ORGANIZATION_SYSTEM_ID" AS "ORGANIZATION_SYSTEM_ID", 
+      "DM_LIST_VIEW"."FULLNAME" AS "FULLNAME", 
+      "DM_LIST_VIEW"."FNAME" AS "FNAME", 
+      "DM_LIST_VIEW"."LNAME" AS "LNAME", 
+      "DM_LIST_VIEW"."ROLE_NAME" AS "ROLE_NAME", 
+      "DM_LIST_VIEW"."PROJECT_COUNT" AS "PROJECT_COUNT"
+      FROM "LAMPADMIN"."DM_LIST_VIEW" "DM_LIST_VIEW"</DefiningQuery>
+    </EntitySet>
+    <EntitySet Name="PROJECT_SITECOUNT_VIEW" EntityType="LaMPDSModel.Store.PROJECT_SITECOUNT_VIEW" store:Type="Views" store:Schema="LAMPADMIN" store:Name="PROJECT_SITECOUNT_VIEW">
+      <DefiningQuery>SELECT 
+      "PROJECT_SITECOUNT_VIEW"."PROJID" AS "PROJID", 
+      "PROJECT_SITECOUNT_VIEW"."MANAGER" AS "MANAGER", 
+      "PROJECT_SITECOUNT_VIEW"."NAME" AS "NAME", 
+      "PROJECT_SITECOUNT_VIEW"."SITECOUNT" AS "SITECOUNT"
+      FROM "LAMPADMIN"."PROJECT_SITECOUNT_VIEW" "PROJECT_SITECOUNT_VIEW"</DefiningQuery>
+    </EntitySet>
+    <EntitySet Name="SITE_LIST_VIEW" EntityType="LaMPDSModel.Store.SITE_LIST_VIEW" store:Type="Views" store:Schema="LAMPADMIN" store:Name="SITE_LIST_VIEW">
+      <DefiningQuery>SELECT 
+      "SITE_LIST_VIEW"."SITE_ID" AS "SITE_ID", 
+      "SITE_LIST_VIEW"."START_DATE" AS "START_DATE", 
+      "SITE_LIST_VIEW"."END_DATE" AS "END_DATE", 
+      "SITE_LIST_VIEW"."PROJECT_ID" AS "PROJECT_ID", 
+      "SITE_LIST_VIEW"."SAMPLE_PLATFORM" AS "SAMPLE_PLATFORM", 
+      "SITE_LIST_VIEW"."ADDITIONAL_INFO" AS "ADDITIONAL_INFO", 
+      "SITE_LIST_VIEW"."NAME" AS "NAME", 
+      "SITE_LIST_VIEW"."DESCRIPTION" AS "DESCRIPTION", 
+      "SITE_LIST_VIEW"."LATITUDE" AS "LATITUDE", 
+      "SITE_LIST_VIEW"."LONGITUDE" AS "LONGITUDE", 
+      "SITE_LIST_VIEW"."WATERBODY" AS "WATERBODY", 
+      "SITE_LIST_VIEW"."STATUS" AS "STATUS", 
+      "SITE_LIST_VIEW"."LAKE" AS "LAKE", 
+      "SITE_LIST_VIEW"."COUNTRY" AS "COUNTRY", 
+      "SITE_LIST_VIEW"."STATE_PROVINCE" AS "STATE_PROVINCE", 
+      "SITE_LIST_VIEW"."WATERSHED_HUC8" AS "WATERSHED_HUC8", 
+      "SITE_LIST_VIEW"."URL" AS "URL"
+      FROM "LAMPADMIN"."SITE_LIST_VIEW" "SITE_LIST_VIEW"</DefiningQuery>
+    </EntitySet>
+  </EntityContainer>
+  <EntityType Name="CONTACT">
+    <Key>
+      <PropertyRef Name="CONTACT_ID" />
+    </Key>
+    <Property Name="CONTACT_ID" Type="number" Nullable="false" StoreGeneratedPattern="Identity" />
+    <Property Name="NAME" Type="nvarchar2" MaxLength="100" />
+    <Property Name="EMAIL" Type="nvarchar2" MaxLength="100" />
+    <Property Name="PHONE" Type="nvarchar2" MaxLength="100" />
+    <Property Name="ORGANIZATION_SYSTEM_ID" Type="number" />
+    <Property Name="SCIENCE_BASE_ID" Type="nvarchar2" MaxLength="40" />
+  </EntityType>
+  <EntityType Name="DATA_HOST">
+    <Key>
+      <PropertyRef Name="DATA_HOST_ID" />
+    </Key>
+    <Property Name="DATA_HOST_ID" Type="number" Nullable="false" StoreGeneratedPattern="Identity" />
+    <Property Name="HOST_NAME" Type="nvarchar2" MaxLength="255" />
+    <Property Name="PORTAL_URL" Type="nvarchar2" MaxLength="255" />
+    <Property Name="PROJECT_ID" Type="number" Nullable="false" />
+    <Property Name="DESCRIPTION" Type="nvarchar2" MaxLength="255" />
+  </EntityType>
+  <EntityType Name="DATA_MANAGER">
+    <Key>
+      <PropertyRef Name="DATA_MANAGER_ID" />
+    </Key>
+    <Property Name="DATA_MANAGER_ID" Type="number" Nullable="false" StoreGeneratedPattern="Identity" />
+    <Property Name="USERNAME" Type="varchar2" Nullable="false" MaxLength="50" />
+    <Property Name="FNAME" Type="nvarchar2" MaxLength="100" />
+    <Property Name="LNAME" Type="nvarchar2" MaxLength="100" />
+    <Property Name="ORGANIZATION_SYSTEM_ID" Type="number" />
+    <Property Name="PHONE" Type="nvarchar2" MaxLength="15" />
+    <Property Name="EMAIL" Type="nvarchar2" MaxLength="50" />
+    <Property Name="ROLE_ID" Type="number" />
+  </EntityType>
+  <EntityType Name="DIVISION">
+    <Key>
+      <PropertyRef Name="DIVISION_ID" />
+    </Key>
+    <Property Name="DIVISION_ID" Type="number" Nullable="false" StoreGeneratedPattern="Identity" />
+    <Property Name="DIVISION_NAME" Type="varchar2" MaxLength="500" />
+    <Property Name="ORG_ID" Type="number" />
+  </EntityType>
+  <EntityType Name="FREQUENCY_TYPE">
+    <Key>
+      <PropertyRef Name="FREQUENCY_TYPE_ID" />
+    </Key>
+    <Property Name="FREQUENCY_TYPE_ID" Type="number" Nullable="false" StoreGeneratedPattern="Identity" />
+    <Property Name="FREQUENCY" Type="nvarchar2" MaxLength="50" />
+  </EntityType>
+  <EntityType Name="KEYWORD">
+    <Key>
+      <PropertyRef Name="KEYWORDS_ID" />
+    </Key>
+    <Property Name="KEYWORDS_ID" Type="number" Nullable="false" StoreGeneratedPattern="Identity" />
+    <Property Name="TERM" Type="nvarchar2" MaxLength="200" />
+  </EntityType>
+  <EntityType Name="LAKE_TYPE">
+    <Key>
+      <PropertyRef Name="LAKE_TYPE_ID" />
+    </Key>
+    <Property Name="LAKE_TYPE_ID" Type="number" Nullable="false" StoreGeneratedPattern="Identity" />
+    <Property Name="LAKE" Type="nvarchar2" MaxLength="30" />
+  </EntityType>
+  <EntityType Name="MEDIA_TYPE">
+    <Key>
+      <PropertyRef Name="MEDIA_TYPE_ID" />
+    </Key>
+    <Property Name="MEDIA_TYPE_ID" Type="number" Nullable="false" StoreGeneratedPattern="Identity" />
+    <Property Name="MEDIA" Type="nvarchar2" MaxLength="50" />
+  </EntityType>
+  <EntityType Name="OBJECTIVE_TYPE">
+    <Key>
+      <PropertyRef Name="OBJECTIVE_TYPE_ID" />
+    </Key>
+    <Property Name="OBJECTIVE_TYPE_ID" Type="number" Nullable="false" StoreGeneratedPattern="Identity" />
+    <Property Name="OBJECTIVE" Type="nvarchar2" MaxLength="50" />
+  </EntityType>
+  <EntityType Name="ORGANIZATION">
+    <Key>
+      <PropertyRef Name="ORGANIZATION_ID" />
+    </Key>
+    <Property Name="ORGANIZATION_ID" Type="number" Nullable="false" StoreGeneratedPattern="Identity" />
+    <Property Name="ORGANIZATION_NAME" Type="nvarchar2" MaxLength="500" />
+  </EntityType>
+  <EntityType Name="ORGANIZATION_SYSTEM">
+    <Key>
+      <PropertyRef Name="ORGANIZATION_SYSTEM_ID" />
+    </Key>
+    <Property Name="ORGANIZATION_SYSTEM_ID" Type="number" Nullable="false" StoreGeneratedPattern="Identity" />
+    <Property Name="ORG_ID" Type="number" Nullable="false" />
+    <Property Name="DIV_ID" Type="number" />
+    <Property Name="SEC_ID" Type="number" />
+    <Property Name="SCIENCE_BASE_ID" Type="varchar2" MaxLength="50" />
+  </EntityType>
+  <EntityType Name="PARAMETER_TYPE">
+    <Key>
+      <PropertyRef Name="PARAMETER_TYPE_ID" />
+    </Key>
+    <Property Name="PARAMETER_TYPE_ID" Type="number" Nullable="false" StoreGeneratedPattern="Identity" />
+    <Property Name="PARAMETER" Type="nvarchar2" MaxLength="75" />
+    <Property Name="PARAMETER_GROUP" Type="nvarchar2" MaxLength="255" />
+  </EntityType>
+  <EntityType Name="PROJ_DURATION">
+    <Key>
+      <PropertyRef Name="PROJ_DURATION_ID" />
+    </Key>
+    <Property Name="PROJ_DURATION_ID" Type="number" Nullable="false" />
+    <Property Name="DURATION_VALUE" Type="nvarchar2" MaxLength="100" />
+  </EntityType>
+  <EntityType Name="PROJ_STATUS">
+    <Key>
+      <PropertyRef Name="PROJ_STATUS_ID" />
+    </Key>
+    <Property Name="PROJ_STATUS_ID" Type="number" Nullable="false" />
+    <Property Name="STATUS_VALUE" Type="nvarchar2" MaxLength="100" />
+  </EntityType>
+  <EntityType Name="PROJECT">
+    <Key>
+      <PropertyRef Name="PROJECT_ID" />
+    </Key>
+    <Property Name="PROJECT_ID" Type="number" Nullable="false" StoreGeneratedPattern="Identity" />
+    <Property Name="NAME" Type="nvarchar2" MaxLength="255" />
+    <Property Name="START_DATE" Type="timestamp" />
+    <Property Name="END_DATE" Type="timestamp" />
+    <Property Name="URL" Type="nvarchar2" MaxLength="255" />
+    <Property Name="ADDITIONAL_INFO" Type="nvarchar2" MaxLength="400" />
+    <Property Name="DATA_MANAGER_ID" Type="number" Nullable="false" />
+    <Property Name="SCIENCE_BASE_ID" Type="nvarchar2" MaxLength="40" />
+    <Property Name="DESCRIPTION" Type="varchar2" />
+    <Property Name="PROJ_STATUS_ID" Type="number" />
+    <Property Name="PROJ_DURATION_ID" Type="number" />
+    <Property Name="READY_FLAG" Type="number" />
+    <Property Name="CREATED_STAMP" Type="date" />
+    <Property Name="LAST_EDITED_STAMP" Type="date" />
+  </EntityType>
+  <EntityType Name="PROJECT_CONTACTS">
+    <Key>
+      <PropertyRef Name="PROJECT_CONTACTS_ID" />
+    </Key>
+    <Property Name="PROJECT_CONTACTS_ID" Type="number" Nullable="false" StoreGeneratedPattern="Identity" />
+    <Property Name="PROJECT_ID" Type="number" />
+    <Property Name="CONTACT_ID" Type="number" />
+  </EntityType>
+  <EntityType Name="PROJECT_COOPERATORS">
+    <Key>
+      <PropertyRef Name="PROJECT_COOPERATOR_ID" />
+    </Key>
+    <Property Name="PROJECT_COOPERATOR_ID" Type="number" Nullable="false" StoreGeneratedPattern="Identity" />
+    <Property Name="PROJECT_ID" Type="number" />
+    <Property Name="ORGANIZATION_SYSTEM_ID" Type="number" />
+  </EntityType>
+  <EntityType Name="PROJECT_KEYWORDS">
+    <Key>
+      <PropertyRef Name="PROJECT_KEYWORDS_ID" />
+    </Key>
+    <Property Name="PROJECT_KEYWORDS_ID" Type="number" Nullable="false" StoreGeneratedPattern="Identity" />
+    <Property Name="PROJECT_ID" Type="number" />
+    <Property Name="KEYWORD_ID" Type="number" />
+  </EntityType>
+  <EntityType Name="PROJECT_OBJECTIVES">
+    <Key>
+      <PropertyRef Name="PROJECT_OBJECTIVES_ID" />
+    </Key>
+    <Property Name="PROJECT_OBJECTIVES_ID" Type="number" Nullable="false" StoreGeneratedPattern="Identity" />
+    <Property Name="PROJECT_ID" Type="number" Nullable="false" />
+    <Property Name="OBJECTIVE_ID" Type="number" Nullable="false" />
+  </EntityType>
+  <EntityType Name="PROJECT_PUBLICATIONS">
+    <Key>
+      <PropertyRef Name="PROJECT_PUBLICATION_ID" />
+    </Key>
+    <Property Name="PROJECT_PUBLICATION_ID" Type="number" Nullable="false" StoreGeneratedPattern="Identity" />
+    <Property Name="PROJECT_ID" Type="number" />
+    <Property Name="PUBLICATION_ID" Type="number" />
+  </EntityType>
+  <EntityType Name="PUBLICATION">
+    <Key>
+      <PropertyRef Name="PUBLICATION_ID" />
+    </Key>
+    <Property Name="PUBLICATION_ID" Type="number" Nullable="false" StoreGeneratedPattern="Identity" />
+    <Property Name="TITLE" Type="nvarchar2" MaxLength="500" />
+    <Property Name="URL" Type="nvarchar2" MaxLength="255" />
+    <Property Name="CITATION" Type="nvarchar2" MaxLength="1000" />
+    <Property Name="SCIENCE_BASE_ID" Type="nvarchar2" MaxLength="40" />
+    <Property Name="DESCRIPTION" Type="varchar2" />
+  </EntityType>
+  <EntityType Name="RESOURCE_TYPE">
+    <Key>
+      <PropertyRef Name="RESOURCE_TYPE_ID" />
+    </Key>
+    <Property Name="RESOURCE_TYPE_ID" Type="number" Nullable="false" StoreGeneratedPattern="Identity" />
+    <Property Name="RESOURCE_NAME" Type="nvarchar2" MaxLength="50" />
+  </EntityType>
+  <EntityType Name="ROLE">
+    <Key>
+      <PropertyRef Name="ROLE_ID" />
+    </Key>
+    <Property Name="ROLE_ID" Type="number" Nullable="false" StoreGeneratedPattern="Identity" />
+    <Property Name="ROLE_NAME" Type="nvarchar2" Nullable="false" MaxLength="255" />
+    <Property Name="ROLE_DESCRIPTION" Type="nvarchar2" MaxLength="255" />
+  </EntityType>
+  <EntityType Name="SECTION">
+    <Key>
+      <PropertyRef Name="SECTION_ID" />
+    </Key>
+    <Property Name="SECTION_ID" Type="number" Nullable="false" StoreGeneratedPattern="Identity" />
+    <Property Name="SECTION_NAME" Type="varchar2" MaxLength="500" />
+    <Property Name="DIV_ID" Type="number" />
+  </EntityType>
+  <EntityType Name="SITE">
+    <Key>
+      <PropertyRef Name="SITE_ID" />
+    </Key>
+    <Property Name="SITE_ID" Type="number" Nullable="false" StoreGeneratedPattern="Identity" />
+    <Property Name="START_DATE" Type="date" />
+    <Property Name="END_DATE" Type="date" />
+    <Property Name="PROJECT_ID" Type="number" />
+    <Property Name="SAMPLE_PLATFORM" Type="nvarchar2" MaxLength="255" />
+    <Property Name="ADDITIONAL_INFO" Type="nvarchar2" MaxLength="1000" />
+    <Property Name="NAME" Type="nvarchar2" MaxLength="255" />
+    <Property Name="DESCRIPTION" Type="nvarchar2" MaxLength="255" />
+    <Property Name="LATITUDE" Type="float" Precision="126" />
+    <Property Name="LONGITUDE" Type="float" Precision="126" />
+    <Property Name="WATERBODY" Type="nvarchar2" MaxLength="255" />
+    <Property Name="STATUS_TYPE_ID" Type="number" />
+    <Property Name="LAKE_TYPE_ID" Type="number" />
+    <Property Name="COUNTRY" Type="nvarchar2" MaxLength="25" />
+    <Property Name="STATE_PROVINCE" Type="nvarchar2" MaxLength="25" />
+    <Property Name="WATERSHED_HUC8" Type="nvarchar2" MaxLength="8" />
+    <Property Name="URL" Type="nvarchar2" MaxLength="255" />
+  </EntityType>
+  <EntityType Name="SITE_FREQUENCY">
+    <Key>
+      <PropertyRef Name="ID" />
+    </Key>
+    <Property Name="ID" Type="number" Nullable="false" StoreGeneratedPattern="Identity" />
+    <Property Name="SITE_ID" Type="number" Nullable="false" />
+    <Property Name="FREQUENCY_TYPE_ID" Type="number" Nullable="false" />
+  </EntityType>
+  <EntityType Name="SITE_MEDIA">
+    <Key>
+      <PropertyRef Name="ID" />
+    </Key>
+    <Property Name="ID" Type="number" Nullable="false" StoreGeneratedPattern="Identity" />
+    <Property Name="SITE_ID" Type="number" Nullable="false" />
+    <Property Name="MEDIA_TYPE_ID" Type="number" Nullable="false" />
+  </EntityType>
+  <EntityType Name="SITE_PARAMETERS">
+    <Key>
+      <PropertyRef Name="ID" />
+    </Key>
+    <Property Name="ID" Type="number" Nullable="false" StoreGeneratedPattern="Identity" />
+    <Property Name="SITE_ID" Type="number" />
+    <Property Name="PARAMETER_TYPE_ID" Type="number" />
+  </EntityType>
+  <EntityType Name="SITE_RESOURCE">
+    <Key>
+      <PropertyRef Name="ID" />
+    </Key>
+    <Property Name="ID" Type="number" Nullable="false" StoreGeneratedPattern="Identity" />
+    <Property Name="SITE_ID" Type="number" Nullable="false" />
+    <Property Name="RESOURCE_TYPE_ID" Type="number" Nullable="false" />
+  </EntityType>
+  <EntityType Name="STATUS_TYPE">
+    <Key>
+      <PropertyRef Name="STATUS_ID" />
+    </Key>
+    <Property Name="STATUS_ID" Type="number" Nullable="false" StoreGeneratedPattern="Identity" />
+    <Property Name="STATUS" Type="nvarchar2" MaxLength="50" />
+  </EntityType>
+  <!--Errors Found During Generation:
+      warning 6002: The table/view 'LAMPADMIN.DM_LIST_VIEW' does not have a primary key defined. The key has been inferred and the definition was created as a read-only table/view.
+      -->
+  <EntityType Name="DM_LIST_VIEW">
+    <Key>
+      <PropertyRef Name="DATA_MANAGER_ID" />
+    </Key>
+    <Property Name="DATA_MANAGER_ID" Type="number" Nullable="false" />
+    <Property Name="ORGANIZATION_SYSTEM_ID" Type="number" />
+    <Property Name="FULLNAME" Type="nvarchar2" MaxLength="201" />
+    <Property Name="FNAME" Type="nvarchar2" MaxLength="100" />
+    <Property Name="LNAME" Type="nvarchar2" MaxLength="100" />
+    <Property Name="ROLE_NAME" Type="nvarchar2" MaxLength="255" />
+    <Property Name="PROJECT_COUNT" Type="number" />
+  </EntityType>
+  <!--Errors Found During Generation:
+      warning 6002: The table/view 'LAMPADMIN.PROJECT_SITECOUNT_VIEW' does not have a primary key defined. The key has been inferred and the definition was created as a read-only table/view.
+      -->
+  <EntityType Name="PROJECT_SITECOUNT_VIEW">
+    <Key>
+      <PropertyRef Name="PROJID" />
+    </Key>
+    <Property Name="PROJID" Type="number" Nullable="false" />
+    <Property Name="MANAGER" Type="number" Nullable="false" />
+    <Property Name="NAME" Type="nvarchar2" MaxLength="255" />
+    <Property Name="SITECOUNT" Type="number" />
+  </EntityType>
+  <!--Errors Found During Generation:
+      warning 6002: The table/view 'LAMPADMIN.SITE_LIST_VIEW' does not have a primary key defined. The key has been inferred and the definition was created as a read-only table/view.
+      -->
+  <EntityType Name="SITE_LIST_VIEW">
+    <Key>
+      <PropertyRef Name="SITE_ID" />
+    </Key>
+    <Property Name="SITE_ID" Type="number" Nullable="false" />
+    <Property Name="START_DATE" Type="date" />
+    <Property Name="END_DATE" Type="date" />
+    <Property Name="PROJECT_ID" Type="number" />
+    <Property Name="SAMPLE_PLATFORM" Type="nvarchar2" MaxLength="255" />
+    <Property Name="ADDITIONAL_INFO" Type="nvarchar2" MaxLength="1000" />
+    <Property Name="NAME" Type="nvarchar2" MaxLength="255" />
+    <Property Name="DESCRIPTION" Type="nvarchar2" MaxLength="255" />
+    <Property Name="LATITUDE" Type="float" Precision="126" />
+    <Property Name="LONGITUDE" Type="float" Precision="126" />
+    <Property Name="WATERBODY" Type="nvarchar2" MaxLength="255" />
+    <Property Name="STATUS" Type="nvarchar2" MaxLength="50" />
+    <Property Name="LAKE" Type="nvarchar2" MaxLength="30" />
+    <Property Name="COUNTRY" Type="nvarchar2" MaxLength="25" />
+    <Property Name="STATE_PROVINCE" Type="nvarchar2" MaxLength="25" />
+    <Property Name="WATERSHED_HUC8" Type="nvarchar2" MaxLength="8" />
+    <Property Name="URL" Type="nvarchar2" MaxLength="255" />
+  </EntityType>
+  <Function Name="OWNERPROFILE_ADD" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" StoreFunctionName="OWNERPROFILE.ADD" Schema="LAMPADMIN">
+    <Parameter Name="USERNAME" Type="varchar2" Mode="In" />
+    <Parameter Name="PASSWORD" Type="varchar2" Mode="In" />
+  </Function>
+  <Function Name="OWNERPROFILE_ADDROLE" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" StoreFunctionName="OWNERPROFILE.ADDROLE" Schema="LAMPADMIN">
+    <Parameter Name="USERNAME" Type="varchar2" Mode="In" />
+    <Parameter Name="ROLEID" Type="number" Mode="In" />
+  </Function>
+  <Function Name="OWNERPROFILE_ALTER" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" StoreFunctionName="OWNERPROFILE.ALTER" Schema="LAMPADMIN">
+    <Parameter Name="USERNAME" Type="varchar2" Mode="In" />
+    <Parameter Name="ALTERSTATEMENT" Type="varchar2" Mode="In" />
+  </Function>
+  <Function Name="OWNERPROFILE_EDITPASSWORD" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" StoreFunctionName="OWNERPROFILE.EDITPASSWORD" Schema="LAMPADMIN">
+    <Parameter Name="USERNAME" Type="varchar2" Mode="In" />
+    <Parameter Name="NEWPASSWORD" Type="varchar2" Mode="In" />
+  </Function>
+  <Function Name="OWNERPROFILE_REMOVE" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" StoreFunctionName="OWNERPROFILE.REMOVE" Schema="LAMPADMIN">
+    <Parameter Name="USERNAME" Type="varchar2" Mode="In" />
+  </Function>
+</Schema>

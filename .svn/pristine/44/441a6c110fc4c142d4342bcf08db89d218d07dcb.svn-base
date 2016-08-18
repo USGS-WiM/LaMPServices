@@ -1,0 +1,135 @@
+﻿@* Comments:
+03.11.13 - TR - Created (Parial View)
+
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+ * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Display details of a Project 
+ */
+ *@
+@using LaMPServices;
+@using LaMPWeb.Assets.Resources;
+
+@model LaMPServices.PROJECT
+
+@*<script type="text/javascript">
+    $(document).ready(function () {
+        $("#loading").fadeOut();
+    });        
+</script>*@
+<div class="detailColumn">
+    
+    @* Project Name: *@
+    <div>          
+        <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjName_Lbl)</span>
+        <label class="inline">@Model.NAME</label>
+    </div>
+
+    @* Organizations: *@
+    <div>
+        <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjOrg_Lbl)</span>
+        <label class="inline">
+            @foreach (ORGANIZATION o in ViewData["organizations"] as List<ORGANIZATION>)
+            {  @string.Format("- {0}", o.NAME);
+               if (o.DIVISION != null)
+               { string.Format(", (Division) {0}", o.DIVISION); }
+               if (o.SECTION != null)
+               { string.Format(", (Section) {0}", o.SECTION); }
+               <br />
+            }
+        </label>
+    </div>
+
+    @* Project Start Date: *@
+    <div>           
+        <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjStartDate_Lbl)</span>
+        <label class="inline">@( ((DateTime)Model.START_DATE).ToShortDateString() )</label>
+    </div>
+
+    @* Project End Date: *@
+    <div>           
+        <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjEndDate_Lbl)</span>
+        <label class="inline">@( Model.END_DATE != null ? ((DateTime)Model.END_DATE).ToShortDateString() : "" )</label>
+    </div>
+        
+    @* Project Objectives: *@
+    <div>
+        <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjDescript_Lbl)</span>
+        <label class="inline">@Model.OBJECTIVE</label>
+    </div>
+
+    @* Project Descriptors: *@
+    <div>         
+        <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjObj_Lbl)</span>
+        <label class="inline">
+            @foreach (string d in ViewData["descriptors"] as List<string>)
+            {
+                string.Format("- {0}", d);
+                <br />
+            }
+        </label>
+    </div>
+
+    @* Project Keywords: *@
+    <div>
+        <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjKeywords_Lbl)</span>
+        <label class="inline">
+            @foreach (KEYWORD k in ViewData["keywords"] as List<KEYWORD>)
+            { 
+                string.Format("- {0}", k.TERM);
+                <br />
+            }
+        </label>
+    </div>
+
+        @* Project Website: *@
+        <div>
+            <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjWebsite_Lbl)</span>
+            <label class="inline">@Model.URL</label>
+        </div>
+
+        @* Additional Project Information: *@
+        <div>
+            <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjAddInfo_Lbl)</span>
+            <textarea class="textAreaDetails inline" cols="30" rows="4" readonly="readonly">@Model.COMMENTS</textarea>
+	
+        </div>
+
+         @* Data Management System: *@
+        <div>           
+            <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjDataMngSys_Lbl)</span>
+            <label class="inline">@Model.DATA_MANAGEMENT_SYSTEM</label>
+        </div>
+
+         @* Data Hosting Entity: *@
+        <div>
+            <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjDataHost_Lbl)</span>
+            <label class="inline">---- Project Data hosting ...from somewhere ---- </label>
+        </div>
+
+         @* Data Portal URL: *@
+        <div>           
+            <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjDataPortal_Lbl)</span>
+            <label class="inline">---- Project Portal url ...from somewhere ---</label>
+        </div>
+
+         @* Funding Program or Sources: *@
+        <div>
+             <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjFunding_Lbl)</span>
+             <label class="inline">---- Project Portal url ...from somewhere ---</label>
+        </div>
+
+         @* Project Cost: *@
+        <div>
+             <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjCost_Lbl)</span>
+             <label class="inline">$ some dollar amount....</label>
+        </div>
+
+
+    </div>
+    

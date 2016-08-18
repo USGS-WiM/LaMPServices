@@ -1,0 +1,77 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+using OpenRasta.Web;
+using OpenRasta.Security;
+
+using LaMPServices.Authentication;
+
+namespace LaMPServices.Handlers
+{
+    public class TestHandler
+    {
+        #region Properties
+
+        // will be automatically injected by DI in OpenRasta
+        public ICommunicationContext Context { get; set; }
+
+        private string connectionString = @"metadata=res://*/LaMPDSModel.csdl|res://*/LaMPDSModel.ssdl|res://*/LaMPDSModel.msl;provider=Oracle.DataAccess.Client;provider connection string=""DATA SOURCE=LAMPRDS;USER ID={0};PASSWORD={1}""";
+
+        #endregion
+
+        #region Routed Methods
+
+        #region GetMethods
+
+
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get()
+        {
+            //KeywordList keywords = new KeywordList();
+            List<Resources.Test> tst = new List<Resources.Test>();
+
+            //Get basic authentication password
+            // using (EasySecureString securedPassword = new EasySecureString(
+            //                        LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            /// {
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+                //Context.ContextOptions.ProxyCreationEnabled = false;
+                tst = Context.KEYWORDS.AsEnumerable().Select(t => new Resources.Test{TestId = 1, Term = "test"}).ToList<Resources.Test>();
+
+
+            }//end using
+            //  }//end using
+
+            return new OperationResult.OK { ResponseResource = tst };
+        }//end httpMethod get
+
+       
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get(Int32 testId)
+        {
+            Resources.Test aTest = new Resources.Test();
+
+            //return BadRequest if ther is no ID
+            if (testId <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            // using (EasySecureString securedPassword = new EasySecureString(
+            //                        LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            /// {
+            aTest.Term = "success";
+            aTest.TestId = testId;
+
+
+            return new OperationResult.OK { ResponseResource = aTest };
+        }//end httpMethod get
+
+        #endregion
+        #endregion
+    }
+}

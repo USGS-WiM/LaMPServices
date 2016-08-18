@@ -1,0 +1,55 @@
+﻿@* Comments:
+02.17.15 - TR - Created 
+
+*@ @*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+ * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Display details of a Data Host 
+ */
+ *@
+@using LaMPServices;
+@using LaMPWeb.Assets.Resources;
+@model LaMPServices.DATA_HOST
+@{
+    ViewBag.Title = "Data Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    PROJECT thisProject = ViewData["Project"] as PROJECT;
+}
+<div id="dataTitle">
+    <div class="title">
+        Project: @Html.ActionLink(thisProject.NAME, "ProjectDetails", "Project", new { id = thisProject.PROJECT_ID }, new { onclick = "loading();" }),<br />
+        Data: @Model.HOST_NAME</div>
+    <span id="errorSection" class="failureNotification"></span>
+</div>
+<br clear="all" />
+<hr class="headerUnderline" />
+<div style="float: left;margin-top:1em;">
+    &nbsp;&nbsp;
+    @Html.ActionLink("Edit", "DataEdit", "Data", new { id = Model.DATA_HOST_ID, projId = thisProject.PROJECT_ID }, new { @class = "LaMPButton blue", @style = "margin-right:10px" })
+    @Html.ActionLink("Delete", "Delete", "Data", new { id = Model.DATA_HOST_ID, projID = thisProject.PROJECT_ID }, new { @style = "margin-right:10px", @onclick = "return confirm('Are you sure you want to delete Data: " + Model.HOST_NAME + "?');", @class = "LaMPButton blue" })
+    @Html.ActionLink("Return to Project Details", "ProjectDetails", "Project", new { id = thisProject.PROJECT_ID }, new { @class = "LaMPButton blue", onclick = "loading();" })
+</div>
+<br clear="all" />
+<br />
+<div style="margin:1em">
+    @* Description: *@
+    <div class="detailDiv">
+        <span class="bold ui-label-a">Data management system or data description:</span>
+        <textarea class="textAreaDetails" cols="30" rows="4" style="width: 50%" readonly="readonly">@Model.DESCRIPTION</textarea>
+    </div>
+    
+    @* Host entity: *@
+    <div class="detailDiv">
+        <span class="bold ui-label-a">Data Hosting Entity:</span>
+        <label class="bold">@Model.HOST_NAME</label>
+    </div>
+    
+    @* URL: *@
+    <div class="detailDiv">
+        <span class="bold ui-label-a">Online Data Location:</span>
+        <label>@Model.PORTAL_URL</label>
+    </div>
+</div>

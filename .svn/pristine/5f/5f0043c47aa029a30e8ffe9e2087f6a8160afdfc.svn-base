@@ -1,0 +1,70 @@
+﻿
+/*Comments:
+ 03.10.13 - TR - Changed index to list of projects for manager signed in
+*/
+
+using System;
+using System.Collections.Generic;
+using System.Data.Objects.DataClasses;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+
+using LaMPWeb.Utilities;
+using RestSharp;
+
+using LaMPServices;
+using LaMPServices.Resources;
+using LaMPWeb.Models;
+
+namespace LaMPWeb.Controllers
+{
+    [Authorize]
+    public class HomeController : Controller
+    {
+
+        public ActionResult Index()
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/projects/managed";
+            request.RootElement = "projects";            
+            List<PROJECT> ProjectList = serviceCaller.Execute<List<PROJECT>>(request);
+            
+            List<ProjectDetails> projects = new List<ProjectDetails>();
+            foreach (PROJECT p in ProjectList)
+            {
+                ProjectDetails thisProj = new ProjectDetails();
+                thisProj.ProjId = p.PROJECT_ID;
+                thisProj.ProjName = p.NAME;
+                thisProj.StartDate = p.START_DATE;
+                thisProj.EndDate = p.END_DATE;
+
+                request = new RestRequest();
+                request.Resource = "/projects/{projectId}/catalogs";
+                request.RootElement = "ArrayOfCATALOG";
+                request.AddParameter("projectId", p.PROJECT_ID, ParameterType.UrlSegment);
+                List<CATALOG_> thisCat = serviceCaller.Execute<List<CATALOG_>>(request);
+                thisProj.NoSites = thisCat.Count;
+                projects.Add(thisProj);
+            }
+            ViewData["ProjectList"] = projects;
+            return View();
+        }
+
+        public ActionResult About()
+        {
+            return View();
+        }
+
+        public ActionResult Mapper()
+        {
+            return View();
+        }
+
+        public ActionResult Finish()
+        {
+            return View();
+        }
+    }
+}

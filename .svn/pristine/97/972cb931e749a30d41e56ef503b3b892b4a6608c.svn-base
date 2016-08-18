@@ -1,0 +1,93 @@
+﻿//------------------------------------------------------------------------------
+//----- SiteResource -----------------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2014 WiM - USGS
+
+//    authors:  Jeremy K. Newson USGS Wisconsin Internet Mapping
+//              Tonia Roddick USGS Wisconsin Internet Mapping
+//  
+//   purpose:   Site resources.
+//              Equivalent to the model in MVC.
+//
+//discussion:   Resources are plain-old CLR objects (POCO) the resources are POCO classes derived from the EF
+//              SiteResource contains additional rederers of the derived EF POCO classes. 
+//              https://github.com/openrasta/openrasta/wiki/Resources
+//
+//     
+
+#region Comments
+// 04.03.14 - tr - Created
+#endregion
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+using System.Xml.Serialization;
+
+namespace LaMPServices.Resources
+{
+    [XmlRoot("ArrayOfPROJECT")]
+    public class ProjectRes 
+    {
+        [XmlElement(typeof(decimal),
+        ElementName = "ProjId")]
+        public decimal ProjId { get; set; }
+
+        [XmlElement(typeof(string),
+        ElementName = "Name")]
+        public string Name { get; set; }
+
+        [XmlElement(typeof(string),
+        ElementName = "Manager")]
+        public string Manager { get; set; }
+
+        [XmlElement(typeof(DateTime),
+        ElementName = "StartDate")]
+        public DateTime? StartDate { get; set; }
+        public bool ShouldSerializeStartDate()
+        { return StartDate.HasValue; }
+
+        [XmlElement(typeof(DateTime),
+        ElementName = "EndDate")]
+        public DateTime? EndDate { get; set; }
+        public bool ShouldSerializeEndDate()
+        { return EndDate.HasValue; }      
+
+
+    }
+
+    [XmlRoot("PROJECT")]
+    public class ExistingProject: PROJECT
+    {
+        public Boolean EXISTS { get; set; }
+
+        public ExistingProject()
+            : base() { 
+        }
+        public ExistingProject(PROJECT p)
+            : this()
+        {
+            this.PROJECT_ID = p.PROJECT_ID;
+            this.NAME = p.NAME;
+            this.ADDITIONAL_INFO = p.ADDITIONAL_INFO;
+            this.DATA_MANAGER_ID = p.DATA_MANAGER_ID;
+            this.DESCRIPTION = p.DESCRIPTION;
+            this.END_DATE = p.END_DATE;
+            this.START_DATE = p.START_DATE;
+            this.URL = p.URL;
+            this.EXISTS = true;
+        }
+    }
+
+}//end namespace
+
+
+
+
+

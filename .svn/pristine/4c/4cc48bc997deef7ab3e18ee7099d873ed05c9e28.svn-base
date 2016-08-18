@@ -1,0 +1,117 @@
+﻿@*
+Comments:
+01.28.15 - TR - Created
+
+*@
+
+@*
+/* Authors:
+*      Tonia Roddick (troddick@usgs.gov)
+* Copyright:
+*      2015 USGS - WiM
+* Purpose:
+*      Create a Project Duration
+*/
+*@
+
+@using LaMPServices;
+@using LaMPWeb.Assets.Resources;
+
+@model System.Collections.Generic.List<LaMPServices.PROJ_DURATION>
+
+@{
+    ViewBag.Title = "Create Project Length";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="@Url.Content("~/Assets/Scripts/jquery.validate.js")" type="text/javascript"></script>
+
+<div id="loading"><div id="loadingcontent"><p id="loadingspinner" style=""><img src="@Url.Content("~/Assets/Images/loading1.gif")"  /></p></div></div>
+
+<div id="dataTitle">
+    <div class="title">Project Length</div>
+    <span id="errorSection" class="failureNotification"></span>
+</div>
+<br clear="all" />
+<hr class="headerUnderline" />
+@using (Html.BeginForm("ProjDurationCreate", "Lookups", null, FormMethod.Post, new { @id = "DurationCreateForm" }))
+{
+    <div class="siteColumn">
+        <div class="ui-grid-a">
+            <div class="ui-block-b" style="height:100px;overflow:auto;">
+                @{
+    foreach (PROJ_DURATION pd in Model)
+                    {    
+                        @pd.DURATION_VALUE
+                        <br />
+                    }
+                }
+            </div>
+            <div class="ui-block-a" style="padding-top:8px"><span class="bold required">New Project Length:</span></div>
+            <div class="ui-block-b" style="width:37%"><input type="text" id="dur" class="lampTextInput ui-shadow-inset" name="DURATION_VALUE" data-mini="true" /></div>
+        </div>
+    </div>
+    
+    <div id="formSubmitDiv" class="formSection">
+        <div class="leftSideSubmit">
+            <div class="cancelDiv"><div class="lightButtonBorder"><input id="resetButton" type="reset" class="cancel" value="Cancel" onclick="cancelClick();" /></div></div>
+            <div class="submitDiv">
+                <div class="darkButtonBorder"><input type="submit" class="submit" value="Submit" /></div>
+            </div>
+        </div>    
+    </div>
+}
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        //validate form on and submit
+        $("#DurationCreateForm").validate({
+            rules: {
+                DURATION_VALUE: "required"
+            },
+            messages: {
+                DURATION_VALUE: "Required"
+            },
+            submitHandler: function (form) {
+                $("#loading").fadeIn();
+                form.submit();
+            }
+        });
+    });
+
+    function cancelClick() {
+        $("#loading").fadeIn();
+        window.location.href = '@Url.Action("Index", "Lookups")'
+    };
+
+    //disable the enter key from submitting the form
+    $(window).keypress(function (e) {
+        if (e.which == 13) {
+            var $targ = $(e.target);
+
+            if (!$targ.is("textarea") && !$targ.is(":button,:submit")) {
+                var focusNext = false;
+                $(this).find(":input:visible:not([disabled],[readonly]), a").each(function () {
+                    if (this === e.target) {
+                        focusNext = true;
+                    }
+                    else if (focusNext) {
+                        $(this).focus();
+                        return false;
+                    }
+                });
+
+                return false;
+            }
+        }
+    });
+
+    function loading() {
+        $("#loading").fadeIn();
+    };
+
+    window.onload = function () {
+        var txtbox = document.getElementById("dur");
+        txtbox.focus();
+    }
+</script>

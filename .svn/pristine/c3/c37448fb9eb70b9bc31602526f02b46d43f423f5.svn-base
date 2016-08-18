@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<repositories>
+  <repository path="..\..\openrasta-2.1\src\openrasta-aspnet\src\OpenRasta.Codecs.WebForms\packages.config" />
+  <repository path="..\LaMPServices\packages.config" />
+  <repository path="..\LaMPWeb\packages.config" />
+</repositories>

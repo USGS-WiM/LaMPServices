@@ -1,0 +1,303 @@
+﻿
+@using LaMPServices;
+@using LaMPWeb.Assets.Resources;
+
+<script type="text/javascript"> $(document).ready(function() { $("select").focus(); });</script>
+@using (Ajax.BeginForm("AddProjOrgs", "Project", null, new AjaxOptions { InsertionMode = InsertionMode.Replace, HttpMethod = "POST", OnSuccess = "updateSuccess" }, new { @id = "updateOrgForm" }))
+{
+    @Html.ValidationSummary(true)
+    <div id="update-message" class="error invisible"></div>
+    
+    <div>Select or add an Organization, division and Section (if applicable). Then, click 'Add Organization' button to display Shortname.</div>
+    <div>To remove an Organization, highlight the organization's shortname in the box and delete.</div>
+    <div>When finished adding, click 'Finished Adding Organizations' button to return to the project Summary page.</div>
+    <br />
+    if (ViewData.ContainsKey("orgs"))
+    {
+        <textarea rows="3" cols="80" id="organizationList" name="AddedOrgs">@ViewData["orgs"]</textarea>
+    }
+    else
+    {
+        <textarea rows="3" cols="80" class="hidden" id="organizationList" name="AddedOrgs"></textarea>
+    }
+   
+        <fieldset>
+
+        <table >
+            <tr>
+                <td>Organization:</td>
+                <td><select id="Orgdropdown" class="required stnSelectInput" name="ProjOrg">
+			            <option value="0">Choose Organization</option>
+                        @foreach (LaMPServices.ORGANIZATION o in ViewData["organizations"] as List<ORGANIZATION>)
+                        {
+                            <option value='@o.SHORTNAME'>@o.NAME</option> 
+                        }
+                    </select>
+                </td>
+                <td>Division:</td>
+                <td><select id="Divdropdown"class="stnSelectInput" name="Division">
+				    </select>
+                </td>
+                <td>Section:</td>
+                <td><select id="Secdropdown" class="stnSelectInput" name="Section">
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>Add Organization: <input type="checkbox" id="OtherOrg" name="OtherOrgCB" onclick="OtherClick();" /></td>
+                <td>
+                    <div id="otherOrgInput" class="hidden">
+                        @Html.Label(ProjectStrings.AddOrgName_Lbl)
+                        <input type="text" id="orgNmInput" name="addOrgName" class="stnTextInput ui-shadow-inset" />
+                        @Html.Label(ProjectStrings.AddOrgState_Lbl)
+                        <input type="text" id="orgSTInput" name="addOrgState" class="stnTextInput ui-shadow-inset" />
+                        
+                        <div style="padding: 5px 0 0 5px"><input type="button" onclick="ConfirmAddOrg();" name="AddOrg" value="Add to Organizations" /></div>
+                    </div>
+                </td>
+                <td>Add Division:  <input type="checkbox" id="OtherDiv" name="OtherDivCB" onclick="OtherDivClick();" /></td>
+                <td>
+                     <div id="otherDivInput" class="hidden">
+                        @Html.Label(ProjectStrings.AddDivName_Lbl)
+                        <input type="text" id="DivInput" name="addDivision" class="stnTextInput ui-shadow-inset" />
+                        <div style="padding: 5px 0 0 5px"><input type="button" onclick="ConfirmAddDiv();" name="addDivision" value="Add to Divisions" /></div>
+                    </div>
+                </td>
+                <td>Add Section:  <input type="checkbox" id="OtherSec" name="OtherSecCB" onclick="OtherSecClick();" /></td>
+                <td>
+                    <div id="otherSecInput" class="ui-grid-a hidden">
+                        @Html.Label(ProjectStrings.AddSectName_Lbl)
+                        <input type="text" id="SecInput" name="addSection" class="stnTextInput ui-shadow-inset" />
+                        <div style="padding: 5px 0 0 5px"><input type="button" onclick="ConfirmAddSec();" name="addSection" value="Add to Sections" /></div>
+                    </div>
+                </td>
+            </tr>
+        
+        </table>
+       
+        </fieldset>
+}
+ <div style="text-align:center"><input type="button" style="background:#4B6C9E; color:white" onclick="AddAnother();" class="LaMPButton blue" value="Add Organization" /></div>
+<script type="text/javascript">
+//add another organization will put selected organization into textarea, clear fields to choose another. (can't post yet because no project id yet)
+    function AddAnother() {
+        var organization = $("#Orgdropdown").val();
+        var textarea = $("#organizationList");
+        textarea.show();
+        var textText = $("#organizationList").val();
+        
+        if (textText == '') {
+            textarea.val(organization);
+            $("#Orgdropdown").val('')
+            $("#Divdropdown").empty();
+            $("#Secdropdown").empty();
+        }
+        else {
+            textarea.val(textarea.val() + "\n" + organization);
+            $("#Orgdropdown").val('')
+            $("#Divdropdown").empty();
+            $("#Secdropdown").empty();
+       }
+    }
+    
+</script>
+<script type="text/javascript">
+    // Organizations: "other" checkbox. when clicked, clear selected val from dropdown (if one is selected), show empty textinput to add value to list
+    function OtherClick() {
+        var checkBoxCntrl = document.getElementById("OtherOrg");
+        if (checkBoxCntrl.checked == true) {
+            $("#Orgdropdown").val('');
+            $("#Divdropdown").empty();
+            $("#Secdropdown").empty();
+            $("#otherOrgInput").show();
+            $("#orgNmInput").val('');
+            $("#orgSTInput").val('');
+            $("#orgShortNmInput").val('');
+        }
+        else {
+            $("#otherOrgInput").hide();
+        }
+    }
+</script>
+<script type="text/javascript">
+    // Organizations: show alert, ADD TO dropdown, hide text input and uncheck box
+    function ConfirmAddOrg() {
+        //get new org values
+        var orgName = $("#orgNmInput").val();
+        var orgState = $("#orgSTInput").val();
+        //hide the input area and uncheck the checkbox
+        
+        $("#otherOrgInput").hide();
+        var checkboxCntrl = document.getElementById("OtherOrg");
+        checkboxCntrl.checked = false;
+        //post the new organization to db
+        $.post("AddOrganization/", { newOrgName: orgName, newOrgState: orgState }, function (data) {
+            populateOrgDD($("#Orgdropdown"), data);
+        });
+    }
+    function populateOrgDD(select, data) {
+        select.empty();
+        if (data == null) {
+            alert("Invalid, please try again");
+        }
+        else {
+            $.each(data, function (id, option) {
+                select.append($('<option/>', {
+                    value: option.ORGANIZATION_ID,
+                    text: option.NAME
+                }));
+            });
+            alert("Organization Added");
+        }
+    }
+</script>
+
+<script type="text/javascript">
+    //Adjust contents of Divisions dropdown based on Organization choice
+    $("#Orgdropdown").change(function () {
+        var thisName = $("#Orgdropdown option:selected").text();
+        $.post("../Project/GetDivisionsList/", { name: thisName }, function (data) {
+            populateDD($("#Divdropdown"), $("#Secdropdown"), data);
+        });
+    });
+
+    function populateDD(select1, select2, data) {
+        select1.empty();
+        select2.empty();
+        $.each(data, function (id, option) {
+            select1.append($('<option/>', {
+                value: option.ORGANIZATION_ID,
+                text: option.DIVISION
+            }));
+            select2.append($('<option/>', {
+                value: option.ORGANIZATION_ID,
+                text: option.SECTION
+            }));
+        });
+    }     
+</script>
+
+<script type="text/javascript">
+    //Adjust contents of Section dropdown based on Division choice
+    $("#Divdropdown").change(function () {
+        var thisName = $("#Divdropdown option:selected").text();
+        $.post("../Project/GetSectionsList/", { name: thisName }, function (data) {
+            populateDD1($("#Secdropdown"), data);
+        });
+    });
+
+    function populateDD1(select, data) {
+        select.empty();
+        $.each(data.Data, function (id, option) {
+            select.append($('<option/>', {
+                value: id,
+                text: option.SECTION
+            }));
+        });
+    }     
+</script>
+
+<script type="text/javascript">
+    // Divisions: "other" checkbox. when clicked, clear selected val from dropdown (if one is selected), show empty textinput to add value to list
+    function OtherDivClick() {
+        var checkBoxCntrl = document.getElementById("OtherDiv");
+        if (checkBoxCntrl.checked == true) {
+            if ($("#Orgdropdown").val() != 0) {
+                $("#Divdropdown").val('');
+                $("#Secdropdown").empty();
+                $("#otherDivInput").show();
+                $("#DivInput").val('');
+            }
+            else {
+                alert("Choose an Organization first");
+                document.getElementById("OtherDiv").checked = false;
+            }
+        }
+        else {
+            $("#otherDivInput").hide();
+        }
+    }
+</script>
+<script type="text/javascript">
+    // Divisions: show alert, ADD TO dropdown, hide text input and uncheck box
+    function ConfirmAddDiv() {
+        //get new div value
+        var divName = $("#DivInput").val();
+        var orgName = $("#Orgdropdown").val();
+        //hide the input area and uncheck the checkbox
+
+        $("#otherDivInput").hide();
+        var checkboxCntrl = document.getElementById("OtherDiv");
+        checkboxCntrl.checked = false;
+        //need to post the new division, and add to dropdown
+        $.post("AddDivision/", { OrgId: orgName, DivName: divName }, function (data) {
+            populateDivDD($("#Divdropdown"), data);
+        });
+    }
+    function populateDivDD(select, data) {
+        select.empty();
+        if (data.Data[0].DIVISION == null) {
+            alert("Invalid, please try again");
+        }
+        else {
+            $.each(data.Data, function (id, option) {
+                select.append($('<option/>', {
+                    value: option.ORGANIZATION_ID,
+                    text: option.DIVISION
+                }));
+            });
+            alert("Division Added");
+        }
+    }
+</script>
+
+<script type="text/javascript">
+    // Section: "other" checkbox. when clicked, clear selected val from dropdown (if one is selected), show empty textinput to add value to list
+    function OtherSecClick() {
+        var checkBoxCntrl = document.getElementById("OtherSec");
+        if (checkBoxCntrl.checked == true) {
+            if ($("#Divdropdown").val() != null) {
+                $("#Secdropdown").val('');
+                $("#otherSecInput").show();
+                $("#SecInput").val('');
+            }
+            else {
+                alert("Choose a Division first");
+                document.getElementById("OtherSec").checked = false;
+            }
+        }
+        else {
+            $("#otherSecInput").hide();
+        }
+    }
+</script>
+<script type="text/javascript">
+    // Section: show alert, ADD TO dropdown, hide text input and uncheck box
+    function ConfirmAddSec() {
+        var sectionName = $("#SecInput").val();
+        var orgName = $("#Orgdropdown").val();
+        //hide the input area and uncheck the checkbox
+        $("#otherSecInput").hide();
+        var checkboxCntrl = document.getElementById("OtherSec");
+        checkboxCntrl.checked = false;
+        //need to post the new division, and add to dropdown
+        $.post("AddSection/", { OrgId: orgName, SecName: sectionName }, function (data) {
+            populateSecDD($("#Secdropdown"), data);
+        });
+    }
+    function populateSecDD(select, data) {
+        select.empty();
+        if (data.Data[0].SECTION == null) {
+            alert("Invalid, please try again");
+        }
+        else {
+            $.each(data.Data, function (id, option) {
+                select.append($('<option/>', {
+                    value: id,
+                    text: option.SECTION
+                }));
+            });
+            alert("Section Added");
+        }
+    }
+</script>

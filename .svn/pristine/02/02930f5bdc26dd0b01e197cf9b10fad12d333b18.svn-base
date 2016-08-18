@@ -1,0 +1,24 @@
+﻿
+@using LaMPServices
+@{ List<ORGANIZATION> allOrgs = ViewData["organizations"] as List<ORGANIZATION>;
+   
+   
+}
+
+
+@using (Ajax.BeginForm("AddOrgExistingProject", "Project", null, new AjaxOptions { UpdateTargetId = "update-message", InsertionMode = InsertionMode.Replace, HttpMethod = "POST", OnSuccess = "updateSuccess" }, new { @id = "updateOrgForm" }))
+{
+    @Html.ValidationSummary(true)
+    <div id="update-message" class="error invisible"></div>
+    
+        <fieldset>
+            <label for="name">Organizations:</label>
+            <input type="text" name="name" id="name" class="text ui-widget-content ui-corner-all" />
+            <label for="email">Email</label>
+            <input type="text" name="email" id="email" value="" class="text ui-widget-content ui-corner-all" />
+            <label for="password">Password</label>
+            <input type="password" name="password" id="password" value="" class="text ui-widget-content ui-corner-all" />
+        </fieldset>
+ 
+
+}

@@ -1,0 +1,115 @@
+﻿@*
+Comments:
+10.08.14 - TR - Created
+
+*@
+
+@*
+/* Authors:
+*      Tonia Roddick (troddick@usgs.gov)
+* Copyright:
+*      2012 USGS - WiM
+* Purpose:
+*      Create Media Type
+*/
+*@
+
+@using LaMPServices;
+@using LaMPWeb.Assets.Resources;
+
+@model System.Collections.Generic.List<LaMPServices.MEDIA_TYPE>
+
+@{
+    ViewBag.Title = "Create Media Type";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="@Url.Content("~/Assets/Scripts/jquery.validate.js")" type="text/javascript"></script>
+
+<div id="loading"><div id="loadingcontent"><p id="loadingspinner" style=""><img src="@Url.Content("~/Assets/Images/loading1.gif")"  /></p></div></div>
+
+<div id="dataTitle">
+    <div class="title">Media Type</div>
+    <span id="errorSection" class="failureNotification"><asp:Literal ID="ErrorMessage" runat="server"></asp:Literal></span>
+</div>
+<br clear="all" />
+<hr class="headerUnderline" />
+
+@using (Html.BeginForm("MediaTypeCreate", "Lookups", null, FormMethod.Post, new { @id = "mediaCreateForm" }))
+{
+    <div class="siteColumn">
+        <div class="ui-grid-a">
+            <div class="ui-block-b" style="height:180px;overflow:auto;">
+                @{
+                    foreach (MEDIA_TYPE mt in Model)
+                    {    
+                        @mt.MEDIA
+                        <br />
+                    }
+                }
+            </div>
+            <div class="ui-block-a" style="padding-top:8px;width:16%"><span class="bold required">New Media Type:</span></div>
+            <div class="ui-block-b" style="width:37%"><input type="text" class="lampTextInput ui-shadow-inset" id="med" name="MEDIA" data-mini="true" /></div>
+        </div>
+    </div>
+    
+    <div id="formSubmitDiv" class="formSection">
+        <div class="leftSideSubmit">
+            <div class="cancelDiv"><div class="lightButtonBorder"><input id="resetButton" type="reset" class="cancel" value="Cancel" onclick="cancelClick();" /></div></div>
+            <div class="submitDiv">
+                <div class="darkButtonBorder"><input type="submit" class="submit" value="Submit" /></div>
+            </div>
+        </div>    
+    </div>
+}
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        //validate form on and submit
+        $("#mediaCreateForm").validate({
+            rules: {
+                MEDIA: "required"
+            },
+            submitHandler: function (form) {
+                $("#loading").fadeIn();
+                form.submit();
+            }
+        });
+    });
+
+    function cancelClick() {
+        $("#loading").fadeIn();
+        window.location.href = '@Url.Action("Index", "Lookups")'
+    };
+
+    //disable the enter key from submitting the form
+    $(window).keypress(function (e) {
+        if (e.which == 13) {
+            var $targ = $(e.target);
+
+            if (!$targ.is("textarea") && !$targ.is(":button,:submit")) {
+                var focusNext = false;
+                $(this).find(":input:visible:not([disabled],[readonly]), a").each(function () {
+                    if (this === e.target) {
+                        focusNext = true;
+                    }
+                    else if (focusNext) {
+                        $(this).focus();
+                        return false;
+                    }
+                });
+
+                return false;
+            }
+        }
+    });
+
+    function loading() {
+        $("#loading").fadeIn();
+    };
+
+    window.onload = function () {
+        var txtbox = document.getElementById("med");
+        txtbox.focus();
+    }
+</script>

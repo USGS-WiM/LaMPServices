@@ -1,0 +1,114 @@
+﻿@*
+Comments:
+10.09.14 - TR - Created
+
+*@
+
+@*
+/* Authors:
+*      Tonia Roddick (troddick@usgs.gov)
+* Copyright:
+*      2012 USGS - WiM
+* Purpose:
+*      Edit Frequency Type
+*/
+*@
+
+@using LaMPServices;
+
+@model LaMPServices.FREQUENCY_TYPE
+
+@{
+    ViewBag.Title = "Edit Frequency Type";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="@Url.Content("~/Assets/Scripts/jquery.validate.js")" type="text/javascript"></script>
+
+<div id="loading"><div id="loadingcontent"><p id="loadingspinner" style=""><img src="@Url.Content("~/Assets/Images/loading1.gif")"  /></p></div></div>
+
+
+    <div id="dataTitle">
+        <div class="title">Edit Frequency Type</div>
+        <span id="errorSection" class="failureNotification"><asp:Literal ID="ErrorMessage" runat="server"></asp:Literal></span>
+    </div>
+    <br clear="all" />
+    <hr class="headerUnderline" />
+
+    @using (Ajax.BeginForm("FreqTypeEdit", "Lookups", new { id = Model.FREQUENCY_TYPE_ID }, new AjaxOptions() { HttpMethod = "POST" }, new { @id = "FreqForm" }))
+    {
+        <div class="siteColumn">   
+            <input type="hidden" name="FREQUENCY_TYPE_ID" value="@Model.FREQUENCY_TYPE_ID" />
+                  
+            <div class="ui-grid-a">
+                <div class="ui-block-a"><span class="required">Frequency Type:</span></div>
+                <div class="ui-block-b" style="width:37%">
+                    <input type="text" class="lampTextInput" id="freq" name="FREQUENCY" data-mini="true" value="@Model.FREQUENCY" />
+                </div>
+            </div>
+                
+        </div>
+    
+         <div id="formSubmitDiv" class="formSection">
+            <div class="leftSideSubmit">
+                <div class="cancelDiv"><div class="lightButtonBorder"><input id="resetButton" type="reset" class="cancel" value="Cancel" onclick="cancelClick();" /></div></div>
+                <div class="submitDiv"><div class="darkButtonBorder"><input type="submit" class="submit" value="Submit" /></div></div>
+
+            </div>
+    
+        </div>
+    
+    }
+
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        //validate form on and submit
+        $("#FreqForm").validate({
+            rules: {
+                FREQUENCY: "required"
+            },
+            submitHandler: function (form) {
+                $("#loading").fadeIn();
+                form.submit();
+            }
+        });
+    });
+
+    //disable the enter key from submitting the form
+    $(window).keypress(function (e) {
+        if (e.which == 13) {
+            var $targ = $(e.target);
+
+            if (!$targ.is("textarea") && !$targ.is(":button,:submit")) {
+                var focusNext = false;
+                $(this).find(":input:visible:not([disabled],[readonly]), a").each(function () {
+                    if (this === e.target) {
+                        focusNext = true;
+                    }
+                    else if (focusNext) {
+                        $(this).focus();
+                        return false;
+                    }
+                });
+
+                return false;
+            }
+        }
+    });
+
+    window.onload = function () {
+        var txtbox = document.getElementById("freq");
+        txtbox.focus();
+    }
+
+    function cancelClick() {
+        $("#loading").fadeIn();
+        window.location.href = '@Url.Action("Index", "Lookups")'
+    };
+
+    function loading() {
+        $("#loading").fadeIn();
+    }
+
+</script>

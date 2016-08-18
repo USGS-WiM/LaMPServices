@@ -1,0 +1,334 @@
+﻿//------------------------------------------------------------------------------
+//----- ObjectiveHandler -----------------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2012 WiM - USGS
+
+//    authors:  Jeremy K. Newson USGS Wisconsin Internet Mapping
+//              
+//  
+//   purpose:   Handles objective_type resources through the HTTP uniform interface.
+//              Equivalent to the controller in MVC.
+//
+//discussion:   Handlers are objects which handle all interaction with resources in 
+//              this case the resources are POCO classes derived from the EF. 
+//               https://github.com/openrasta/openrasta/wiki/Handlers
+//
+//     
+#region Comments
+// 03.12.13 - jkn - Created
+#endregion
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+using LaMPServices.Authentication;
+using OpenRasta.Web;
+using OpenRasta.Security;
+
+namespace LaMPServices.Handlers
+{
+    public class ObjectiveHandler : HandlerBase
+    {
+        #region Routed Methods
+
+        #region GetMethods
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get()
+        {
+            List<OBJECTIVE_TYPE> objList;
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    objList = aLaMPRDS.OBJECTIVE_TYPE.OrderBy(o => o.OBJECTIVE_TYPE_ID).ToList();
+
+                    if (objList != null)
+                        objList.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+
+                }//end using
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = objList };
+        }//end httpMethod get
+
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get(Int32 objectiveId)
+        {
+            OBJECTIVE_TYPE aObj;
+
+            //return BadRequest if ther is no ID
+            if (objectiveId <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    aObj = aLaMPRDS.OBJECTIVE_TYPE.SingleOrDefault(o => o.OBJECTIVE_TYPE_ID == objectiveId);
+
+                    if (aObj != null)
+                        aObj.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+
+                }//end using
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = aObj };
+        }//end httpMethod get
+
+        [HttpOperation(HttpMethod.GET, ForUriName = "GetProjectObjectives")]
+        public OperationResult GetProjectObjectives(Int32 projectId)
+        {
+            List<OBJECTIVE_TYPE> objList;
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    //return the list of contacts associated with project
+                    objList = aLaMPRDS.OBJECTIVE_TYPE.Where(o => o.PROJECT_OBJECTIVES.Any(po => po.PROJECT_ID == projectId)).ToList();
+
+                    if (objList != null)
+                        objList.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+
+                }//end using
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = objList };
+        }//end httpMethod get
+
+        #endregion
+
+        #region PostMethods
+        /// 
+        /// Force the user to provide authentication 
+        /// 
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.POST)]
+        public OperationResult Post(OBJECTIVE_TYPE aObj)
+        {
+            //Return BadRequest if missing required fields
+            if (String.IsNullOrEmpty(aObj.OBJECTIVE))
+            { return new OperationResult.BadRequest(); }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    //check if it exists
+                    if (!Exists(aLaMPRDS.OBJECTIVE_TYPE, ref aObj))
+                    {
+                        //set ID
+                        //aObj.OBJECTIVE_TYPE_ID = GetNextObjectiveID(aLaMPRDS.OBJECTIVE_TYPE);
+
+                        aLaMPRDS.OBJECTIVE_TYPE.AddObject(aObj);
+
+                        aLaMPRDS.SaveChanges();
+                    }
+
+                    if (aObj != null)
+                        aObj.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+
+                }// end using
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = aObj };
+        }
+
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.POST, ForUriName = "AddProjectObjective")]
+        public OperationResult AddProjectObjective(Int32 projectId, OBJECTIVE_TYPE aObjective)
+        {
+            PROJECT_OBJECTIVES aProjectObjective = null;
+            List<OBJECTIVE_TYPE> objList = null;
+            //Return BadRequest if missing required fields
+            if (projectId <= 0 || String.IsNullOrEmpty(aObjective.OBJECTIVE))
+            { return new OperationResult.BadRequest(); }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    //check if valid project
+                    if (aLaMPRDS.PROJECTS.First(p => p.PROJECT_ID == projectId) == null)
+                        return new OperationResult.BadRequest { Description = "Project does not exist" };
+
+                    //check authorization
+                    if (!IsAuthorizedToEdit(aLaMPRDS.PROJECTS.First(p => p.PROJECT_ID == projectId).DATA_MANAGER.USERNAME))
+                        return new OperationResult.Forbidden { Description = "Not Authorized" };
+
+                    if (!Exists(aLaMPRDS.OBJECTIVE_TYPE, ref aObjective))
+                    {
+                        //set ID
+                        //aObjective.OBJECTIVE_TYPE_ID = GetNextObjectiveID(aLaMPRDS.OBJECTIVE_TYPE);
+                        aLaMPRDS.OBJECTIVE_TYPE.AddObject(aObjective);
+                        aLaMPRDS.SaveChanges();
+                    }//end if
+
+                    //add to project
+                    //first check if Project already contains publication
+                    if (aLaMPRDS.PROJECT_OBJECTIVES.FirstOrDefault(po => po.OBJECTIVE_ID == aObjective.OBJECTIVE_TYPE_ID &&
+                                                                          po.PROJECT_ID == projectId) == null)
+                    {//create one
+                        aProjectObjective = new PROJECT_OBJECTIVES();
+                        //set ID and create ProjectContact
+                        //aProjectObjective.PROJECT_OBJECTIVES_ID = GetNextProjectObjectiveID(aLaMPRDS.PROJECT_OBJECTIVES);
+
+                        aProjectObjective.PROJECT_ID = projectId;
+                        aProjectObjective.OBJECTIVE_ID = aObjective.OBJECTIVE_TYPE_ID;
+
+                        aLaMPRDS.PROJECT_OBJECTIVES.AddObject(aProjectObjective);
+                        aLaMPRDS.SaveChanges();
+                    }//end if
+
+                    //return the list of contacts associated with project
+                    objList = aLaMPRDS.OBJECTIVE_TYPE.Where(o => o.PROJECT_OBJECTIVES.Any(po => po.PROJECT_ID == projectId)).ToList();
+
+                    if (objList != null)
+                        objList.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+
+                }// end using
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = objList };
+        }
+
+        #endregion
+
+        #region PutMethods
+
+        [RequiresRole(AdminRole)]
+        [HttpOperation(HttpMethod.PUT)]
+        public OperationResult Put(Int32 objectiveId, OBJECTIVE_TYPE instance)
+        {
+            //Return BadRequest if missing required fields
+            if ((objectiveId <= 0)) 
+            { return new OperationResult.BadRequest(); }
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    OBJECTIVE_TYPE ObjectToBeUpdated = aLaMPRDS.OBJECTIVE_TYPE.SingleOrDefault(o => o.OBJECTIVE_TYPE_ID == objectiveId);
+                    
+                    //Objective
+                    ObjectToBeUpdated.OBJECTIVE = (string.IsNullOrEmpty(instance.OBJECTIVE) ?
+                        ObjectToBeUpdated.OBJECTIVE : instance.OBJECTIVE);
+
+                    aLaMPRDS.SaveChanges();
+
+                    if (instance != null)
+                        instance.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+                }// end using
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = instance };
+        }
+
+        #endregion
+
+        #region DeleteMethods
+        [RequiresRole(AdminRole)]
+        [HttpOperation(HttpMethod.DELETE)]
+        public OperationResult Delete(Int32 objectiveId)
+        {
+            //Return BadRequest if missing required fields
+            if (objectiveId <= 0)
+            { return new OperationResult.BadRequest(); }
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    OBJECTIVE_TYPE ObjectToBeDeleted = aLaMPRDS.OBJECTIVE_TYPE.SingleOrDefault(o => o.OBJECTIVE_TYPE_ID == objectiveId);
+                    //delete it
+                    aLaMPRDS.OBJECTIVE_TYPE.DeleteObject(ObjectToBeDeleted);
+
+                    aLaMPRDS.SaveChanges();
+
+                }// end using
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { };
+        }
+
+        #endregion
+
+        #endregion
+        #region "Helper Methods"
+        private Boolean Exists(System.Data.Objects.IObjectSet<OBJECTIVE_TYPE> objectiveTypes, ref OBJECTIVE_TYPE aObjective)
+        {
+            OBJECTIVE_TYPE existingOBJ;
+            OBJECTIVE_TYPE thisOBJ = aObjective;
+            //check if it exists
+            try
+            {
+                existingOBJ = objectiveTypes.FirstOrDefault(o => o.OBJECTIVE.Equals(thisOBJ.OBJECTIVE));
+
+                if (existingOBJ == null)
+                    return false;
+
+                //if exists then update ref contact
+                aObjective = existingOBJ;
+                return true;
+
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        //private decimal GetNextObjectiveID(System.Data.Objects.IObjectSet<OBJECTIVE_TYPE> objectiveTypes)
+        //{
+        //    decimal nextKey = 1;
+        //    if (objectiveTypes.Count() > 0)
+        //    {
+        //        nextKey = objectiveTypes.OrderByDescending(o => o.OBJECTIVE_TYPE_ID).First().OBJECTIVE_TYPE_ID + 1;
+        //    }
+
+        //    return nextKey;
+        //}
+        //private decimal GetNextProjectObjectiveID(System.Data.Objects.IObjectSet<PROJECT_OBJECTIVES> projectObjectives)
+        //{
+        //    decimal nextKey = 1;
+        //    if (projectObjectives.Count() > 0)
+        //    {
+        //        nextKey = projectObjectives.OrderByDescending(po => po.PROJECT_OBJECTIVES_ID).First().PROJECT_OBJECTIVES_ID + 1;
+        //    }
+
+        //    return nextKey;
+        //}
+        #endregion
+    }//end ObjectiveHandler
+}//end namespace

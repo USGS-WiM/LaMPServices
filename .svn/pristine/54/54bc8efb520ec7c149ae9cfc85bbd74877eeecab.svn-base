@@ -1,0 +1,267 @@
+﻿//------------------------------------------------------------------------------
+//----- ParameterTypeHandler -----------------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2012 WiM - USGS
+
+//    authors:  Jeremy K. Newson USGS Wisconsin Internet Mapping
+//              
+//  
+//   purpose:   Handles parameter type resources through the HTTP uniform interface.
+//              Equivalent to the controller in MVC.
+//
+//discussion:   Handlers are objects which handle all interaction with resources in 
+//              this case the resources are POCO classes derived from the EF. 
+//               https://github.com/openrasta/openrasta/wiki/Handlers
+//
+//     
+#region Comments
+// 05.02.12 - jkn - Created
+#endregion   
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+using LaMPServices.Authentication;
+using OpenRasta.Web;
+using OpenRasta.Security;
+
+namespace LaMPServices.Handlers
+{
+    public class ParameterTypeHandler
+    {
+
+        #region Properties
+
+        // will be automatically injected by DI in OpenRasta
+        public ICommunicationContext Context { get; set; }
+
+        private string connectionString = @"metadata=res://*/LaMPDSModel.csdl|res://*/LaMPDSModel.ssdl|res://*/LaMPDSModel.msl;provider=Oracle.DataAccess.Client;provider connection string=""DATA SOURCE=LAMPRDS;USER ID={0};PASSWORD={1}""";
+
+        #endregion
+
+        #region Routed Methods
+
+        #region GetMethods
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get()
+        {
+            List<PARAMETER_TYPE> parameters;
+
+            //Get basic authentication password
+            // using (EasySecureString securedPassword = new EasySecureString(
+            //                        LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            /// {
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+
+                parameters = Context.PARAMETER_TYPE.OrderBy(p => p.PARAMETER_TYPE_ID).ToList();
+
+            }//end using
+            //  }//end using
+
+            return new OperationResult.OK { ResponseResource = parameters };
+        }//end httpMethod get
+
+
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get(Int32 parameterTypeId)
+        {
+            PARAMETER_TYPE aParameterType;
+
+            //return BadRequest if ther is no ID
+            if (parameterTypeId <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            // using (EasySecureString securedPassword = new EasySecureString(
+            //                        LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            /// {
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+
+                aParameterType = Context.PARAMETER_TYPE.Single(p => p.PARAMETER_TYPE_ID == parameterTypeId);
+
+
+            }//end using
+            //  }//end using
+
+            return new OperationResult.OK { ResponseResource = aParameterType };
+        }//end httpMethod get
+
+        #endregion
+
+        #region PostMethods
+        /// 
+        /// Force the user to provide authentication 
+        /// 
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.POST, ForUriName = "CreateParameterType")]
+        public OperationResult Post(PARAMETER_TYPE aParameterType)
+        {
+            //Return BadRequest if missing required fields
+            if (String.IsNullOrEmpty(aParameterType.PARAMETER))
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            //using (EasySecureString securedPassword = new EasySecureString(
+            //                      LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            //{
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+                decimal nextEntityId = 0;
+                //Increment Key
+                PARAMETER_TYPE lastEntity = Context.PARAMETER_TYPE.OrderByDescending(p => p.PARAMETER_TYPE_ID).FirstOrDefault();
+                if (lastEntity != null) nextEntityId = lastEntity.PARAMETER_TYPE_ID + 1;
+
+                aParameterType.PARAMETER_TYPE_ID = nextEntityId;
+
+                Context.PARAMETER_TYPE.AddObject(aParameterType);
+
+                Context.SaveChanges();
+            }// end using
+
+            // } end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = aParameterType };
+        }
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.POST, ForUriName = "CreateParameterTypeList")]
+        public OperationResult Post(List<PARAMETER_TYPE> aParameters)
+        {
+            //Return BadRequest if missing required fields
+            if (aParameters.Count <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            //using (EasySecureString securedPassword = new EasySecureString(
+            //                      LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            //{
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+                //get last key in repository
+                decimal nextEntityId = 0;
+                //Increment Key
+                PARAMETER_TYPE lastEntity = Context.PARAMETER_TYPE.OrderByDescending(p => p.PARAMETER_TYPE_ID).FirstOrDefault();
+                if (lastEntity != null) nextEntityId = lastEntity.PARAMETER_TYPE_ID + 1;
+
+                foreach (PARAMETER_TYPE item in aParameters)
+                {
+                    //update database ID
+                    item.PARAMETER_TYPE_ID = nextEntityId;
+                    Context.PARAMETER_TYPE.AddObject(item);
+                    nextEntityId += 1;
+
+                }//next item
+
+                Context.SaveChanges();
+            }// end using
+
+            //} end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = aParameters };
+        }
+        #endregion
+
+        #region PutMethods
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.PUT, ForUriName = "UpdateParameterType")]
+        public OperationResult Post(Int32 parameterTypeId, PARAMETER_TYPE instance)
+        {
+            //Return BadRequest if missing required fields
+            if ((parameterTypeId <= 0))
+            {
+                return new OperationResult.BadRequest();
+            }
+
+
+            //Get basic authentication password
+            //using (EasySecureString securedPassword = new EasySecureString(
+            //                      LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            //{
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+                //fetch the object to be updated (assuming that it exists)
+                PARAMETER_TYPE ObjectToBeUpdated = Context.PARAMETER_TYPE.Single(p => p.PARAMETER_TYPE_ID == parameterTypeId);
+
+                //Parameter
+                ObjectToBeUpdated.PARAMETER = (string.IsNullOrEmpty(instance.PARAMETER) ?
+                    ObjectToBeUpdated.PARAMETER : instance.PARAMETER);
+
+
+                //Citation
+                ObjectToBeUpdated.PARAMETER_GROUP = (string.IsNullOrEmpty(instance.PARAMETER_GROUP) ?
+                    ObjectToBeUpdated.PARAMETER_GROUP : instance.PARAMETER_GROUP);
+
+
+                Context.SaveChanges();
+            }// end using
+
+            // } end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = instance };
+        }
+
+
+        #endregion
+
+        #region DeleteMethods
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.DELETE, ForUriName = "DeleteParameterType")]
+        public OperationResult Post(Int32 parameterTypeId)
+        {
+            //Return BadRequest if missing required fields
+            if (parameterTypeId <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+
+            //Get basic authentication password
+            //using (EasySecureString securedPassword = new EasySecureString(
+            //                      LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            //{
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+                //fetch the object to be updated (assuming that it exists)
+                PARAMETER_TYPE ObjectToBeDeleted = Context.PARAMETER_TYPE.Single(p => p.PARAMETER_TYPE_ID == parameterTypeId);
+                //delete it
+                Context.PARAMETER_TYPE.DeleteObject(ObjectToBeDeleted);
+
+                Context.SaveChanges();
+
+            }// end using
+
+            // } end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { };
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Helper Methods
+
+        #endregion
+    }//end ParameterTypeHandler
+}//end namespace

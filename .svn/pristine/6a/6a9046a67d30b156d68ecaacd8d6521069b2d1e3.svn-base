@@ -1,0 +1,135 @@
+﻿@*@* Comments: 
+02.28.13 - TR - Integrating the services
+02.25.13 - TR - Created 
+
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+  * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Project Sites GridView (copy/paste
+ */
+ *@
+
+ @using LaMPServices;
+
+ @{
+     ViewBag.Title = "Site Summary";
+     List<string> aSite = ViewData["aSite"] as List<string>;
+     PROJECT thisProject = ViewData["project"] as PROJECT;
+}
+
+@*<script src="@Url.Content("~/Assets/Scripts/handsontable/lib/jquery.js")" type="text/javascript"></script>*@
+<script src="@Url.Content("~/Assets/Scripts/handsontable/dist/jquery.handsontable.full.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Assets/Scripts/handsontable/lib/bootstrap-typeahead.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Assets/Scripts/handsontable/lib/jquery-context-menu/jquery.contextMenu.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Assets/Scripts/handsontable/lib/jquery-context-menu/jquery.ui.position.js")"  type="text/javascript"></script>
+<link  href="@Url.Content("~/Assets/Scripts/handsontable/lib/jQuery-contextMenu/jquery.contextMenu.css")" rel="stylesheet" type="text/css" />
+<link href="@Url.Content("~/Assets/Styles/jquery.handsontable.full.css")" rel="stylesheet" type="text/css" />
+
+<div id="dataTitle">
+    <div class="title">Site Summary</div>
+    <div class="submitDiv" style="float:left">
+        <div>@Html.ActionLink("Site Create - Form View", "SiteCreate1", null, new { @class = "LaMPButton blue" })</div>
+    </div>
+    <span id="errorSection" class="failureNotification"><asp:Literal ID="ErrorMessage" runat="server"></asp:Literal></span>
+    <br />
+    <div style="clear:left; padding-top:15px"><label>@Session["projectName"]</label></div>
+ </div>
+
+<br clear="all" />
+<hr class="headerUnderline" style="margin: 0 0 25px 0" />
+
+@*@using (Html.BeginForm("SiteCreate2", "Site", FormMethod.Post, new { id = "form0" }))
+{*@
+    <input type="hidden" name="ProjID" id="projId" value="@thisProject.PROJECT_ID" />
+    
+    <div class="siteColumn" style="width:90%">
+        <div>Copy/paste or manually type in values. Use comma separators where multiple values may be entered.</div>
+        <br />
+       <div id="siteTable" class="datatable handsontable"></div>
+
+    </div>
+    <br clear="all" />
+    <br /><br />
+
+    <div id="formSubmitDiv" class="formSection">
+        <div class="leftSideSubmit">
+            @*<div class="submitDiv"><div class="darkButtonBorder"><input type="submit" name="Create" onclick="submit();" class="submit" value="Submit" /></div></div>
+            <div class="cancelDiv"><div class="lightButtonBorder"><input id="resetButton" type="reset" class="cancel" value="Cancel" onclick="location.href='@Url.Action("ProjectCreate", "Project")' " /></div></div>*@
+            <span id="errorSection" class="failureNotification"><asp:Literal ID="ErrorMessage" runat="server"></asp:Literal></span>
+        </div>
+    </div>  
+ @*}*@
+
+<script type="text/javascript">
+    //build the empty table
+    $(window).load(function () {
+        var data = [  {"isActive" : false }  ];
+        $("#siteTable").handsontable({
+                data: data,
+                colWidths: [42, 76, 60, 65, 62, 65, 60, 80, 105, 100, 90, 140, 80, 130, 110, 110, 120, 120, 100, 100],
+                startRows: 20,
+                //always keep at least 1 spare row at the bottom,
+                rowHeaders: false,
+                contextMenu: true,
+                colHeaders: ["Select", "Site Name", "Latitude", "Longitude",
+                            "Country", "State/Prov", "Lake", "Waterbody", "Watershed HUC8",
+                            "Description", "Status", "Resource Component", "Media",
+                            "Sampling Frequency", "Start Date", "End Date", 
+                            "Sampling Platform", "Additional Info", "Site URL", "Parameters"],
+                columns: [
+                    { data: "isActive", type: Handsontable.CheckboxCell },
+                    { data: "NAME" },
+                    { data: "LATITUDE" },
+                    { data: "LONGITUDE" },
+                    { data: "COUNTRY" },
+                    { data: "STATE_PROVINCE" },
+                    { data: "LAKE" },
+                    { data: "WATERBODY" },
+                    { data: "WATERSHED_HUC8" },
+                    { data: "DESCRIPTION" },
+                    { data: "STATUS" },
+                    { data: "ResourceTypes" },
+                    { data: "MediaTypes" },
+                    { data: "FrequencyTypes" },
+                    { data: "START_DATE" },
+                    { data: "END_DATE" },
+                    { data: "SAMPLE_PLATFORM" },
+                    { data: "ADDITIONAL_INFO" },
+                    { data: "URL" },
+                    { data: "Parameters" }                    
+                ]
+            });
+        });
+
+
+//        $("#form0").submit(function () {
+        function submit() {
+            var projID = $("#projId").val();
+            var handsontable = $("#siteTable").data('handsontable');
+            var tableData = JSON.stringify(handsontable.getData());
+            var input = JSON.stringify({ "input": tableData, "project": projID });
+            //input += ',"{"project":"[{,\"projectId\":\"' + projID + '\",}]"}';
+            var url = "../../Site/SiteCreate2";
+            $.ajax({
+                type: 'POST',
+                url: url,
+                data: input,
+                contentType: "application/json; charset=utf-8",
+                dataType: 'json',
+                success: function (res) {
+                    if (res.result === 'ok') {
+                        alert("Data saved");
+                    }
+                },
+                error: function (xhr) {
+                    alert(xhr.responseText);
+                }
+            });
+
+        };
+</script>

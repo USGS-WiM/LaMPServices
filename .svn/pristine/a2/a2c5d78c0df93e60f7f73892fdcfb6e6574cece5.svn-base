@@ -1,0 +1,214 @@
+﻿@* Comments:
+02.28.13 - TR - Integrating the services 
+02.06.13 - TR - Created 
+
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+  * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Project Contact
+ */
+ *@
+
+ @using LaMPServices;
+ @using LaMPWeb.Models;
+
+@{
+    ViewBag.Title = "Project Contacts";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@model LaMPServices.CONTACT
+           
+@*<div id="loading"><div id="loadingcontent"><p id="loadingspinner" style=""><img src="@Url.Content("~/Assets/Images/loading1.gif")"  /></p></div></div>*@
+
+
+<script type="text/javascript">
+    $(function () {
+        $('input').filter('.datepicker').datepicker({
+            changeMonth: true,
+            changeYear: true
+        });
+    });
+</script>
+
+
+<div id="dataTitle">
+    <div class="title">Project Contacts</div>
+</div>
+<br clear="all" />
+<hr class="headerUnderline" />
+@{
+    Boolean contact1 = false;
+    
+    
+}
+@using (Html.BeginForm("ProjContacts2", "Project", FormMethod.Post))
+{
+        if (Session["Contact"] != null) 
+        {
+            <div class="ui-grid-a">           
+                <div class="ui-block-a" style="width:10%">Contacts:</div>
+                <div class="ui-block-b"><textarea style="width:100%" readonly="readonly" class="textarea ui-shadow-inset" name="Contact" rows="2" cols="30">@Session["Contact"]</textarea></div>
+            </div>
+            contact1 = true;
+        }
+    
+    <div class="siteColumn">
+       <input type="hidden" name="ProjName" value='@Session["projectName"]' />
+
+        
+        
+        @* Project Name: *@
+        <div class="ui-grid-a">           
+            <div class="ui-block-a">Project Name:</div> @* store Viewdata[project]..then use thisProj.Name *@
+            <div class="ui-block-b"><label>@Session["projectName"]</label></div>
+        </div>
+        
+        @* Contact Name: *@
+        <div class="ui-grid-a">
+             <div class="ui-block-a"><span class="required">Contact Name:</span></div>
+             <div class="ui-block-b"><input type="text" id="contactName" name="NAME" class="required stnTextInput ui-shadow-inset" /></div>
+        </div>
+        
+        @* Email Address: *@
+        <div class="ui-grid-a">
+             <div class="ui-block-a"><span class="required">Email Address:</span></div>
+             <div class="ui-block-b"><input type="text" name="EMAIL" class="required stnTextInput ui-shadow-inset" /></div>
+        </div>
+        
+        
+        
+        @* Add Another Contact? (checkbox) *@
+        <div class="ui-grid-a">
+            <div data-role="fieldcontain">
+                <div class="ui-block-a">Add Another Contact? (will post & refresh page)</div>
+                <div class="ui-block-b"><input type="checkbox" id="OtherContact" onclick="ContactClick();" /></div>
+           </div>
+       </div>
+    </div>
+    <div class="siteColumn">
+
+        <div class="ui-grid-a">
+             <div class="ui-block-a"><span class="required">Contact Organization:</span></div>
+             <div class="ui-block-b">
+                <select id="Orgdropdown" class="required stnSelectInput" name="ProjOrg">
+			        @foreach (LaMPServices.ORGANIZATION o in ViewData["organizations"] as List<ORGANIZATION>)
+                    {
+                        <option title='@o.NAME @o.DIVISION' value='@o.ORGANIZATION_ID'>@o.SHORTNAME</option> 
+                    }
+                </select>
+            </div>
+        </div>
+
+        @* Phone Number: *@
+        <div class="ui-grid-a">           
+            <div class="ui-block-a">Phone number:</div>
+            <div class="ui-block-b"><input type="text" name="PHONE" class="stnTextInput ui-shadow-inset" /></div>
+        </div>
+
+    </div>
+        
+    <br clear="all" />
+    <br />
+    <div id="formSubmitDiv" class="formSection">
+        <div class="leftSideSubmit">
+            <div class="submitDiv"><div class="darkButtonBorder"><input type="submit" name="Create" class="submit" value="Proceed to Publications" /></div></div>
+            <div class="cancelDiv"><div class="lightButtonBorder"><input id="resetButton" type="reset" class="cancel" value="Go Back to Summary" onclick="location.href='@Url.Action("ProjSummary1", "Project")' " /></div></div>
+            <span id="errorSection" class="failureNotification"><asp:Literal ID="ErrorMessage" runat="server"></asp:Literal></span>
+        </div>
+    </div> 
+}
+<script type="text/javascript">
+    function cancelClick() {
+        $("#loading").fadeIn();
+        window.location.href = '@Url.Action("Details", "Sites", new { id = ViewData["SiteId"] })'
+    };
+</script>
+<script type="text/javascript">
+    function loading() {
+        $("#loading").fadeIn();
+    }
+</script>
+<script type="text/javascript">
+    //want to add another contact. post this one, come back here with empty fields except project
+    function ContactClick() {
+
+        var ContactName = document.getElementById("contactName").value;
+        var checkBoxCntrl = document.getElementById("OtherContact");
+        if ('@contact1' == 'True') {
+
+        }
+        if (checkBoxCntrl.checked == true) {
+            $.ajax({
+                url: '@Url.Action("PostAndReturnContacts", "Project")',
+                type: 'GET',
+                data: { CName: ContactName },
+                success: function (response) {
+                    if (response) {
+                        window.location.href = '@Url.Action("ProjContacts2", "Project")'
+                    }
+                }
+            });
+        }
+    }
+</script>
+
+<script type="text/javascript">
+
+    $("#form0").submit(function () {
+        var MISSING = "ui-req";
+
+        var requiredInput = $('input[class*="required"]');
+        var requiredSelect = $('select[class*="required"]');
+        var Ierr = false;
+        var Serr = false;
+        var missingMsg = "The highlighted fields are required.";
+
+        // Reset the previously highlighted form elements  
+        requiredInput.each(function (index) {
+            $(this).removeClass(MISSING);
+            $(this).addClass("ui-shadow-inset");
+        });
+        // Reset the previously highlighted form elements  
+        requiredSelect.each(function (index) {
+            $(this).removeClass(MISSING);
+            $(this).addClass("ui-shadow-inset");
+        });
+        // Perform form validation  
+        requiredInput.each(function (index) {
+            if ($(this).val() == null || $(this).val() == "") {
+                $(this).addClass(MISSING);
+                $(this).removeClass("ui-shadow-inset");
+                Ierr = true;
+//                $("#errorSection").append(missingMsg);
+            }
+        });
+        // Perform form validation  
+        requiredSelect.each(function (index) {
+            var ind = $(this).context.selectedIndex;
+            if (ind == -1) {
+                $(this).addClass(MISSING);
+                Serr = true;
+//                $("#errorSection").append(missingMsg);
+            }
+        });
+        if (Ierr == true || Serr == true) {
+            $("#errorSection").append(missingMsg); 
+        }
+        // Check if validation fails
+        if (Ierr == true) {
+            return false;
+        }
+        // Check if validation fails
+        if (Serr == true) {
+            return false;
+        }
+        
+    });
+
+</script>

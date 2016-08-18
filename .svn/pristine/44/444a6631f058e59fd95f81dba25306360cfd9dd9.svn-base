@@ -1,0 +1,483 @@
+﻿@* Comments: 
+03.29.13 - TR - Added loading logo
+03.28.13 - TR - Worked on use case (added buttons for where to go from here)
+03.25.13 - TR - Fixing all the pieces
+02.28.13 - TR - Integrating the services
+02.06.13 - TR - Created 
+
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+  * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Project Sites
+ */
+ *@
+
+<div id="loading"><div id="loadingcontent"><p id="loadingspinner" style=""><img src="@Url.Content("~/Assets/Images/loading1.gif")"  /></p></div></div>
+
+
+ @using LaMPServices;
+ @using LaMPWeb.Models;
+ @using LaMPWeb.Assets.Resources;
+
+ @{
+     ViewBag.Title = "Project Sites";
+     Layout = "~/Views/Shared/_Layout.cshtml";
+ }
+
+ @{ PROJECT thisProject = ViewData["project"] as PROJECT;
+    Boolean site1 = false;
+        
+ }
+
+<script src="@Url.Content("~/Assets/Scripts/jquery.unobtrusive-ajax.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Assets/Scripts/jquery.validate.min.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Assets/Scripts/jquery.validate.unobtrusive.min.js")" type="text/javascript"></script>
+
+<div id="dataTitle">
+    <div class="title">Site Summary</div>
+    <div class="submitDiv" style="float:left">
+        @*<div>@Html.ActionLink("Site Summary - Grid View", "SiteSummary2", "Site", null, new { @class = "LaMPButton blue" })</div>
+        
+        <div><a onclick="Post4Grid();" class="LaMPButton blue">Site Summary - Grid View</a></div>*@
+    </div>
+</div>
+<br clear="all" />
+<hr class="headerUnderline" style="margin-top:15px" />
+<div id="loading"><div id="loadingcontent"><p id="loadingspinner" style=""><img src="@Url.Content("~/Assets/Images/loading1.gif")"  /></p></div></div>
+
+
+@using (Html.BeginForm("SiteSummary", "Site", FormMethod.Post, new { id = "form0" }))
+{
+    <div class="siteColumn">
+    
+    @if (ViewData.ContainsKey("sites"))
+    {        
+        <div class="ui-grid-a">           
+                <div class="ui-block-a">Existing Sites:</div>
+                <div class="ui-block-b"><textarea style="width:100%" readonly="readonly" class="textarea ui-shadow-inset" name="SITES" rows="2" cols="30">@foreach (Site s in ViewData["sites"] as List<Site>)
+                                                                                                                                                            {
+                                                                                                                                                                if (s.CatalogId != null && s.CatalogId != 0)
+                                                                                                                                                                {
+                                                                                                                                                                    string c = s.LocationName + "\n";@c}
+                                                                                                                                                            }</textarea></div>
+            </div>
+                                                                                                                                                            site1 = true;
+    }
+    
+        
+          
+
+    <input type="hidden" id="projId" name="projId" value="@thisProject.PROJECT_ID" />
+       
+        @* Project Name: *@
+        <div class="ui-grid-a">           
+            <div class="ui-block-a">Project Name:</div> 
+            <div class="ui-block-b"><label>@thisProject.NAME</label></div>
+        </div>
+
+        <div class="ui-grid-a">           
+            <div class="ui-block-a"><span class="required">Site Name:</span></div>
+            <div class="ui-block-b"><input type="text" id="SiteName" name="NAME" class="required stnTextInput ui-shadow-inset" /></div>
+        </div>
+
+        <div class="ui-grid-a">           
+            <div class="ui-block-a"><span class="required">Latitude:</span></div>
+            <div class="ui-block-b"><input type="text" id="SiteLat" name="LATITUDE" class="required stnTextInput ui-shadow-inset"/></div>
+            <div class="ui-block-c notes">Latitude should be entered in NAD83 decimal degrees (positive values).</div>
+        </div>
+
+        <div class="ui-grid-a">           
+            <div class="ui-block-a"><span class="required">Longitude:</span></div>
+            <div class="ui-block-b"><input type="text" id="SiteLong" name="LONGITUDE" class="required stnTextInput ui-shadow-inset" /></div>
+            <div class="ui-block-c notes">Longitute should be entered in NAD83 decimal degrees (negative values indicate western hemisphere).</div>
+        </div>
+
+        <div class="ui-grid-a">           
+            <div class="ui-block-a"><span class="required">Country:</span></div>
+            <div class="ui-block-b"><select id="Countrydropdown" class="required stnSelectInput" name="COUNTRY">
+					@foreach (string c in ViewData["countries"] as List<string>)
+                    {
+                        <option value="@c">@c</option> 
+                    }      
+                </select>
+                <br /></div>
+            <div class="ui-block-c">Which country is this site located in?</div>
+        </div>
+
+         <div class="ui-grid-a">           
+            <div class="ui-block-a"><span class="required">State/Province:</span></div>
+            <div class="ui-block-b"><select id="statesdropdown" class="required stnSelectInput" name="STATE_PROVINCE">
+					@foreach (string s in ViewData["states"] as List<string>)
+                    {
+                        <option value="@s">@s</option> 
+                    }      
+                </select>
+                <br /></div>
+            <div class="ui-block-c">Which state (U.S. only) or province (Canada only) is this site located in?</div>
+        </div>
+
+        <div class="ui-grid-a">           
+            <div class="ui-block-a"><span class="required">Lake:</span></div>
+            <div class="ui-block-b">
+                <select id="Lakedropdown" class="required stnSelectInput" name="LAKE_TYPE_ID">
+					@foreach (LAKE_TYPE l in ViewData["Lakes"] as List<LAKE_TYPE>)
+     {
+                        <option value="@l.LAKE_TYPE_ID">@l.LAKE</option> 
+     }
+                </select>
+                    <br />	
+            </div>
+            <div class="ui-block-c notes">Which Great Lake (or Lakewide Management Plan) is this site associated with?</div>
+        </div>
+
+        
+        <div class="ui-grid-a">           
+            <div class="ui-block-a">Waterbody:</div>
+            <div class="ui-block-b"><input type="text" name="WATERBODY" class="stnTextInput ui-shadow-inset" /></div>
+            <div class="ui-block-c notes">Identify any additional waterbodies this site is associated with. Separate distinct waterbody names with a comma.</div>
+        </div>
+
+        <div class="ui-grid-a">           
+            <div class="ui-block-a">Watershed (8-digit HUC):</div>
+            <div class="ui-block-b"><input type="text" name="WATERSHED_HUC8" class="stnTextInput ui-shadow-inset" /></div>
+            <div class="ui-block-c notes">Enter the 8-digit HUC (hydrologic unit code, ex. 04030204) for this site.</div>
+        </div>
+
+        <div class="ui-grid-a">           
+            <div class="ui-block-a">Site Description:</div>
+            <div class="ui-block-b"><textarea class="stnTextInput ui-shadow-inset" id="SiteDesc" name="DESCRIPTION" rows="2" cols="30"></textarea></div>
+            <div class="ui-block-c notes">Include any site description or additional location information here.</div>
+        </div>        
+
+        <div class="ui-grid-a">           
+            <div class="ui-block-a">Status:</div>
+            <div class="ui-block-b">
+                <select id="Statusdropdown" class="stnSelectInput" name="STATUS_TYPE_ID">
+					@foreach (STATUS_TYPE st in ViewData["statusTypes"] as List<STATUS_TYPE>)
+     {
+                        <option value="@st.STATUS_ID">@st.STATUS</option> 
+     }
+                </select>
+                <br />	
+            </div>
+            <div class="ui-block-c notes">Indicate if your site is currently being monitored (at any sampling frequency).</div>
+        </div>
+
+        
+        <div class="ui-grid-a">           
+            <div class="ui-block-a">Resource Component:</div>
+            <div class="ui-block-b">
+                <select id="Resourcedropdown" multiple="multiple" class="stnSelectInput" name="RESOURCE_TYPE_ID">
+					@foreach (RESOURCE_TYPE rt in ViewData["resourceTypes"] as List<RESOURCE_TYPE>)
+     {
+                        <option value="@rt.RESOURCE_TYPE_ID">@rt.RESOURCE_NAME</option> 
+     }
+                </select>
+                <br />	
+            </div>
+        </div>
+
+        
+        <div class="ui-grid-a">           
+            <div class="ui-block-a">Media:</div>
+            <div class="ui-block-b">
+                <select id="Mediadropdown" multiple="multiple" class="stnSelectInput" name="MEDIA_TYPE_ID">
+					@foreach (MEDIA_TYPE mt in ViewData["mediaTypes"] as List<MEDIA_TYPE>)
+     {
+                        <option value="@mt.MEDIA_TYPE_ID">@mt.MEDIA</option> 
+     }
+                </select>
+                <br />	
+            </div>
+        </div>
+
+        <div class="ui-grid-a">           
+            <div class="ui-block-a">Sampling Frequency:</div>
+            <div class="ui-block-b">
+                <select id="Frequencydropdown" multiple="mutiple" class="stnSelectInput" name="FREQUENCY_TYPE_ID">
+					@foreach (FREQUENCY_TYPE ft in ViewData["frequencyTypes"] as List<FREQUENCY_TYPE>)
+     {
+                        <option value="@ft.FREQUENCY_TYPE_ID">@ft.FREQUENCY</option> 
+     }
+                </select>
+                <br />	
+            </div>
+        </div>
+
+        <div class="ui-grid-a">           
+            <div class="ui-block-a">Sampling Start Date:</div>
+            <div class="ui-block-b"><input type="text" id="startDate" name="START_DATE" class="stnSelectInput datepicker" /></div>
+        </div>
+        
+        <div class="ui-grid-a">           
+            <div class="ui-block-a">Sampling End Date:</div>
+            <div class="ui-block-b"><input type="text" id="endDate" name="END_DATE" class="stnSelectInput datepicker" /></div>
+            <div class="ui-block-c">If sampling is ongoing, leave blank.</div>
+        </div>
+
+        <div class="ui-grid-a">           
+            <div class="ui-block-a">Sampling Platform:</div>
+            <div class="ui-block-b"><input type="text" name="SAMPLE_PLATFORM" class="stnTextInput ui-shadow-inset" /></div>
+            <div class="ui-block-c">Include information about the type of sampling equipment used here. Separate terms with a comma.</div>
+        </div>
+
+        <div class="ui-grid-a">           
+            <div class="ui-block-a">Additional Site Information:</div>
+            <div class="ui-block-b"><textarea class="stnTextInput ui-shadow-inset" name="ADDITIONAL_INFO" rows="2" cols="30"></textarea></div>
+            <div class="ui-block-c notes">Include any other sampling or site-specific information here.</div>
+        </div>        
+
+        <div class="ui-grid-a">           
+            <div class="ui-block-a">Site URL:</div>
+            <div class="ui-block-b"><input type="text" name="URL" class="stnTextInput ui-shadow-inset" /></div>
+            <div class="ui-block-c">If site-specific data is available online, enter URL here.</div>
+        </div>
+       
+
+        <div class="ui-grid-a">           
+            <div class="ui-block-a"></div>
+            <div class="ui-block-b">@Html.ActionLink("Add Parameters", "AddParameters", null, new{ @id = "ParamLink", @class = "LaMPButton blue" })</div>
+            <div class="ui-block-c">Enter parameters for this site.</div>
+        </div>
+        <input type="hidden" id="SiteParams" name="SiteParameters" />
+        <div id="ParamDialog" title="Add Parameters"></div>
+       
+       <br clear="all" />   
+    </div>
+    
+    <br clear="all" />
+    <br />
+    <div id="formSubmitDiv" class="formSection">
+        <div class="leftSideSubmit"> 
+            <div class="cancelDiv"><div class="lightButtonBorder"><input type="reset" class="cancel" value="Cancel & Go To&#10; Project Details" style="font-size:1.2em" onclick="cancelClick();" /></div></div>
+            <div class="submitDiv"><div class="darkButtonBorder"><input type="submit" name="Create" onclick="loading();" class="submit" value="Save & Add&#10; Another Site" /></div></div>
+            <div class="submitDiv"><div class="darkButtonBorder"><input type="submit" name="Create" class="submit" onclick="loading();" value="Save & Return To&#10; Project Details" /></div></div>
+            @*<div class="submitDiv"><div class="darkButtonBorder"><input type="submit" id="ProjDetails" name="Create" class="submit" value="Go To&#10; Project Details" /></div></div>*@
+            @if (ViewData.ContainsKey("From"))
+            {<div class="submitDiv"><div class="darkButtonBorder"><input type="submit" name="Create" onclick="loading();" class="submit" value="Save Site&#10; and Finish" /></div></div>}
+            <span id="errorSection" class="failureNotification"><asp:Literal ID="ErrorMessage" runat="server"></asp:Literal></span>
+        </div>
+    </div>  
+}
+
+<script type="text/javascript">
+    function loading() {
+        $("#loading").fadeIn();
+    }
+</script>
+
+<script type="text/javascript">
+    function cancelClick() {
+        var id = '@thisProject.PROJECT_ID';
+        if ('@site1' == 'False') {//there are no sites
+            var answer = confirm("Leaving here without 1 site created will result in project not showing on SiGL mapper. Continue?");
+            if (answer) {
+                $("#loading").fadeIn();
+                $.ajax({
+                    url: '@Url.Action("ProjectDetails", "Project")',
+                    data: { id: '@thisProject.PROJECT_ID' },
+                    success: function () {
+                        window.location.href = '/LaMPWeb/Project/ProjectDetails/' + id;
+                    }
+                });
+            }
+        }
+        else { //there are sites, just cancel
+            var answer = confirm("Do you want to leave this page and go to the project details?");
+            if (answer) {
+                $("#loading").fadeIn();
+                $.ajax({
+                    url: '@Url.Action("ProjectDetails", "Project")',
+                    data: { id: '@thisProject.PROJECT_ID' },
+                    success: function () {
+                        window.location.href = '/LaMPWeb/Project/ProjectDetails/' + id;
+                    }
+                });
+            }
+        }
+    }
+</script>
+<style type="text/css">
+    .dialog_style2 .ui-widget-header
+    {
+        background: none repeat scroll 0 0 #4B6C9E;
+    }
+    .dialog_style2 .ui-widget-header
+    {
+        color: White;
+    }
+    .ui-widget
+    {
+        font-size: small;
+    }
+</style>
+
+
+ <script type="text/javascript">
+     function Post4Grid() {
+        var SiteName = $("#SiteName").val();
+        var SiteLat = $("#SiteLat").val();
+        var SiteLong = $("#SiteLong").val();
+        var SiteDesc = $("#SiteDesc").val();
+        var Lakedropdown = $("#Lakedropdown").val();
+        var Waterdropdown = $("#Waterdropdown").val();
+        var newWaterbody = $("#newWaterbody").val();
+        var wbInput = $("#wbInput").val();
+        var startDate = $("#startDate").val();
+        var endDate = $("#endDate").val();
+        var Resourcedropdown = $("#Resourcedropdown").val();
+        var mediadropdown = $("#mediadropdown").val();
+        var sfdropdown = $("#sfdropdown").val();
+        var samplePlatform = $("#samplePlatform").val();
+        var parameters = $("#parameters").val();
+        var siteUrl = $("#siteUrl").val();
+        var additionalInfo = $("#additionalInfo").val();
+        var OtherSite = $("#OtherSite").val();
+        
+             $.ajax({
+                url: '@Url.Action("Post4Grid", "Site")',
+                type: 'GET',
+                data: { SiteName:SiteName, SiteLat:SiteLat, SiteLong:SiteLong, SiteDesc:SiteDesc, Lakedropdown:Lakedropdown, 
+                        Waterdropdown:Waterdropdown, newWaterbody:newWaterbody, wbInput:wbInput, startDate:startDate, endDate:endDate, 
+                        Resourcedropdown:Resourcedropdown, mediadropdown:mediadropdown, sfdropdown:sfdropdown,
+                        samplePlatform: samplePlatform, parameters: parameters, siteUrl: siteUrl, additionalInfo: additionalInfo, OtherSite: OtherSite
+                    }
+        });
+    }
+ </script>
+ 
+<script type="text/javascript">
+    function loading() {
+        $("#loading").fadeIn();
+    }
+</script>
+
+<script type="text/javascript">
+
+    $("#form0").submit(function () {
+        var MISSING = "ui-req";
+
+        var requiredInput = $('input[class*="required"]');
+        var requiredSelect = $('select[class*="required"]');
+        var requiredTextArea = $('textarea[class*="required"]');
+        var Ierr = false;
+        var Serr = false;
+        var Terr = false;
+        var missingMsg = "The highlighted fields are required.";
+
+        // Reset the previously highlighted form inputs  
+        requiredInput.each(function (index) {
+            $(this).removeClass(MISSING);
+            $(this).addClass("ui-shadow-inset");
+        });
+        // Reset the previously highlighted form selects  
+        requiredSelect.each(function (index) {
+            $(this).removeClass(MISSING);
+            $(this).addClass("ui-shadow-inset");
+        });
+        // Reset the previously highlighted form textareas  
+        requiredTextArea.each(function (index) {
+            $(this).removeClass(MISSING);
+            $(this).addClass("ui-shadow-inset");
+        });
+        // Perform form validation  
+        requiredInput.each(function (index) {
+            if ($(this).val() == null || $(this).val() == "") {
+                $(this).addClass(MISSING);
+                $(this).removeClass("ui-shadow-inset");
+                Ierr = true;
+                //                $("#errorSection").append(missingMsg);
+            }
+        });
+        // Perform form validation  
+        requiredSelect.each(function (index) {
+            var ind = $(this).context.selectedIndex;
+            if (ind == -1) {
+                $(this).addClass(MISSING);
+                Serr = true;
+                //                $("#errorSection").append(missingMsg);
+            }
+        });
+        // Perform form validation  
+        requiredTextArea.each(function (index) {
+            if ($(this).val() == null || $(this).val() == "") {
+                $(this).addClass(MISSING);
+                $(this).removeClass("ui-shadow-inset");
+                Terr = true;
+                //                $("#errorSection").append(missingMsg);
+            }
+        });
+        if (Ierr == true || Serr == true || Terr == true) {
+            $("#errorSection").append(missingMsg);
+        }
+        // Check if validation fails
+        if (Ierr == true) {
+            $("#loading").fadeOut();
+            return false;
+        }
+        // Check if validation fails
+        if (Serr == true) {
+            $("#loading").fadeOut();
+            return false;
+        }
+        // Check if validation fails
+        if (Terr == true) {
+            $("#loading").fadeOut();
+            return false;
+        }
+    });
+
+</script>
+
+
+        @*<table id="site-table-a">
+                <thead>
+                    <tr>
+                        <th style="width:3em" scope="col">Site Name</th>
+                        <th style="width:4em" scope="col">Latitude</th>
+                        <th style="width:4.5em" scope="col">Longitude</th>
+                        <th style="width:5em" scope="col">Site Description</th>
+                        <th style="width:2em" scope="col">Lake</th>
+                        <th style="width:4.7em" scope="col">Waterbody</th>
+                        <th style="width:4em" scope="col">Sampling Start Date</th>
+                        <th style="width:4em" scope="col">Sampling End Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                     <tr>
+                        <td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td>
+                     </tr>
+                </tbody>
+            </table>
+            <br />
+            <table id="site-table-a">
+                <thead>
+                    <tr>
+                        <th style="width:auto" scope="col">Resource Component</th>
+                        <th style="width:auto" scope="col">Media</th>
+                        <th style="width:auto" scope="col">Sampling Frequency</th>
+                        <th style="width:auto" scope="col">Sampling Platform</th>
+                        <th style="width:auto" scope="col">Parameters</th>
+                        <th style="width:auto" scope="col">Site Url</th>
+                        <th style="width:auto" scope="col">Additional Site Information</th>
+                        <th style="width:auto" scope="col">Link to Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                     <tr>
+                        <td>9</td> 
+                        <td>10</td>
+                        <td>11</td> 
+                        <td>12</td>
+                        <td>13</td>
+                        <td>14</td>
+                        <td>15</td>
+                        <td>16</td>
+                    </tr>
+                </tbody>
+            </table>*@

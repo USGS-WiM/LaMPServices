@@ -1,0 +1,393 @@
+﻿@* Comments:
+04.04.14 - TR -  Changed dropdowns to multipleSelects (with checkboxes)
+07.30.13 - TR - Created 
+
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+ * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Display Edit page of a Site 
+ */
+ *@
+@using LaMPServices;
+@using LaMPWeb.Assets.Resources;
+
+@{
+    ViewBag.Title = "Site Edit";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+}
+
+@model LaMPWeb.Models.SiteModel
+
+<script src="@Url.Content("~/Assets/Scripts/jquery.validate.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Assets/Scripts/jquery.maskedinput.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Assets/Scripts/jquery.multiple.select.js")" type="text/javascript"></script>
+<link href="@Url.Content("~/Assets/Styles/multiple-select.css")" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+    table, table td 
+    {
+        border: none;
+    }
+</style>
+<script type="text/javascript">
+    $(function () {
+        //datepicker 
+        $('input').filter('.datepicker').datepicker({
+            changeMonth: true,
+            yearRange: '1965:2030',
+            changeYear: true
+        });
+    });
+
+    jQuery(function ($) {
+        $("#huc8").mask("99999999");
+    });
+
+    window.onload = function () {
+        var txtbox = document.getElementById("SiteName");
+        txtbox.focus();
+    }
+</script>
+
+@{    
+    List<RESOURCE_TYPE> SiteResources = ViewData["SiteResources"] as List<RESOURCE_TYPE>;
+    List<MEDIA_TYPE> SiteMedia = ViewData["MediaList"] as List<MEDIA_TYPE>;
+    List<FREQUENCY_TYPE> SiteFreq = ViewData["FrequencyList"] as List<FREQUENCY_TYPE>;
+
+    List<PARAMETER_TYPE> PhysicalPs = ViewData["PhysicalP"] as List<PARAMETER_TYPE>;
+    List<PARAMETER_TYPE> ChemicalPs = ViewData["ChemicalP"] as List<PARAMETER_TYPE>;
+    List<PARAMETER_TYPE> BiologicalPs = ViewData["BiologicalP"] as List<PARAMETER_TYPE>;
+    List<PARAMETER_TYPE> MicrobiolPs = ViewData["MicrobiolP"] as List<PARAMETER_TYPE>;
+    List<PARAMETER_TYPE> ToxicologicalPs = ViewData["ToxicologicalP"] as List<PARAMETER_TYPE>;  
+}
+           
+<div id="dataTitle">                                                        
+    <div class="title">Project: @Html.ActionLink(@Model.aProject.NAME, "ProjectDetails", "Project", new { id = @Model.aProject.PROJECT_ID }, new { onclick = "loading();" }), Site: @Model.aSite.NAME</div>
+    <span id="errorSection" class="failureNotification"><asp:Literal ID="ErrorMessage" runat="server"></asp:Literal></span>
+</div>
+<br clear="all" />
+
+<hr class="headerUnderline" />
+<div id="loading"><div id="loadingcontent"><p id="loadingspinner" style=""><img src="@Url.Content("~/Assets/Images/loading1.gif")"  /></p></div></div>
+
+@using (Html.BeginForm("SiteEdit1", "Site", new { id = Model.aSite.SITE_ID, projId = Model.aProject.PROJECT_ID }, FormMethod.Post, new { @id = "SiteEdit" }))
+{    
+    <input type="hidden" id="CatID" name="aSite.SITE_ID" value="@Model.aSite.SITE_ID" />
+    <input type="hidden" id="CatProjId" name="aSite.PROJECT_ID" value="@Model.aSite.PROJECT_ID" />
+        
+    <div class="ui-grid-a">
+        <div class="ui-block-a"><span class="required">Site Name:</span></div>
+        <div style="width:38.5%" class="ui-block-b"><input type="text" style="width:94%" id="SiteName" name="aSite.NAME" class="required lampTextInput ui-shadow-inset" value="@Model.aSite.NAME" /></div>
+    </div>
+
+    <div class="ui-grid-a">
+        <div class="ui-block-a"><span class="required">Latitude:</span></div>
+        <div style="width:38.5%" class="ui-block-b"><input type="text" style="width:94%" id="LocLat" name="aSite.LATITUDE" class="required lampTextInput ui-shadow-inset" value="@Model.aSite.LATITUDE" /></div>
+    </div>
+
+    <div class="ui-grid-a">
+        <div class="ui-block-a"><span class="required">Longitude:</span></div>
+        <div class="ui-block-b" style="width:38.5%"><input type="text" id="LocLong" style="width:94%" name="aSite.LONGITUDE" class="required lampTextInput ui-shadow-inset" value="@Model.aSite.LONGITUDE" /></div>
+    </div>
+
+    <div class="ui-grid-a">
+        <div class="ui-block-a"><span class="required">Country:</span></div>
+        <div class="ui-block-b" style="width:38.5%"><select id="Countrydropdown" style="width:97%" class="required lampSelectInput" name="aSite.COUNTRY">
+            <option value=""></option>
+				@foreach (string c in ViewData["countries"] as List<string>)
+    {
+                    <option @( c == Model.aSite.COUNTRY ? "selected" : "") value="@c">@c</option> 
+    }      
+            </select>
+            <br /></div>
+        <div class="ui-block-c notes" style="margin-left:15px">Which country is this site located in?</div>
+    </div>
+
+    <div class="ui-grid-a">
+        <div class="ui-block-a"><span class="required">State/Province:</span></div>
+        <div class="ui-block-b" style="width:38.5%"><select id="statesdropdown" style="width:97%" class="required lampSelectInput" name="aSite.STATE_PROVINCE">
+				<option value=""></option>
+                @foreach (string s in ViewData["states"] as List<string>)
+                {
+                    <option @( s == Model.aSite.STATE_PROVINCE ? "selected" : "") value="@s">@s</option> 
+                }      
+            </select>
+            <br /></div>
+        <div class="ui-block-c notes" style="margin-left:15px">Which state (U.S. only) or province (Canada only) is this site located in?</div>
+    </div>
+
+    <div class="ui-grid-a">
+        <div class="ui-block-a"><span class="required">Lake:</span></div>
+        <div class="ui-block-b" style="width:38.5%"><select style="width:97%" id="Lakedropdown" class="required lampSelectInput" name="aSite.LAKE_TYPE_ID">
+			<option value=""></option>
+            @foreach (LAKE_TYPE l in ViewData["Lakes"] as List<LAKE_TYPE>)
+            {
+                <option @( l.LAKE_TYPE_ID == Model.aSite.LAKE_TYPE_ID ? "selected" : "") value="@l.LAKE_TYPE_ID">@l.LAKE</option> 
+            }
+            </select>
+            <br />	</div>
+        <div class="ui-block-c notes" style="margin-left:15px">Which Great Lake (or Lakewide Management Plan) is this site associated with?</div>
+    </div>
+        
+    <div class="ui-grid-a">
+        <div class="ui-block-a">Waterbody:</div>
+        <div class="ui-block-b"><input type="text" name="aSite.WATERBODY" class="lampTextInput ui-shadow-inset" value="@Model.aSite.WATERBODY" /></div>
+        <div class="ui-block-c notes">Identify any additional waterbodies this site is associated with. Separate distinct waterbody names with a comma.</div>
+    </div>
+
+    <div class="ui-grid-a">
+        <div class="ui-block-a">Watershed (8-digit HUC):</div>
+        <div class="ui-block-b"><input type="text" id="huc8" name="aSite.WATERSHED_HUC8" class="lampTextInput ui-shadow-inset" value="@Model.aSite.WATERSHED_HUC8" /></div>
+        <div class="ui-block-c notes">Enter the 8-digit HUC (hydrologic unit code, ex. 04030204) for this site.</div>
+    </div>
+
+    <div class="ui-grid-a">
+        <div class="ui-block-a">Site Description:</div>
+        <div class="ui-block-b"><textarea class="lampTextInput ui-shadow-inset" id="SiteDesc" name="aSite.DESCRIPTION" rows="2" cols="30">@Model.aSite.DESCRIPTION</textarea></div>
+        <div class="ui-block-c notes">Include any site description or additional location information here.</div>
+    </div>      
+
+    <div class="ui-grid-a">
+        <div class="ui-block-a">Status:</div>
+        <div class="ui-block-b">
+                <select style="width:93%" id="Statusdropdown" class="lampSelectInput" name="aSite.STATUS_TYPE_ID">
+					@foreach (STATUS_TYPE st in ViewData["statusTypes"] as List<STATUS_TYPE>)
+     {
+                        <option @( st.STATUS_ID == Model.aSite.STATUS_TYPE_ID ? "selected" : "") value="@st.STATUS_ID">@st.STATUS</option> 
+     }
+                </select>
+                <br />
+        </div>
+        <div class="ui-block-c notes">Indicate if your site is currently being monitored (at any sampling frequency).</div>
+    </div>
+    
+    <br clear="all" />
+    <hr />    
+    
+    @* --------------------------- resource component -------------------*@
+     
+    <div class="ui-grid-a">
+        <div data-role="fieldcontain">
+            <div class="ui-block-a">@Html.Label(ProjectStrings.SiteRes_Lbl)</div>
+            <div class="ui-block-b">
+                <select id="resourcesDD" class="lampSelectInput" name="resources">
+                    @foreach (RESOURCE_TYPE res in ViewData["resourceTypes"] as List<RESOURCE_TYPE>)
+                    {
+                        <option value="@res.RESOURCE_TYPE_ID">@res.RESOURCE_NAME</option> 
+                    }
+                </select>
+                <script type="text/javascript">
+                    $("#resourcesDD").multipleSelect({
+                        selectAll: false,
+                        onClose: function () {
+                            var resIDs = $("#resourcesDD").multipleSelect("getSelects");
+                            if (resIDs.length == 0) {
+                                $("#resourceIDs").val("");
+                            }
+                            else {
+                                $("#resourceIDs").val(resIDs);
+                            }
+                        }
+                    });
+                    </script>
+                <br />	
+            </div>
+            <div class="ui-block-c notes">Select where the sampling or analysis occurred.</div>
+        </div>
+    </div>
+       
+    @* hidden inputs to store id each Objective added *@
+    <input type="hidden" id="resourceIDs" name="ResourceTypes" value="@Model.ResourceTypes" />
+           
+    @* --------------------------- resource component -------------------*@
+    <br clear="all" />
+    <hr />
+    @* --------------------------- media component -------------------*@
+    <br />       
+
+    <div class="ui-grid-a">
+        <div data-role="fieldcontain">
+            <div class="ui-block-a">@Html.Label(ProjectStrings.SiteMed_Lbl)</div>
+            <div class="ui-block-b">
+                <select id="mediaDD" class="lampSelectInput" name="media">
+                    <option value="0">Choose a Media</option>
+					@foreach (MEDIA_TYPE med in ViewData["mediaTypes"] as List<MEDIA_TYPE>)
+                    {
+                        <option value="@med.MEDIA_TYPE_ID">@med.MEDIA</option> 
+                    }
+                </select>
+                <script type="text/javascript">
+                    $("#mediaDD").multipleSelect({
+                        selectAll: false,
+                        onClose: function () {
+                            var medIDs = $("#mediaDD").multipleSelect("getSelects");
+                            if (medIDs.length == 0) {
+                                $("#mediaIDs").val("");
+                            }
+                            else {
+                                $("#mediaIDs").val(medIDs);
+                            }
+                        }
+                    });
+                    </script>
+                <br />	
+            </div>
+            <div class="ui-block-c notes">Select what type of media was sampled or analyzed here. Select one, click Add Media. Can add many.</div>
+        </div>
+    </div>
+        
+    @* hidden inputs to store id each Objective added *@
+    <input type="hidden" id="mediaIDs" name="MediaTypes" value="@Model.MediaTypes" />
+    
+    <br clear="all" />
+    
+    @* --------------------------- media component -------------------*@
+    <br clear="all" />
+    <hr />
+      @* --------------------------- Sampling Frequency -------------------*@
+    <br />
+
+        
+    <div class="ui-grid-a">
+        <div data-role="fieldcontain">
+            <div class="ui-block-a">@Html.Label(ProjectStrings.SiteFreq_Lbl)</div>
+            <div class="ui-block-b">
+                <select id="frequencyDD" class="lampSelectInput" name="frequency">
+                    <option value="0">Choose a Frequency</option>
+					@foreach (FREQUENCY_TYPE freq in ViewData["frequencyTypes"] as List<FREQUENCY_TYPE>)
+        {
+                        <option value="@freq.FREQUENCY_TYPE_ID">@freq.FREQUENCY</option> 
+        }
+                </select>
+                <script type="text/javascript">
+                    $("#frequencyDD").multipleSelect({
+                        selectAll: false,
+                        onClose: function () {
+                            var freqIDs = $("#frequencyDD").multipleSelect("getSelects");
+                            if (freqIDs.length == 0) {
+                                $("#frequencyIDs").val("");
+                            }
+                            else {
+                                $("#frequencyIDs").val(freqIDs);
+                            }
+                        }
+                    });
+                    </script>
+                <br />	
+            </div>
+            <div class="ui-block-c notes">Indicate how frequently this site was sampled or analyzed.</div>
+        </div>
+    </div> 
+        
+    @* hidden inputs to store id each Objective added *@
+    <input type="hidden" id="frequencyIDs" name="FrequencyTypes" value="@Model.FrequencyTypes" />
+             
+    <br clear="all" />
+    <hr />
+    
+    @* --------------------------- sampling frequency -------------------*@
+
+    <div class="ui-grid-a">
+        <div class="ui-block-a">Sampling Start Date:</div>
+        <div class="ui-block-b"><input type="text" id="startDate" name="aSite.START_DATE" class="lampSelectInput datepicker" value="@( Model.aSite.START_DATE != null ? ((DateTime)Model.aSite.START_DATE).ToShortDateString() : "")" /></div>
+    </div>
+        
+    <div class="ui-grid-a">
+        <div class="ui-block-a">Sampling End Date:</div>
+        <div class="ui-block-b"><input type="text" id="endDate" name="aSite.END_DATE" class="lampSelectInput datepicker" value="@( Model.aSite.END_DATE != null ? ((DateTime)Model.aSite.END_DATE).ToShortDateString() : "")" /></div>
+        <div class="ui-block-c notes">If sampling is ongoing, leave blank.</div>
+    </div>
+
+    <div class="ui-grid-a">
+        <div class="ui-block-a">Sampling Platform:</div>
+        <div class="ui-block-b"><input type="text" name="aSite.SAMPLE_PLATFORM" class="lampTextInput ui-shadow-inset" value="@Model.aSite.SAMPLE_PLATFORM" /></div>
+        <div class="ui-block-c notes">Include information about the type of sampling equipment used here. Separate terms with a comma.</div>
+    </div>
+
+    <div class="ui-grid-a">
+        <div class="ui-block-a">Additional Site Information:</div>
+        <div class="ui-block-b"><textarea class="lampTextInput ui-shadow-inset" name="aSite.ADDITIONAL_INFO" rows="2" cols="30">@Model.aSite.ADDITIONAL_INFO</textarea></div>
+        <div class="ui-block-c notes">Include any other sampling or site-specific information here.</div>
+    </div>         
+
+    <div class="ui-grid-a">
+        <div class="ui-block-a">Site URL:</div>
+        <div class="ui-block-b"><input type="text" name="aSite.URL" class="lampTextInput ui-shadow-inset" value="@Model.aSite.URL" /></div>
+        <div class="ui-block-c notes">If site-specific data is available online, enter URL here.</div>
+    </div>       
+    
+    <br clear="all" />
+    <hr />
+    
+    <div class="ui-grid-a">
+        <div class="ui-block-a">Parameters:</div>
+        <div class="ui-block-b">@Html.ActionLink("Edit Parameters", "AddParameters", null, new { @id = "ParamLink" })<div id="successParam" class="notes" style="padding-left:10px; visibility:hidden; color:Red">Parameters Updated.</div></div>
+        <div class="ui-block-c notes">Enter parameters for this site.</div>
+    </div>   
+     
+    
+    <input type="hidden" id="SiteParams" name="SiteParameters" value="@Model.SiteParameters" />
+    <div id="ParamDialog" title="Add Parameters"></div>
+    
+    <br clear="all" />
+    <br />
+
+    <div id="formSubmitDiv" class="formSection">
+        <div class="leftSideSubmit">
+            <div class="cancelDiv"><div class="lightButtonBorder"><input id="resetButton" type="reset" class="cancel" value="Cancel" onclick="stopClick();" /></div></div>
+            <div class="submitDiv"><div class="darkButtonBorder"><input type="submit" name="Create" class="submit" value="Save" /></div></div>
+        </div>
+    </div>
+}
+   
+<script type="text/javascript">
+    $(document).ready(function () {
+        //validate form on and submit
+        $("#SiteEdit").validate({
+            rules: {
+                'aSite.NAME': "required",
+                'aSite.LATITUDE': "required",
+                'aSite.LONGITUDE': "required",
+                'aSite.COUNTRY': "required",
+                'aSite.STATE_PROVINCE': "required",
+                'aSite.LAKE_TYPE_ID': "required"
+            },
+            submitHandler: function (form) {
+                $("#loading").fadeIn();
+                form.submit();
+            }
+        });
+    
+
+        var res = $("#resourceIDs").val();
+        var resArray = res.split(',');
+        var med = $("#mediaIDs").val();
+        var medArray = med.split(',');
+        var frq = $("#frequencyIDs").val();
+        var freqArray = frq.split(',');
+        
+        $("#resourcesDD").multipleSelect("setSelects", resArray);
+        $("#mediaDD").multipleSelect("setSelects", medArray);
+        $("#frequencyDD").multipleSelect("setSelects", freqArray);
+
+    });
+    
+    function stopClick() {
+        //cancel from edit page, sent back to details
+        var id = $("#CatID").val();
+        var projectId = $("#CatProjId").val();
+        var answer = confirm("Continue without saving any changes?");
+        if (answer) {
+            $("#loading").fadeIn();
+            window.location.href = '@Url.Action("SiteDetails", "Site")' + "/" + id + "?projId=" + projectId;
+        }
+    }
+
+
+</script>

@@ -1,0 +1,238 @@
+﻿//------------------------------------------------------------------------------
+//----- StatusTypeHandler -----------------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2012 WiM - USGS
+
+//    authors:  Jeremy K. Newson USGS Wisconsin Internet Mapping
+//              
+//  
+//   purpose:   Handles media type resources through the HTTP uniform interface.
+//              Equivalent to the controller in MVC.
+//
+//discussion:   Handlers are objects which handle all interaction with resources in 
+//              this case the resources are POCO classes derived from the EF. 
+//               https://github.com/openrasta/openrasta/wiki/Handlers
+//
+//     
+#region Comments
+// 08.21.12 - jkn - Created
+#endregion
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+using LaMPServices.Authentication;
+using OpenRasta.Web;
+using OpenRasta.Security;
+
+namespace LaMPServices.Handlers
+{
+    public class StatusTypeHandler:HandlerBase
+    {
+        #region Routed Methods
+
+        #region GetMethods
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get()
+        {
+            List<STATUS_TYPE> statusTypes;
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    statusTypes = aLaMPRDS.STATUS_TYPE.OrderBy(s => s.STATUS_ID).ToList();
+                }//end using
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = statusTypes };
+        }//end httpMethod get
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get(Int32 statusTypeID)
+        {
+            STATUS_TYPE aStatusType;
+
+            //return BadRequest if ther is no ID
+            if (statusTypeID <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    aStatusType = aLaMPRDS.STATUS_TYPE.SingleOrDefault(s => s.STATUS_ID == statusTypeID);
+                }//end using
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = aStatusType };
+        }//end httpMethod get
+
+        #endregion
+
+        #region PostMethods
+        /// 
+        /// Force the user to provide authentication 
+        /// 
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.POST, ForUriName = "CreateStatusType")]
+        public OperationResult Post(STATUS_TYPE aStatusType)
+        {
+            //Return BadRequest if missing required fields
+            if (String.IsNullOrEmpty(aStatusType.STATUS))
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    decimal nextKey = 1;
+                    if (aLaMPRDS.STATUS_TYPE.Count() > 0)
+                    {
+                        nextKey = aLaMPRDS.STATUS_TYPE.OrderByDescending(s => s.STATUS_ID).First().STATUS_ID + 1;
+                    }
+
+                    //set ID
+                    aStatusType.STATUS_ID = nextKey;
+
+                    aLaMPRDS.STATUS_TYPE.AddObject(aStatusType);
+
+                    aLaMPRDS.SaveChanges();
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = aStatusType };
+        }//end Post
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.POST, ForUriName = "CreateStatusTypeList")]
+        public OperationResult Post(List<STATUS_TYPE> StatusTypes)
+        {
+            //Return BadRequest if missing required fields
+            if (StatusTypes.Count <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    decimal nextKey = 1;
+                    if (aLaMPRDS.STATUS_TYPE.Count() > 0)
+                    {
+                        nextKey = aLaMPRDS.STATUS_TYPE.OrderByDescending(s => s.STATUS_ID).First().STATUS_ID + 1;
+                    }
+
+                    foreach (STATUS_TYPE item in StatusTypes)
+                    {
+                        //update database ID
+                        item.STATUS_ID = nextKey;
+
+                        aLaMPRDS.STATUS_TYPE.AddObject(item);
+                        nextKey += 1;
+
+                    }//next item
+
+                    aLaMPRDS.SaveChanges();
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = StatusTypes };
+        }
+        #endregion
+
+        #region PutMethods
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.PUT, ForUriName = "UpdateStatusType")]
+        public OperationResult Post(Int32 statusTypeId, STATUS_TYPE instance)
+        {
+            //Return BadRequest if missing required fields
+            if ((statusTypeId <= 0))
+            {
+                return new OperationResult.BadRequest();
+            }
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    STATUS_TYPE ObjectToBeUpdated = aLaMPRDS.STATUS_TYPE.Single(s => s.STATUS_ID == statusTypeId);
+
+                    //Status
+                    ObjectToBeUpdated.STATUS = (string.IsNullOrEmpty(instance.STATUS) ?
+                        ObjectToBeUpdated.STATUS : instance.STATUS);
+
+                    aLaMPRDS.SaveChanges();
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = instance };
+        }
+
+
+        #endregion
+
+        #region DeleteMethods
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.DELETE, ForUriName = "DeleteStatusType")]
+        public OperationResult Post(Int32 statusTypeId)
+        {
+            //Return BadRequest if missing required fields
+            if (statusTypeId <= 0)
+            {return new OperationResult.BadRequest();}
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    STATUS_TYPE ObjectToBeDeleted = aLaMPRDS.STATUS_TYPE.Single(s => s.STATUS_ID == statusTypeId);
+
+                    //delete it
+                    aLaMPRDS.STATUS_TYPE.DeleteObject(ObjectToBeDeleted);
+                    aLaMPRDS.SaveChanges();
+
+                }// end using
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { };
+        }
+
+        #endregion
+
+        #endregion
+
+    }//end StatusTypeHandler
+}//end namespace

@@ -1,0 +1,177 @@
+﻿//------------------------------------------------------------------------------
+//----- SiteResource -----------------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2014 WiM - USGS
+
+//    authors:  Jeremy K. Newson USGS Wisconsin Internet Mapping
+//              Tonia Roddick USGS Wisconsin Internet Mapping
+//  
+//   purpose:   Site resources.
+//              Equivalent to the model in MVC.
+//
+//discussion:   Resources are plain-old CLR objects (POCO) the resources are POCO classes derived from the EF
+//              SiteResource contains additional rederers of the derived EF POCO classes. 
+//              https://github.com/openrasta/openrasta/wiki/Resources
+//
+//     
+
+#region Comments
+// 04.03.14 - tr - Created
+#endregion
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+using System.Xml.Serialization;
+
+namespace LaMPServices.Resources
+{
+    [XmlRoot("ArrayOfPROJECT")]
+    public class ProjectRes 
+    {
+        [XmlElement(typeof(decimal),
+        ElementName = "ProjId")]
+        public decimal ProjId { get; set; }
+
+        [XmlElement(typeof(string),
+        ElementName = "Name")]
+        public string Name { get; set; }
+
+        [XmlElement(typeof(decimal),
+        ElementName = "DataManagerID")]
+        public decimal DataManagerID { get; set; }
+
+        [XmlElement(typeof(string),
+        ElementName = "LName")]
+        public string LName { get; set; }
+
+        [XmlElement(typeof(string),
+        ElementName = "FName")]
+        public string FName { get; set; }
+
+        [XmlElement(typeof(string),
+        ElementName = "ManagerOrg")]
+        public string ManagerOrg { get; set; }
+
+        [XmlElement(typeof(DateTime),
+        ElementName = "StartDate")]
+        public DateTime? StartDate { get; set; }
+        public bool ShouldSerializeStartDate()
+        { return StartDate.HasValue; }
+
+        [XmlElement(typeof(decimal?),
+        ElementName = "SiteCount")]
+        public decimal? SiteCount { get; set; }
+        public bool ShouldSerializeSiteCount()
+        { return SiteCount.HasValue; }
+        
+        //[XmlElement(typeof(DateTime),
+        //ElementName = "EndDate")]
+        //public DateTime? EndDate { get; set; }
+        //public bool ShouldSerializeEndDate()
+        //{ return EndDate.HasValue; }    
+    }    
+
+    [XmlRoot("PROJECT")]
+    public class ExistingProject: PROJECT
+    {
+        public Boolean EXISTS { get; set; }
+
+        public ExistingProject()
+            : base() { 
+        }
+        public ExistingProject(PROJECT p)
+            : this()
+        {
+            this.PROJECT_ID = p.PROJECT_ID;
+            this.NAME = p.NAME;
+            this.ADDITIONAL_INFO = p.ADDITIONAL_INFO;
+            this.DATA_MANAGER_ID = p.DATA_MANAGER_ID;
+            this.DESCRIPTION = p.DESCRIPTION;
+            this.END_DATE = p.END_DATE;
+            this.START_DATE = p.START_DATE;
+            this.URL = p.URL;
+            this.EXISTS = true;
+        }
+    }
+
+    public class FullProject
+    {
+        [XmlElement(typeof(decimal),
+        ElementName = "ProjectId")]
+        public decimal ProjectId { get; set; }
+
+        [XmlElement(typeof(string),
+        ElementName = "ScienceBaseId")]
+        public string ScienceBaseId { get; set; }
+
+        [XmlElement(typeof(string),
+        ElementName = "Name")]
+        public string Name { get; set; }
+
+        [XmlElement(typeof(string),
+        ElementName = "StartDate")]
+        public string StartDate { get; set; }
+
+        [XmlElement(typeof(string),
+        ElementName = "EndDate")]
+        public string EndDate { get; set; }
+
+        [XmlElement(typeof(decimal),
+        ElementName = "DataManagerId")]
+        public decimal DataManagerId { get; set; }
+        
+        [XmlElement(typeof(string),
+        ElementName = "Description")]
+        public string Description { get; set; }
+
+        [XmlElement(typeof(List<OBJECTIVE_TYPE>),
+        ElementName = "Objectives")]
+        public List<OBJECTIVE_TYPE> Objectives { get; set; }
+
+        [XmlElement(typeof(List<KEYWORD>),
+        ElementName = "Keywords")]
+        public List<KEYWORD> Keywords { get; set; }
+        
+        [XmlElement(typeof(string),
+        ElementName = "ProjectWebsite")]
+        public string ProjectWebsite { get; set; }
+
+        [XmlElement(typeof(DataHostModel),
+        ElementName = "DataHost")]
+        public DataHostModel DataHost { get; set; }
+
+        [XmlElement(typeof(List<OrganizationResource>),
+        ElementName = "Organizations")]
+        public List<OrganizationResource> Organizations { get; set; }
+
+        [XmlElement(typeof(List<ContactModel>),
+        ElementName = "Contacts")]
+        public List<ContactModel> Contacts { get; set; }
+
+        [XmlElement(typeof(List<PUBLICATION>),
+        ElementName = "Publications")]
+        public List<PUBLICATION> Publications { get; set; }
+        
+    }
+
+    public class DataHostModel
+    {
+        public decimal ID { get; set; }
+        public string onlineDataLocation { get; set; }
+        public string description { get; set; }
+        public string name { get; set; }
+
+    }
+}//end namespace
+
+
+
+
+

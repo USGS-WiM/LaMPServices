@@ -1,0 +1,955 @@
+﻿//------------------------------------------------------------------------------
+//----- ProjectController.cs-----------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2013 WiM - USGS
+
+//    authors:  Tonia Roddick USGS Wisconsin Internet Mapping
+//              
+//  
+//   purpose:   Display master pages
+//
+//discussion:   
+//
+//     
+
+#region Comments
+// 03.05.13 - TR - added partial views for Organizations and keyword
+// 02.28.13 - TR - hooked into services
+// 02.21.13 - TR - Created 
+#endregion
+
+
+using System;
+using System.Collections.Generic;
+using System.Data.Objects.DataClasses;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+using System.Text.RegularExpressions;
+
+using LaMPWeb.Utilities;
+using RestSharp;
+
+using LaMPServices;
+using LaMPServices.Resources;
+using LaMPWeb.Models;
+using LaMPWeb.Helpers;
+
+namespace LaMPWeb.Controllers
+{
+    [Authorize]
+    [RequireSSL]
+    public class ProjectController : Controller
+    {  
+        //
+        // GET: Project create page
+        public ActionResult ProjectCreate()
+        {
+            List<ORGANIZATION> ListOrganizations = GetAllOrganizations();
+
+            ViewData["organizations"] = (ListOrganizations).GroupBy(x => x.NAME).Select(x => x.First()).OrderBy(x => x.NAME).ToList();
+            ViewData["objectives"] = GetAllObjectives();
+            ViewData["ProjDurations"] = GetAllProjDurations();
+            ViewData["ProjStatuses"] = GetAllProjStats();
+
+            return View();
+        }
+
+        //
+        //POST: Post first page of project create and send to contact info page
+        [HttpPost]
+        public ActionResult ProjectCreate(ProjectModel pm, string Create)
+        {
+            try
+            {
+                LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+                var request = new RestRequest(Method.POST);
+
+                //POST to Project
+                PROJECT newProject = pm.project;
+
+                request.Resource = "/projects/";
+                request.RequestFormat = DataFormat.Xml;
+                request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+                request.AddBody(newProject);
+                PROJECT postedProject = serviceCaller.Execute<PROJECT>(request);
+
+                //POST to ProjectOrgs 
+                List<ORGANIZATION> projOrganizations = new List<ORGANIZATION>();
+                if (pm.projOrgs != "" && pm.projOrgs != null)
+                {
+                    //parse
+                    string[] orgs = Regex.Split(pm.projOrgs, ",");
+                    foreach (string o in orgs)
+                    {
+                        if (o != "")
+                        {
+                            request = new RestRequest();
+                            request.Resource = "/organizations/{organizationId}";
+                            request.RootElement = "ORGANIZATION";
+                            request.AddParameter("organizationId", o, ParameterType.UrlSegment);
+                            ORGANIZATION thisOrganization = serviceCaller.Execute<ORGANIZATION>(request);
+
+                            //now post it to the project
+                            request = new RestRequest(Method.POST);
+                            request.Resource = "/projects/{projectId}/AddOrganization";
+                            request.AddParameter("projectId", postedProject.PROJECT_ID, ParameterType.UrlSegment);
+                            request.RequestFormat = DataFormat.Xml;
+                            request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+                            request.AddBody(thisOrganization);
+                            projOrganizations = serviceCaller.Execute<List<ORGANIZATION>>(request);
+                        }
+                    }    
+                }
+                
+                //POST to ProjectObjective 
+                List<OBJECTIVE_TYPE> projObjectives = new List<OBJECTIVE_TYPE>();
+
+                //parse, get the object, post it to the project
+                if (pm.projObjectives != null && pm.projObjectives != "")
+                {
+                    string[] objs = Regex.Split(pm.projObjectives, ",");
+                    foreach (string ob in objs)
+                    {
+                        if (ob != "")
+                        {
+                            request = new RestRequest();
+                            request.Resource = "/objectives/{objectiveId}";
+                            request.RootElement = "OBJECTIVE_TYPE";
+                            request.AddParameter("objectiveId", ob, ParameterType.UrlSegment);
+                            OBJECTIVE_TYPE thisObjective = serviceCaller.Execute<OBJECTIVE_TYPE>(request);
+
+                            //now post it to the project
+                            request = new RestRequest(Method.POST);
+                            request.Resource = "/projects/{projectId}/addObjective";
+                            request.AddParameter("projectId", postedProject.PROJECT_ID, ParameterType.UrlSegment);
+                            request.RequestFormat = DataFormat.Xml;
+                            request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+                            request.AddBody(thisObjective);
+                            projObjectives = serviceCaller.Execute<List<OBJECTIVE_TYPE>>(request);
+                        }
+                    }
+                }
+
+                //POST to ProjectKeywords 
+                if (pm.projKeywords != null && pm.projKeywords != "")
+                {
+                    //parse and add array value to a list<string>
+                    string[] keys = Regex.Split(pm.projKeywords, ",");
+                    List<KEYWORD> keywordList = new List<KEYWORD>();
+                    foreach (string k in keys)
+                    {
+                        KEYWORD newKeyword = new KEYWORD();
+                        newKeyword.TERM = k;
+                        request = new RestRequest(Method.POST);
+                        request.Resource = "/projects/{projectId}/addKeyword";
+                        request.AddParameter("projectId", postedProject.PROJECT_ID, ParameterType.UrlSegment);
+                        request.RequestFormat = DataFormat.Xml;
+                        request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+                        request.AddBody(newKeyword);
+                        keywordList = serviceCaller.Execute<List<KEYWORD>>(request);
+                    }
+                }
+
+                //update project and site counts
+                request = new RestRequest();
+                request.Resource = "/dataManagers/{dataManagerId}/projects";
+                request.RootElement = "ArrayOfPRODUCT";
+                request.AddParameter("dataManagerId", postedProject.DATA_MANAGER_ID, ParameterType.UrlSegment);
+                List<PROJECT> ProjList = serviceCaller.Execute<List<PROJECT>>(request);
+
+                if (ProjList.Count > 0)
+                {
+                    Session["TotProj"] = String.Format("{0:n0}", ProjList.Count());
+                }
+                
+                if (Create == "Save & Go To\r\nProject Details")
+                {
+                    return RedirectToAction("ProjectDetails", new { id = postedProject.PROJECT_ID });
+                }
+                else //submit and go to contacts
+                {
+                    return RedirectToAction("ContactCreate", "Contact", new { id = postedProject.PROJECT_ID, From = "Summary" });
+                }
+            }
+            catch
+            {
+                return View();
+            }
+        }
+
+        //GET: ProjectDetails
+        public ActionResult ProjectDetails(int id)
+        {
+            PROJECT thisProject = GetThisProject(id);
+
+            //parse out urls 
+            if (thisProject.URL != null)
+            {
+                if (thisProject.URL.Contains("|"))
+                {
+                    ViewData["eachURLarray"] = Regex.Split(thisProject.URL, "|");
+                }
+            }
+
+            //get all the organizations for this project
+            ViewData["projOrgs"] = GetProjOrganizations(id);
+
+            ViewData["projDuration"] = GetProjDuration(id);
+            ViewData["projStatus"] = GetProjStatus(id);
+
+            //get all objectives for this project
+            List<OBJECTIVE_TYPE> Objectives = GetProjObjectives(id);
+            if (Objectives.Count >= 1)
+            { ViewData["projObjectives"] = Objectives; }
+
+            //get all keywords for this project
+            List<KEYWORD> Keywords = GetProjKeywords(id);
+            if (Keywords.Count >= 1)
+            { ViewData["projKeywords"] = GetProjKeywords(id); }
+
+            //get data host for this project
+            List<DATA_HOST> DataHosts = GetProjDataHost(id);
+            if (DataHosts.Count >= 1)
+            { ViewData["dataHost"] = DataHosts; }
+
+            //get the manager for this project if admin is logged in
+            string thisRole = GetUserRole(User.Identity.Name);
+            if (thisRole == "Admin")
+            {
+                LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+                var request = new RestRequest();
+                request.Resource = "/dataManagers/{dataManagerId}";
+                request.RootElement = "DATA_MANAGER";
+                request.AddParameter("dataManagerId", thisProject.DATA_MANAGER_ID, ParameterType.UrlSegment);
+                DATA_MANAGER thisGuy = serviceCaller.Execute<DATA_MANAGER>(request);
+
+                ViewData["DataManager"] = thisGuy.FNAME + " " + thisGuy.LNAME;
+            }
+            ViewData["Role"] = thisRole;
+
+            return View("ProjectDetails", thisProject);
+        }
+    
+        //Get: edit page for a project
+        public ActionResult ProjectEdit(int id)
+        {
+            string thisRole = GetUserRole(User.Identity.Name);
+            if (thisRole == "Admin")
+            {
+                //get all the data managers in case they want to reassign
+                ViewData["DataManagers"] = GetAllDataManagers();
+            }
+            ViewData["Role"] = thisRole;
+
+            PROJECT thisProject = GetThisProject(id);
+            if (!string.IsNullOrEmpty(thisProject.URL))
+            {
+                if (thisProject.URL.Contains("|"))
+                {
+                    //multiple urls
+                    ViewData["eachURLarray"] = Regex.Split(thisProject.URL, "|");
+                }
+                else
+                {
+                    //only 1 url
+                    string[] oneUrlArray = new string[1];
+                    oneUrlArray[0] = thisProject.URL;
+                    ViewData["eachURLarray"] = oneUrlArray;
+                }
+            }
+
+            ProjectModel newProjModel = new ProjectModel();
+
+            //get all the organizations for this project and all the orgs for the dropdown
+            List<ORGANIZATION> allOrgs = GetAllOrganizations();
+            ViewData["organizations"] = allOrgs.GroupBy(x => x.NAME).Select(x => x.First()).OrderBy(x => x.NAME).ToList();
+            
+            List<ORGANIZATION> projOrgs = GetProjOrganizations(id);
+            if (projOrgs != null && projOrgs.Count >= 1)
+                ViewData["projOrgs"] = projOrgs;
+
+            
+            //get all objectives for this project and all Objectives for dropdown
+            ViewData["AllObjectives"] = GetAllObjectives();
+            List<OBJECTIVE_TYPE> Objectives = GetProjObjectives(id);
+            //List<decimal> allObjectives = new List<decimal>();
+            string allObjectives = string.Empty;
+            string trimmedObjectives = string.Empty;
+            if (Objectives.Count >= 1)
+            { 
+                //for (int i; i >= Objectives.Count; i++)
+                foreach (OBJECTIVE_TYPE ot in Objectives)
+                {
+                    allObjectives += ot.OBJECTIVE_TYPE_ID + ",";                    
+                }
+
+                trimmedObjectives = allObjectives.TrimEnd(',', ' ');
+                ViewData["projObjectives"] = Objectives;
+                ViewData["ProjObjIDS"] = allObjectives;
+            }
+
+            //get all keywords for this project
+            List<KEYWORD> Keywords = GetProjKeywords(id);
+            string allKeywords = string.Empty;
+            string trimmedKeywords = string.Empty;
+            if (Keywords.Count >= 1)
+            {
+                foreach (KEYWORD k in Keywords)
+                {
+                    allKeywords += k.TERM + ",";
+                }
+                
+                trimmedKeywords = allKeywords.TrimEnd(',', ' ');
+                ViewData["projKeywords"] = Keywords;
+            }
+
+            newProjModel.project = thisProject;
+
+            newProjModel.projKeywords = trimmedKeywords;
+            newProjModel.projObjectives = trimmedObjectives;
+            ViewData["ProjDurations"] = GetAllProjDurations();
+            ViewData["ProjStatuses"] = GetAllProjStats();
+
+            //separate websites
+
+            return View(newProjModel);
+        }
+
+        //POST The edit
+        [HttpPost]
+        public ActionResult ProjectEdit(int id, ProjectModel thisProject)
+        {
+            try
+            {
+                LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+                var request = new RestRequest(Method.POST);
+
+                //PUT to Project
+                PROJECT editingProj = thisProject.project;
+
+                request.Resource = "/projects/{projectId}";
+                request.RequestFormat = DataFormat.Xml;
+                request.AddParameter("projectId", id, ParameterType.UrlSegment);
+                request.AddHeader("X-HTTP-Method-Override", "PUT");
+                request.AddHeader("Content-Type", "application/xml");
+                request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+                request.AddBody(editingProj);
+                PROJECT updatedProj = serviceCaller.Execute<PROJECT>(request);
+
+                //ProjectOrgs - remove those from "OrgIDsRemoved", then add all those in "OrgIDs"
+                //remove first
+                if (!string.IsNullOrWhiteSpace(thisProject.projOrgsToRemove))
+                {
+                    //parse
+                    string[] RemoveOrgs = Regex.Split(thisProject.projOrgsToRemove, ",").ToArray();
+                    foreach (string ro in RemoveOrgs)
+                    {
+                        if (!string.IsNullOrWhiteSpace(ro))
+                        {
+                            ORGANIZATION thisOrg = GetAnOrganization(Convert.ToDecimal(ro));
+
+                            if (thisOrg != null)
+                            {
+                                //now remove it from the project
+                                request = new RestRequest(Method.POST);
+                                request.Resource = "/projects/{projectId}/RemoveOrganization";
+                                request.AddParameter("projectId", updatedProj.PROJECT_ID, ParameterType.UrlSegment);
+                                request.AddHeader("X-HTTP-Method-Override", "DELETE");
+                                request.AddHeader("Content-Type", "application/xml");
+                                request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+                                request.AddBody(thisOrg);
+                                serviceCaller.Execute<ORGANIZATION>(request);
+                            }
+                        }
+                    }
+                }
+                
+                //now make sure all the ones in the projOrgs are attached to the project 
+                List<ORGANIZATION> projOrganizations = new List<ORGANIZATION>();
+                if (!string.IsNullOrWhiteSpace(thisProject.projOrgs))
+                {
+                    //parse
+                    string[] orgs = Regex.Split(thisProject.projOrgs, ",").ToArray();
+                    foreach (string o in orgs)
+                    {
+                        if (!string.IsNullOrWhiteSpace(o))
+                        {
+                            ORGANIZATION thisOrganization = GetAnOrganization(Convert.ToDecimal(o));
+                            
+                            if (thisOrganization != null)
+                            {
+                                //now post it to the project
+                                request = new RestRequest(Method.POST);
+                                request.Resource = "/projects/{projectId}/AddOrganization";
+                                request.AddParameter("projectId", updatedProj.PROJECT_ID, ParameterType.UrlSegment);
+                                request.RequestFormat = DataFormat.Xml;
+                                request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+                                request.AddBody(thisOrganization);
+                                projOrganizations = serviceCaller.Execute<List<ORGANIZATION>>(request);
+                            }
+                        }
+                    }
+                }
+                /////////////////////////
+                //Proj Objectives - add all those in "projObjectives"
+                //get all the Objectives that were on this proj.. remove them all, then go through and add the ones passed
+                request = new RestRequest();
+                request.Resource = "/projects/{projectId}/objectives";
+                request.RootElement = "ArrayOfOBJECTIVE_TYPE";
+                request.AddParameter("projectId", thisProject.project.PROJECT_ID, ParameterType.UrlSegment);
+                List<OBJECTIVE_TYPE> objectives = serviceCaller.Execute<List<OBJECTIVE_TYPE>>(request);
+
+                //remove first
+                if (objectives != null)
+                {
+                    foreach (OBJECTIVE_TYPE ot in objectives)
+                    {
+                        request = new RestRequest(Method.POST);
+                        request.Resource = "/projects/{projectId}/removeObjective";
+                        request.AddParameter("projectId", thisProject.project.PROJECT_ID, ParameterType.UrlSegment);
+                        request.AddHeader("X-HTTP-Method-Override", "DELETE");
+                        request.AddHeader("Content-Type", "application/xml");
+                        request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+                        request.AddBody(ot);
+                        serviceCaller.Execute<OBJECTIVE_TYPE>(request);
+                    }
+                }
+
+                //now POST to ProjectObjective 
+                List<OBJECTIVE_TYPE> projObjectives = new List<OBJECTIVE_TYPE>();
+                //parse, get the object, post it to the project
+                if (!string.IsNullOrWhiteSpace(thisProject.projObjectives))
+                {
+                    string[] objs = Regex.Split(thisProject.projObjectives, ",");
+                    foreach (string ob in objs)
+                    {
+                        if (!string.IsNullOrWhiteSpace(ob))
+                        {
+                            OBJECTIVE_TYPE thisObjective = GetAnObjective(Convert.ToDecimal(ob));
+
+                            //now post it to the project
+                            if (thisObjective != null)
+                            {
+                                request = new RestRequest(Method.POST);
+                                request.Resource = "/projects/{projectId}/addObjective";
+                                request.AddParameter("projectId", updatedProj.PROJECT_ID, ParameterType.UrlSegment);
+                                request.RequestFormat = DataFormat.Xml;
+                                request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+                                request.AddBody(thisObjective);
+                                projObjectives = serviceCaller.Execute<List<OBJECTIVE_TYPE>>(request);
+                            }
+                        }
+                    }
+                }
+
+                //Remove/Post to ProjectKeywords 
+                //1. get all keywords by term to remove, remove them
+                if (!string.IsNullOrWhiteSpace(thisProject.projKeywordsToRemove))
+                {
+                    string[] keysToRemove = Regex.Split(thisProject.projKeywordsToRemove, ",");
+                    foreach (string k in keysToRemove)
+                    {
+                        if (!string.IsNullOrWhiteSpace(k))
+                        {
+                            KEYWORD thisKeyword = GetAKeyword(k);
+                            if (thisKeyword != null)
+                            {
+                                //remove it
+                                request = new RestRequest(Method.POST);
+                                request.Resource = "/projects/{projectId}/removeKeyword";
+                                request.AddParameter("projectId", updatedProj.PROJECT_ID, ParameterType.UrlSegment);
+                                request.AddHeader("X-HTTP-Method-Override", "DELETE");
+                                request.AddHeader("Content-Type", "application/xml");
+                                request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+                                request.AddBody(thisKeyword);
+                                serviceCaller.Execute<KEYWORD>(request);
+                            }
+                        }
+                    }
+                }
+                
+                //2. get all keywords by term to add, if null, create it, then post them
+                List<KEYWORD> projKeywords = new List<KEYWORD>();
+                if (!string.IsNullOrWhiteSpace(thisProject.projKeywords))
+                {
+                    string[] keysToAdd = Regex.Split(thisProject.projKeywords, ",");
+                    foreach (string keyword in keysToAdd)
+                    {
+                        if (!string.IsNullOrWhiteSpace(keyword))
+                        {
+                            KEYWORD thisKeyword = GetAKeyword(keyword);
+                            if (thisKeyword == null)
+                            {
+                                //create one
+                                thisKeyword = new KEYWORD();
+                                thisKeyword.TERM = keyword;
+                            }
+                            //add it
+                            request = new RestRequest(Method.POST);
+                            request.Resource = "/projects/{projectId}/addKeyword";
+                            request.AddParameter("projectId", updatedProj.PROJECT_ID, ParameterType.UrlSegment);
+                            request.RequestFormat = DataFormat.Xml;
+                            request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+                            request.AddBody(thisKeyword);
+                            projKeywords = serviceCaller.Execute<List<KEYWORD>>(request);
+                        }
+                    }
+                }
+
+                return RedirectToAction("ProjectDetails", new { id = updatedProj.PROJECT_ID });
+            }
+            catch (Exception e)
+            {
+                return View(e.ToString());
+            }
+        }
+
+        [HttpPost]
+        public ActionResult ProjectDelete(int id)
+        {
+            try
+            {
+                LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+                
+                //get the dm
+                var request = new RestRequest();
+                request.Resource = "/projects/{projectId}/dataManager";
+                request.RootElement = "DATA_MANAGER";
+                request.AddParameter("projectId", id, ParameterType.UrlSegment);
+                DATA_MANAGER thisDM = serviceCaller.Execute<DATA_MANAGER>(request);
+                
+                request = new RestRequest(Method.POST);
+                request.Resource = "Projects/{projectId}";
+                request.AddParameter("projectId", id, ParameterType.UrlSegment);
+                request.AddHeader("X-HTTP-Method-Override", "DELETE");
+                request.AddHeader("Content-Type", "application/xml");
+                serviceCaller.Execute<PROJECT>(request);
+
+                //update project and site counts
+                request = new RestRequest();
+                request.Resource = "/dataManagers/{dataManagerId}/projects";
+                request.RootElement = "ArrayOfPRODUCT";
+                request.AddParameter("dataManagerId", thisDM.DATA_MANAGER_ID, ParameterType.UrlSegment);
+                List<PROJECT> ProjList = serviceCaller.Execute<List<PROJECT>>(request);
+
+                if (ProjList.Count > 0)
+                {
+                    Session["TotProj"] = String.Format("{0:n0}", ProjList.Count());
+                    //Session["TotSites"] = String.Format("{0:n0}", ProjSiteCts.SitesCount);
+                }
+                
+                return RedirectToAction("Index", "Home");
+            }
+            catch
+            {
+                return View();
+            }
+        }
+
+        [HttpPost]
+        public JsonResult ProjectFlag(int flag, int projectId)
+        {
+            PROJECT thisProject = GetThisProject(projectId);
+            
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest(Method.POST);
+
+            request.Resource = "/projects/{projectId}?Flag={flag}";
+            request.RequestFormat = DataFormat.Xml;
+            request.AddParameter("flag", flag, ParameterType.UrlSegment);
+            request.AddParameter("projectId", projectId, ParameterType.UrlSegment);
+            request.AddHeader("X-HTTP-Method-Override", "PUT");
+            request.AddHeader("Content-Type", "application/xml");
+            request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+            request.AddBody(thisProject);
+            PROJECT updatedProj = serviceCaller.Execute<PROJECT>(request);
+
+            //get all sites for this project
+
+            if (updatedProj != null)
+            {
+                return Json("success");
+            }
+            else
+            {
+                return Json("NotGood");
+            }
+        }
+
+        [HttpPost]
+        public ActionResult ScienceBaseDelete(int id)
+        {
+            try
+            {
+                LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+                var request = new RestRequest(Method.POST);
+
+                request.Resource = "Projects/{dataManagerId}/DeleteAllDMProjects";
+                request.AddParameter("dataManagerId", id, ParameterType.UrlSegment);
+                request.AddHeader("X-HTTP-Method-Override", "DELETE");
+                request.AddHeader("Content-Type", "application/xml");
+                serviceCaller.Execute<PROJECT>(request);
+
+                return RedirectToAction("Index", "Home");
+            }
+            catch
+            {
+                return View();
+            }
+        }
+        public ActionResult Review()
+        {
+            return View();
+        }
+
+        //add organization to dropdown list when checkbox click input text add
+        [HttpPost]
+        public JsonResult AddOrganization(string newOrgName)
+        {
+
+            ORGANIZATION newOrg = new ORGANIZATION();
+            newOrg.NAME = newOrgName;
+            newOrg.DIVISION = "";
+            newOrg.SECTION = "";
+
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest(Method.POST);
+            request.Resource = "organizations/";
+            request.RequestFormat = DataFormat.Xml;
+            request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+            request.AddBody(newOrg);
+            ORGANIZATION createdOrg = serviceCaller.Execute<ORGANIZATION>(request);
+
+            List<ORGANIZATION> Organizations = GetAllOrganizations().GroupBy(x => x.NAME).Select(x => x.First()).OrderBy(x => x.NAME).ToList(); ;
+
+            return Json(Organizations);
+        }
+
+        //add division (checkbox)
+        public JsonResult AddDivision(string OrgName, string DivName)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+
+            ORGANIZATION newOrg = new ORGANIZATION();
+
+            newOrg.NAME = OrgName;
+            newOrg.DIVISION = DivName;
+            newOrg.SECTION = "";
+
+            var request = new RestRequest(Method.POST);
+            request.Resource = "organizations/";
+            request.RequestFormat = DataFormat.Xml;
+            request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+            request.AddBody(newOrg);
+            ORGANIZATION createdOrg = serviceCaller.Execute<ORGANIZATION>(request);
+
+            var Divisions = GetDivisionsList(OrgName);
+
+            return Json(Divisions);
+        }
+
+        //add Section (checkbox)
+        public JsonResult AddSection(string OrgName, string SecName, string DivName)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+
+            //List<ORGANIZATION> AllOrgs = GetAllOrganizations();
+            //ORGANIZATION thisOrg = AllOrgs.FirstOrDefault(o => o.DIVISION == DivName && o.SHORTNAME.Contains(OrgSN));
+            // 
+            ORGANIZATION newOrg = new ORGANIZATION();
+
+            newOrg.NAME = OrgName;
+            newOrg.DIVISION = DivName;
+            newOrg.SECTION = SecName;
+
+            var request = new RestRequest(Method.POST);
+            request.Resource = "organizations/";
+            request.RequestFormat = DataFormat.Xml;
+            request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+            request.AddBody(newOrg);
+            serviceCaller.Execute<ORGANIZATION>(request);
+
+            var Sections = GetSectionsList(DivName);
+
+            return Json(Sections);
+
+        }
+
+        
+        //GET: get this particular project based on id
+        public PROJECT GetThisProject(int id)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/projects/{projectId}";
+            request.RootElement = "projects";
+            request.AddParameter("projectId", id, ParameterType.UrlSegment);
+            PROJECT thisProject = serviceCaller.Execute<PROJECT>(request);
+            return thisProject;
+        }
+
+        //GET: get the project Organizations
+        public List<ORGANIZATION> GetProjOrganizations(int id)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/projects/{projectId}/organizations";
+            request.RootElement = "ArrayOfORGANIZATION";
+            request.AddParameter("projectId", id, ParameterType.UrlSegment);
+            List<ORGANIZATION> projOrgs = serviceCaller.Execute<List<ORGANIZATION>>(request);
+            return projOrgs;
+        }
+
+        //GET: get organization by shortname
+        public ORGANIZATION GetOrgByShortName(string name)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/organizations?shortname={shortName}";
+            request.RootElement = "organization";
+            request.AddParameter("shortName", name, ParameterType.UrlSegment);
+            ORGANIZATION thisOne = serviceCaller.Execute<ORGANIZATION>(request);
+            return thisOne;
+        }
+        
+        //GET: get the project objectives
+        public List<OBJECTIVE_TYPE> GetProjObjectives(int id)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/projects/{projectId}/objectives";
+            request.RootElement = "ArrayOfOBJECTIVE_TYPE";
+            request.AddParameter("projectId", id, ParameterType.UrlSegment);
+            List<OBJECTIVE_TYPE> projObjs = serviceCaller.Execute<List<OBJECTIVE_TYPE>>(request);
+            return projObjs;
+        }
+
+        //GET: get the project keywords
+        public List<KEYWORD> GetProjKeywords(int id)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/projects/{projectId}/keywords";
+            request.RootElement = "ArrayOfKEYWORD";
+            request.AddParameter("projectId", id, ParameterType.UrlSegment);
+            List<KEYWORD> projKeywords = serviceCaller.Execute<List<KEYWORD>>(request);
+            return projKeywords;
+        }
+
+        //GET: get project datahost
+        public List<DATA_HOST> GetProjDataHost(int id)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/projects/{projectId}/dataHosts";
+            request.RootElement = "ArrayOfDATA_HOST";
+            request.AddParameter("projectId", id, ParameterType.UrlSegment);
+            List<DATA_HOST> projDataHost = serviceCaller.Execute<List<DATA_HOST>>(request);
+            return projDataHost;
+        }
+
+       
+        //GET: get an organization containing incoming shortname, then narrow down to correct one based on
+        // section and division, so correct shortname is shown in textarea of organization popup (on project summary)
+        public JsonResult GetOrganization(string org, string div, string sec)
+        {
+            ORGANIZATION thisOrg = new ORGANIZATION();
+            if (sec != null && sec != "0" && sec != "")
+            {
+                thisOrg = GetAnOrganization(Convert.ToInt32(sec));
+            }
+            else if (div != null && div != "0" && div != "")
+            {
+                thisOrg = GetAnOrganization(Convert.ToInt32(div));
+            }
+            else
+            {
+                thisOrg = GetAnOrganization(Convert.ToInt32(org));
+            }
+            
+            return Json(thisOrg, JsonRequestBehavior.AllowGet);
+        }
+        
+        //GET: Get a list of the divisions to return to populate division dropdown based on organization selection
+        public JsonResult GetDivisionsList(string name)
+        {
+            List<ORGANIZATION> OrganizationList = GetAllOrganizations();
+            List<ORGANIZATION> holderList = new List<ORGANIZATION>();
+            List<ORGANIZATION> OrgDivisionsList = new List<ORGANIZATION>();
+
+            //get organizations that have incoming name to show org divisions
+            holderList = OrganizationList.Where(ol => ol.NAME == name).ToList();
+            OrgDivisionsList = (holderList).GroupBy(dl => dl.DIVISION).Select(x => x.First()).ToList();
+
+            return Json(OrgDivisionsList);
+        }
+
+        //GET: Get a list of the Sections to return to populate sections dropdown based on division selection
+        public JsonResult GetSectionsList(string name)
+        {
+            List<ORGANIZATION> OrganizationList = GetAllOrganizations();
+            List<ORGANIZATION> holderList = new List<ORGANIZATION>();
+            List<ORGANIZATION> DivSectionList = new List<ORGANIZATION>();
+
+            //get organizations that have incoming name to show org divisions
+            holderList = OrganizationList.Where(ol => ol.DIVISION == name).ToList();
+            //need to return both so that section will show a null and a value options???
+            DivSectionList = (holderList).GroupBy(dl => dl.SECTION).Select(x => x.First()).ToList();
+
+            return Json(DivSectionList);
+        }
+
+        public List<ORGANIZATION> GetAllOrganizations()
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "organizations";
+            request.RootElement = "ArrayOfORGANIZATION";
+            List<ORGANIZATION> organizationList = serviceCaller.Execute<List<ORGANIZATION>>(request);
+
+            return organizationList;
+        }
+
+        public ORGANIZATION GetAnOrganization(decimal? id)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "organizations/{orgId}";
+            request.RootElement = "organization";
+            request.AddParameter("orgId", id, ParameterType.UrlSegment);
+            ORGANIZATION thisOrg = serviceCaller.Execute<ORGANIZATION>(request);
+            return thisOrg;
+        }
+
+        public OBJECTIVE_TYPE GetAnObjective(decimal? id)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/objectives/{objectiveId}";
+            request.RootElement = "OBJECTIVE_TYPE";
+            request.AddParameter("objectiveId", id, ParameterType.UrlSegment);
+            OBJECTIVE_TYPE thisObj = serviceCaller.Execute<OBJECTIVE_TYPE>(request);
+            return thisObj;
+        }
+
+        public KEYWORD GetAKeyword(string term)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/keywords?term={term}";
+            request.RootElement = "KEYWORD";
+            request.AddParameter("term", term, ParameterType.UrlSegment);
+            KEYWORD thisKey = serviceCaller.Execute<KEYWORD>(request);
+            return thisKey;
+        }
+
+        public List<KEYWORD> GetAllKeywords()
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "keywords";
+            request.RootElement = "ArrayOfKEYWORD";
+            List<KEYWORD> keywordList = serviceCaller.Execute<List<KEYWORD>>(request);
+
+            return keywordList;
+        }
+
+        public List<OBJECTIVE_TYPE> GetAllObjectives()
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "objectives";
+            request.RootElement = "ArrayOfOBJECTIVE_TYPE";
+            List<OBJECTIVE_TYPE> objectiveList = serviceCaller.Execute<List<OBJECTIVE_TYPE>>(request);
+            objectiveList = objectiveList.OrderBy(x => x.OBJECTIVE).ToList();
+            return objectiveList;
+        }
+
+        private object GetProjStatus(int id)
+        {
+            string status_value = string.Empty;
+
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/Projects/{projectId}/projStatus";
+            request.RootElement = "PROJ_STATUS";
+            request.AddParameter("projectId", id, ParameterType.UrlSegment);
+            PROJ_STATUS ProjStat = serviceCaller.Execute<PROJ_STATUS>(request);
+            status_value = ProjStat != null ? ProjStat.STATUS_VALUE : "";
+
+            return status_value;
+        }
+
+        private object GetProjDuration(int id)
+        {
+            string duration_value = string.Empty;
+
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/Projects/{projectId}/projDuration";
+            request.RootElement = "PROJ_DURATION";
+            request.AddParameter("projectId", id, ParameterType.UrlSegment);
+            PROJ_DURATION ProjDuration = serviceCaller.Execute<PROJ_DURATION>(request);
+            duration_value = ProjDuration != null ? ProjDuration.DURATION_VALUE : "";
+
+            return duration_value;
+        }
+
+        private string GetUserRole(string username)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/dataManagers?username={userName}";
+            request.RootElement = "DATA_MANAGER";
+            request.AddParameter("userName", username, ParameterType.UrlSegment);
+            DATA_MANAGER thisDM = serviceCaller.Execute<DATA_MANAGER>(request);
+            int loggedInMember = Convert.ToInt32(thisDM.ROLE_ID);
+            
+            switch (loggedInMember)
+            {
+                case 1: return "Admin"; 
+                case 2: return "Manager";
+                case 3: return "Public";
+                default: return "error"; 
+            }
+
+        }
+
+        private List<DATA_MANAGER> GetAllDataManagers()
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/dataManagers";
+            request.RootElement = "ArrayOfDATA_MANAGER";
+            List<DATA_MANAGER> allDMs = serviceCaller.Execute<List<DATA_MANAGER>>(request);
+            allDMs = allDMs.OrderBy(x => x.LNAME).ToList();
+            return allDMs;
+        }
+
+        private object GetAllProjStats()
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/ProjectStatus";
+            request.RootElement = "ArrayOfPROJ_STATUS";
+            List<PROJ_STATUS> allStats = serviceCaller.Execute<List<PROJ_STATUS>>(request);
+            return allStats;
+        }
+
+        private object GetAllProjDurations()
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/ProjectDuration";
+            request.RootElement = "ArrayOfPROJ_DURATION";
+            List<PROJ_DURATION> allDurations = serviceCaller.Execute<List<PROJ_DURATION>>(request);
+            return allDurations;
+        }
+    }
+}

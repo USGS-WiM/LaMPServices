@@ -1,0 +1,88 @@
+﻿//------------------------------------------------------------------------------
+//----- LoginHandler -----------------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2012 WiM - USGS
+
+//    authors:  Tonia Roddick USGS Wisconsin Internet Mapping
+//              
+//  
+//   purpose:   Handles Login resources through the HTTP uniform interface.
+//              Equivalent to the controller in MVC.
+//
+//discussion:   Handlers are objects which handle all interaction with resources in 
+//              this case the resources are POCO classes derived from the EF. 
+//              https://github.com/openrasta/openrasta/wiki/Handlers
+//
+//     
+#region Comments
+// 03.06.13 - TR - Created
+#endregion                          
+
+using System;
+using System.Data;
+using System.Data.EntityClient;
+using System.Data.Metadata.Edm;
+using System.Data.Objects;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Reflection;
+using System.Web;
+using System;
+using System.Net;
+
+using LaMPServices.Resources;
+using LaMPServices.Authentication;
+
+using OpenRasta.Authentication.Basic;
+using OpenRasta.Web;
+using OpenRasta.Security;
+
+
+namespace LaMPServices.Handlers
+{
+    public class LoginHandler:HandlerBase
+    { 
+
+        #region Routed Methods
+
+        #region GetMethods
+        
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get()
+        {
+            DATA_MANAGER aDataManager = null;
+            try
+            {
+                //Get basic authentication password
+                using (EasySecureString securedPassword = GetSecuredPassword())
+                {
+                    using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                    {
+                        List<DATA_MANAGER> ManagerList = aLaMPRDS.DATA_MANAGER.AsEnumerable()
+                             .Where(managers => managers.USERNAME.ToUpper() == Context.User.Identity.Name.ToUpper()).ToList();
+                        aDataManager = ManagerList.First<DATA_MANAGER>();
+                    }//end using
+                }//end using
+                return new OperationResult.OK { ResponseResource = aDataManager };
+            }
+            catch
+            {
+                return new OperationResult.BadRequest();
+            }
+        }//end httpMethod get
+
+        
+        #endregion
+
+        #endregion
+
+    }//end class LoginHandler
+
+}//end namespace

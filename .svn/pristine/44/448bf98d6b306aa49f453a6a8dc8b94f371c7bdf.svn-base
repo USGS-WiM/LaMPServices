@@ -1,0 +1,749 @@
+﻿//------------------------------------------------------------------------------
+//----- ProjectController.cs-----------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2013 WiM - USGS
+
+//    authors:  Tonia Roddick USGS Wisconsin Internet Mapping
+//              
+//  
+//   purpose:   Display master pages
+//
+//discussion:   
+//
+//     
+
+#region Comments
+// 03.05.13 - TR - added partial views for Organizations and keyword
+// 02.28.13 - TR - hooked into services
+// 02.21.13 - TR - Created 
+#endregion
+
+
+using System;
+using System.Collections.Generic;
+using System.Data.Objects.DataClasses;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+using System.Text.RegularExpressions;
+
+using LaMPWeb.Utilities;
+using RestSharp;
+
+using LaMPServices;
+using LaMPServices.Resources;
+using LaMPWeb.Models;
+
+namespace LaMPWeb.Controllers
+{
+    [Authorize]
+    public class ProjectController : Controller
+    {
+        #region Create
+
+        //Get the popup partial for Project Edit (Add Organization)
+        public ActionResult OrganizationPopup()
+        {
+            return Content("<div>Hello</div>", "text/html");
+
+            //            return PartialView("Create/OrganizationPopup");
+        }
+
+        //
+        // GET: Project summary page (create page)
+        public ActionResult ProjSummary()
+        {
+            List<ORGANIZATION> ListOrganizations = GetAllOrganizations();
+
+            ViewData["organizations"] = (ListOrganizations).GroupBy(x => x.NAME).Select(x => x.First()).OrderBy(x => x.NAME).ToList();
+            ViewData["objectives"] = GetAllObjectives();
+
+            return View("Create/ProjSummary");
+        }
+
+        //
+        //POST: Post first page of project create and send to contact info page
+        [HttpPost]
+        public ActionResult ProjSummary(ProjectModel pm, string Create)
+        {
+            try
+            {
+                LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+                var request = new RestRequest(Method.POST);
+
+                //POST to Project
+                PROJECT newProject = pm.project;
+
+                request.Resource = "/projects/";
+                request.RequestFormat = DataFormat.Xml;
+                request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+                request.AddBody(newProject);
+                PROJECT postedProject = serviceCaller.Execute<PROJECT>(request);
+
+                //POST to DATA_HOST 
+                DATA_HOST newDataHost = pm.dataHost;
+
+                request = new RestRequest(Method.POST);
+                request.Resource = "/projects/{projectId}/addDataHost";
+                request.AddParameter("projectId", postedProject.PROJECT_ID, ParameterType.UrlSegment);
+                request.RequestFormat = DataFormat.Xml;
+                request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+                request.AddBody(newDataHost);
+                List<DATA_HOST> postedDataHost = serviceCaller.Execute<List<DATA_HOST>>(request);
+
+                //POST to ProjectOrgs 
+                //parse and add array value to a list<string>
+                string[] values = Regex.Split(pm.projOrgs, "\r\n");
+                List<string> eachString = new List<string>();
+                //remove the empty string at the end
+                foreach (string line in values)
+                {
+                    if (line != "")
+                    {
+                        eachString.Add(line);
+                    }
+                }
+
+                //GET each ORGANIZATION based on the shortname and POST
+                List<ORGANIZATION> projOrganizations = new List<ORGANIZATION>();
+
+                foreach (string shortName in eachString)
+                {
+                    ORGANIZATION thisOne = GetOrgByShortName(shortName);
+
+                    //Now Post it to this project
+                    request = new RestRequest(Method.POST);
+                    request.Resource = "/projects/{projectId}/AddOrganization";
+                    request.AddParameter("projectId", postedProject.PROJECT_ID, ParameterType.UrlSegment);
+                    request.RequestFormat = DataFormat.Xml;
+                    request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+                    request.AddBody(thisOne);
+                    projOrganizations = serviceCaller.Execute<List<ORGANIZATION>>(request);
+                }
+
+                //POST to ProjectObjective 
+                List<OBJECTIVE_TYPE> projObjectives = new List<OBJECTIVE_TYPE>();
+
+                //parse, get the object, post it to the project
+                if (pm.projObjectives != null && pm.projObjectives != "")
+                {
+                    string[] objs = Regex.Split(pm.projObjectives, ",");
+                    foreach (string ob in objs)
+                    {
+                        request = new RestRequest();
+                        request.Resource = "/objectives/{objectiveId}";
+                        request.RootElement = "OBJECTIVE_TYPE";
+                        request.AddParameter("objectiveId", ob, ParameterType.UrlSegment);
+                        OBJECTIVE_TYPE thisObjective = serviceCaller.Execute<OBJECTIVE_TYPE>(request);
+
+                        //now post it to the project
+                        request = new RestRequest(Method.POST);
+                        request.Resource = "/projects/{projectId}/addObjective";
+                        request.AddParameter("projectId", postedProject.PROJECT_ID, ParameterType.UrlSegment);
+                        request.RequestFormat = DataFormat.Xml;
+                        request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+                        request.AddBody(thisObjective);
+                        projObjectives = serviceCaller.Execute<List<OBJECTIVE_TYPE>>(request);
+                    }
+                }
+
+                //POST to ProjectKeywords 
+                if (pm.projKeywords != null && pm.projKeywords != "")
+                {
+                    //parse and add array value to a list<string>
+                    string[] keys = Regex.Split(pm.projKeywords, ",");
+                    List<KEYWORD> keywordList = new List<KEYWORD>();
+                    foreach (string k in keys)
+                    {
+                        KEYWORD newKeyword = new KEYWORD();
+                        newKeyword.TERM = k;
+                        request = new RestRequest(Method.POST);
+                        request.Resource = "/projects/{projectId}/addKeyword";
+                        request.AddParameter("projectId", postedProject.PROJECT_ID, ParameterType.UrlSegment);
+                        request.RequestFormat = DataFormat.Xml;
+                        request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+                        request.AddBody(newKeyword);
+                        keywordList = serviceCaller.Execute<List<KEYWORD>>(request);
+                    }
+                }
+
+                if (Create == "Save & Go To\r\n Project Details")
+                {
+                    return RedirectToAction("ProjectDetails", new { id = postedProject.PROJECT_ID });
+                }
+                else //submit and go to contacts
+                {
+                    return RedirectToAction("ProjContacts", new { id = postedProject.PROJECT_ID, From = "Summary" });
+                }
+            }
+            catch
+            {
+                return View();
+            }
+        }
+
+        //
+        //GET: Project Contacts page
+        public ActionResult ProjContacts(int id, string From)
+        {
+            ViewData["project"] = GetThisProject(id);
+            //get any contacts for this project
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/projects/{projectId}/contacts";
+            request.RootElement = "ArrayOfCONTACT";
+            request.AddParameter("projectId", id, ParameterType.UrlSegment);
+            List<CONTACT> projContacts = serviceCaller.Execute<List<CONTACT>>(request);
+            if (projContacts.Count >= 1)
+            {
+                ViewData["contacts"] = projContacts;
+            }
+
+            List<ORGANIZATION> ListOrganizations = GetAllOrganizations();
+            ViewData["organizations"] = (ListOrganizations).GroupBy(x => x.NAME).Select(x => x.First()).OrderBy(x => x.NAME).ToList();
+            if (From == "Summary")
+            {
+                ViewData["From"] = From;
+            }
+            return View("Create/ProjContacts");
+        }
+        
+        //POST: post the contact info, and send to the Project publications page
+        [HttpPost]
+        public ActionResult ProjContacts(FormCollection fc, string Create)
+        {
+            try
+            {
+                decimal projId = Convert.ToDecimal(fc["projId"]);
+                string From = fc["From"];
+
+                CONTACT aContact = new CONTACT();
+                aContact.NAME = fc["Contact.NAME"];
+                aContact.EMAIL = fc["Contact.EMAIL"];
+                aContact.PHONE = fc["Contact.PHONE"];
+
+                int Section = Convert.ToInt32(fc["section"]);
+                int Division = Convert.ToInt32(fc["division"]);
+                if (Section != 0 && Section != null)
+                { aContact.ORGANIZATION_ID = Section; }
+                else if (Division != 0 && Division != null)
+                { aContact.ORGANIZATION_ID = Division; }
+                
+                LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+                var request = new RestRequest(Method.POST);
+                request.Resource = "/projects/{projectId}/AddContact";
+                request.AddParameter("projectId", projId, ParameterType.UrlSegment);
+                request.RequestFormat = DataFormat.Xml;
+                request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+                request.AddBody(aContact);
+                List<CONTACT> createdContact = serviceCaller.Execute<List<CONTACT>>(request);
+
+                if (Create == "Save & Add\r\n Another Contact")
+                {
+                    return RedirectToAction("ProjContacts", new { id = projId, From = From });
+                }
+                else if (Create == "Save & Go To\r\n Project Details")
+                {
+                    return RedirectToAction("ProjectDetails", new { id = projId });
+                }
+                else
+                {
+                    return RedirectToAction("ProjPublications", new { id = projId, From = "Contacts" });
+                }
+            }
+            catch (Exception e)
+            {
+                return View(e.ToString());
+            }
+        }
+
+        public ActionResult ProjPublications(int id, string From)
+        {
+            ViewData["project"] = GetThisProject(id);
+            //get any publications for this project
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/projects/{projectId}/publications";
+            request.RootElement = "ArrayOfPUBLICATION";
+            request.AddParameter("projectId", id, ParameterType.UrlSegment);
+            List<PUBLICATION> projPubs = serviceCaller.Execute<List<PUBLICATION>>(request);
+            if (projPubs.Count >= 1)
+            {
+                ViewData["publications"] = projPubs;
+            }
+
+            if (From == "Contacts")
+            {
+                ViewData["From"] = From;
+            }
+            
+            return View("Create/ProjPublications");
+        }
+        
+
+        [HttpPost]
+        public ActionResult ProjPublications(FormCollection fc, string Create)
+        {
+            try
+            {
+                decimal projId = Convert.ToDecimal(fc["projId"]);
+                string From = fc["From"];
+
+                PUBLICATION aPub = new PUBLICATION();
+                aPub.TITLE = fc["Publication.TITLE"];
+                aPub.DESCRIPTION = fc["Publication.DESCRIPTION"];
+                aPub.URL = fc["Publication.URL"];
+
+                LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+                var request = new RestRequest(Method.POST);
+                request.Resource = "/projects/{projectId}/addPublication";
+                request.AddParameter("projectId", projId, ParameterType.UrlSegment);
+                request.RequestFormat = DataFormat.Xml;
+                request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+                request.AddBody(aPub);
+                List<PUBLICATION> createdPublication = serviceCaller.Execute<List<PUBLICATION>>(request);
+
+                if (Create == "Save & Add\r\n Another Publication")
+                {
+                    return RedirectToAction("ProjPublications", new { id = projId, From = From });
+                }
+                else if (Create == "Save & Go To\r\n Project Details")
+                {
+                    return RedirectToAction("ProjectDetails", new { id = projId });
+                }
+                else
+                {
+                    return RedirectToAction("SiteSummary1", "Site", new { id = projId, From = "Publications" });
+                }
+            }
+            catch (Exception e)
+            {
+                return View(e.ToString());
+            }
+        }
+
+        #endregion Create
+
+        #region Details
+
+        //GET: infobox containing publications for a project
+        public PartialViewResult PubInfoBox(int id)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "projects/{projectId}/publications";
+            request.RootElement = "ArrayOfPublications";
+            request.AddParameter("projectId", id, ParameterType.UrlSegment);
+            ViewData["publications"] = serviceCaller.Execute<List<PUBLICATION>>(request);
+            //pass the projectId back
+            ViewData["projectId"] = id; 
+            
+            return PartialView("Details/PubInfoBox");
+        }
+
+        //GET: infobox containing contacts for a project
+        public PartialViewResult ContactInfoBox(int id)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "projects/{projectId}/contacts";
+            request.RootElement = "ArrayOfCONTACT";
+            request.AddParameter("projectId", id, ParameterType.UrlSegment);
+            List<CONTACT> ContactList = serviceCaller.Execute<List<CONTACT>>(request);
+
+            //add to the model to pass back to view
+            List<ContactInfo> Contacts = new List<ContactInfo>();
+            foreach (CONTACT c in ContactList)
+            {
+                ContactInfo thisContact = new ContactInfo();
+                thisContact.ContactId = c.CONTACT_ID;
+                thisContact.Name = c.NAME;
+                thisContact.OrgName = GetAnOrganization(Convert.ToInt32(c.ORGANIZATION_ID)).NAME;
+                Contacts.Add(thisContact);
+            }
+
+            ViewData["contacts"] = Contacts;
+            ViewData["projectId"] = id;
+
+            return PartialView("Details/ContactInfoBox");
+        }
+
+        //GET: ProjectDetails
+        public ActionResult ProjectDetails(int id)
+        {
+            PROJECT thisProject = GetThisProject(id);
+
+            return View("Details/ProjectDetails", thisProject);
+        }
+
+        public PartialViewResult ProjectDetailsPV(int id)
+        {
+            PROJECT thisProject = GetThisProject(id);
+
+            //get all the organizations for this project
+            ViewData["projOrgs"] = GetProjOrganizations(id);
+            
+            //get all objectives for this project
+            List<OBJECTIVE_TYPE> Objectives = GetProjObjectives(id);
+            if (Objectives.Count >= 1)
+            { ViewData["projObjectives"] = Objectives; }
+                        
+            //get all keywords for this project
+            List<KEYWORD> Keywords = GetProjKeywords(id);
+            if (Keywords.Count >= 1)
+            { ViewData["projKeywords"] = GetProjKeywords(id); }
+
+            //get data host for this project
+            List<DATA_HOST> DataHosts = GetProjDataHost(id);
+            if (DataHosts.Count >= 1)
+            { ViewData["dataHost"] = DataHosts; }
+
+            return PartialView("Details/ProjectDetailsPV", thisProject);
+        }
+
+        public ActionResult ContactDetails(int id, int projId)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/contacts/{contactId}";
+            request.RootElement = "CONTACT";
+            request.AddParameter("contactId", id, ParameterType.UrlSegment);
+            CONTACT thisContact = serviceCaller.Execute<CONTACT>(request);
+            //get this organization
+            ViewData["ContactOrg"] = GetAnOrganization(thisContact.ORGANIZATION_ID);
+            
+            //pass this project
+            ViewData["project"] = GetThisProject(projId);
+
+            return View("Details/ContactDetails", thisContact);
+        }
+
+        public ActionResult PublicationDetails(int id, int projId)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/publications/{publicationId}";
+            request.RootElement = "PUBLICATION";
+            request.AddParameter("publicationId", id, ParameterType.UrlSegment);
+            PUBLICATION thisPub = serviceCaller.Execute<PUBLICATION>(request);
+            
+            //pass this project
+            ViewData["project"] = GetThisProject(projId);
+
+            return View("Details/PublicationDetails", thisPub);
+        }
+        #endregion Details
+
+        #region Edit
+
+        //Get: edit page for a project
+        public PartialViewResult ProjectEditPV(int id)
+        {
+            PROJECT thisProject = GetThisProject(id);
+            //get all the organizations for this project
+            ViewData["projOrgs"] = GetProjOrganizations(id);
+
+            //get all objectives for this project
+            List<OBJECTIVE_TYPE> Objectives = GetProjObjectives(id);
+            if (Objectives.Count >= 1)
+            { ViewData["projObjectives"] = Objectives; }
+
+            //get all keywords for this project
+            List<KEYWORD> Keywords = GetProjKeywords(id);
+            if (Keywords.Count >= 1)
+            { ViewData["projKeywords"] = GetProjKeywords(id); }
+
+            //get data host for this project
+            List<DATA_HOST> DataHosts = GetProjDataHost(id);
+            if (DataHosts.Count >= 1)
+            { ViewData["dataHost"] = DataHosts; }
+
+            return PartialView("Edit/ProjectEditPV", thisProject);
+        }
+
+        #endregion Edit
+        
+        public ActionResult Review()
+        {
+            return View();
+        }
+
+
+        #region Organization POPUP on Project Summary Create
+        //gives partial view for adding organizations to a project
+        public ActionResult AddProjOrgs(string orgs)
+        {
+            if (orgs != null)
+            {
+                if (orgs != "")
+                {
+                    string[] listOrgs = orgs.Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+
+                    ViewData["orgs"] = listOrgs;
+                }
+            }
+            List<ORGANIZATION> ListOrganizations = GetAllOrganizations();
+            ViewData["organizations"] = (ListOrganizations).GroupBy(x => x.NAME).Select(x => x.First()).OrderBy(x => x.NAME).ToList();
+            return PartialView("Create/AddProjOrganizations");
+        }
+        
+        
+        [HttpPost]
+        public JsonResult AddProjOrgs(FormCollection fc)
+        {
+            string orgsToAdd = fc["AddedOrgs"];
+            string proj = fc["ProjectOrgIDS"]; //coming in ""??
+
+
+            string[] listOrgs = orgsToAdd.Split("\r\n".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+
+
+            return Json(JsonResponseFactory.SuccessResponse(listOrgs), JsonRequestBehavior.DenyGet);
+            
+        }
+
+        //add organization to dropdown list when checkbox click input text add
+        [HttpPost]
+        public JsonResult AddOrganization(string newOrgName)
+        { 
+
+            ORGANIZATION newOrg = new ORGANIZATION();
+            newOrg.NAME = newOrgName;
+           
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest(Method.POST);
+            request.Resource = "organizations/";
+            request.RequestFormat = DataFormat.Xml;
+            request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+            request.AddBody(newOrg);
+            ORGANIZATION createdOrg = serviceCaller.Execute<ORGANIZATION>(request);
+
+            List<ORGANIZATION> Organizations = GetAllOrganizations().GroupBy(x => x.NAME).Select(x => x.First()).OrderBy(x => x.NAME).ToList();;
+            
+            return Json(Organizations);
+        }
+
+        //add division (checkbox)
+        public JsonResult AddDivision(string OrgName, string DivName)
+        {   
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            
+            ORGANIZATION newOrg = new ORGANIZATION();
+
+            newOrg.NAME = OrgName;
+            newOrg.DIVISION = DivName;
+                        
+            var request = new RestRequest(Method.POST);
+            request.Resource = "organizations/";
+            request.RequestFormat = DataFormat.Xml;
+            request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+            request.AddBody(newOrg);
+            ORGANIZATION createdOrg = serviceCaller.Execute<ORGANIZATION>(request);
+
+            var Divisions = GetDivisionsList(OrgName);
+            
+            return Json(Divisions);
+        }
+
+        //add Section (checkbox)
+        public JsonResult AddSection(string OrgName, string SecName, string DivName)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+
+            //List<ORGANIZATION> AllOrgs = GetAllOrganizations();
+            //ORGANIZATION thisOrg = AllOrgs.FirstOrDefault(o => o.DIVISION == DivName && o.SHORTNAME.Contains(OrgSN));
+// 
+            ORGANIZATION newOrg = new ORGANIZATION();
+
+            newOrg.NAME = OrgName;
+            newOrg.DIVISION = DivName;
+            newOrg.SECTION = SecName;
+
+            var request = new RestRequest(Method.POST);
+            request.Resource = "organizations/";
+            request.RequestFormat = DataFormat.Xml;
+            request.XmlSerializer = new RestSharp.Serializers.DotNetXmlSerializer();
+            request.AddBody(newOrg);
+            serviceCaller.Execute<ORGANIZATION>(request);
+
+            var Sections = GetSectionsList(DivName);
+
+            return Json(Sections);
+
+        }
+
+        #endregion Organization POPUP
+
+        
+        //GET: get this particular project based on id
+        public PROJECT GetThisProject(int id)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/projects/{projectId}";
+            request.RootElement = "projects";
+            request.AddParameter("projectId", id, ParameterType.UrlSegment);
+            PROJECT thisProject = serviceCaller.Execute<PROJECT>(request);
+            return thisProject;
+        }
+
+        //GET: get the project Organizations
+        public List<ORGANIZATION> GetProjOrganizations(int id)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/projects/{projectId}/organizations";
+            request.RootElement = "ArrayOfORGANIZATION";
+            request.AddParameter("projectId", id, ParameterType.UrlSegment);
+            List<ORGANIZATION> projOrgs = serviceCaller.Execute<List<ORGANIZATION>>(request);
+            return projOrgs;
+        }
+
+        //GET: get organization by shortname
+        public ORGANIZATION GetOrgByShortName(string name)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/organizations?shortname={shortName}";
+            request.RootElement = "organization";
+            request.AddParameter("shortName", name, ParameterType.UrlSegment);
+            ORGANIZATION thisOne = serviceCaller.Execute<ORGANIZATION>(request);
+            return thisOne;
+        }
+        //GET: get the project objectives
+        public List<OBJECTIVE_TYPE> GetProjObjectives(int id)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/projects/{projectId}/objectives";
+            request.RootElement = "ArrayOfOBJECTIVE_TYPE";
+            request.AddParameter("projectId", id, ParameterType.UrlSegment);
+            List<OBJECTIVE_TYPE> projObjs = serviceCaller.Execute<List<OBJECTIVE_TYPE>>(request);
+            return projObjs;
+        }
+
+        //GET: get the project keywords
+        public List<KEYWORD> GetProjKeywords(int id)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/projects/{projectId}/keywords";
+            request.RootElement = "ArrayOfKEYWORD";
+            request.AddParameter("projectId", id, ParameterType.UrlSegment);
+            List<KEYWORD> projKeywords = serviceCaller.Execute<List<KEYWORD>>(request);
+            return projKeywords;
+        }
+
+        //GET: get project datahost
+        public List<DATA_HOST> GetProjDataHost(int id)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/projects/{projectId}/dataHosts";
+            request.RootElement = "ArrayOfDATA_HOST";
+            request.AddParameter("projectId", id, ParameterType.UrlSegment);
+            List<DATA_HOST> projDataHost = serviceCaller.Execute<List<DATA_HOST>>(request);
+            return projDataHost;
+        }
+
+       
+        //GET: get an organization containing incoming shortname, then narrow down to correct one based on
+        // section and division, so correct shortname is shown in textarea of organization popup (on project summary)
+        public JsonResult GetOrganization(string org, string div, string sec)
+        {
+            ORGANIZATION thisOrg = new ORGANIZATION();
+            if (sec != null && sec != "0" && sec != "")
+            {
+                thisOrg = GetAnOrganization(Convert.ToInt32(sec));
+            }
+            else if (div != null && div != "0" && div != "")
+            {
+                thisOrg = GetAnOrganization(Convert.ToInt32(div));
+            }
+            else
+            {
+                thisOrg = GetAnOrganization(Convert.ToInt32(org));
+            }
+            
+            return Json(thisOrg, JsonRequestBehavior.AllowGet);
+        }
+        //GET: Get a list of the divisions to return to populate division dropdown based on organization selection
+        public JsonResult GetDivisionsList(string name)
+        {
+            List<ORGANIZATION> OrganizationList = GetAllOrganizations();
+            List<ORGANIZATION> holderList = new List<ORGANIZATION>();
+            List<ORGANIZATION> OrgDivisionsList = new List<ORGANIZATION>();
+
+            //get organizations that have incoming name to show org divisions
+            holderList = OrganizationList.Where(ol => ol.NAME == name).ToList();
+            OrgDivisionsList = (holderList).GroupBy(dl => dl.DIVISION).Select(x => x.First()).ToList();
+
+            return Json(OrgDivisionsList);
+        }
+
+        //GET: Get a list of the Sections to return to populate sections dropdown based on division selection
+        public JsonResult GetSectionsList(string name)
+        {
+            List<ORGANIZATION> OrganizationList = GetAllOrganizations();
+            List<ORGANIZATION> holderList = new List<ORGANIZATION>();
+            List<ORGANIZATION> DivSectionList = new List<ORGANIZATION>();
+
+            //get organizations that have incoming name to show org divisions
+            holderList = OrganizationList.Where(ol => ol.DIVISION == name).ToList();
+            //need to return both so that section will show a null and a value options???
+            DivSectionList = (holderList).GroupBy(dl => dl.SECTION).Select(x => x.First()).ToList();
+
+            return Json(DivSectionList);
+        }
+
+        public List<ORGANIZATION> GetAllOrganizations()
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "organizations";
+            request.RootElement = "ArrayOfORGANIZATION";
+            List<ORGANIZATION> organizationList = serviceCaller.Execute<List<ORGANIZATION>>(request);
+
+            return organizationList;
+        }
+
+        public ORGANIZATION GetAnOrganization(decimal? id)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "organizations/{orgId}";
+            request.RootElement = "organization";
+            request.AddParameter("orgId", id, ParameterType.UrlSegment);
+            ORGANIZATION thisOrg = serviceCaller.Execute<ORGANIZATION>(request);
+            return thisOrg;
+        }
+
+
+        public List<KEYWORD> GetAllKeywords()
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "keywords";
+            request.RootElement = "ArrayOfKEYWORD";
+            List<KEYWORD> keywordList = serviceCaller.Execute<List<KEYWORD>>(request);
+
+            return keywordList;
+        }
+
+        public List<OBJECTIVE_TYPE> GetAllObjectives()
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "objectives";
+            request.RootElement = "ArrayOfOBJECTIVE_TYPE";
+            List<OBJECTIVE_TYPE> keywordList = serviceCaller.Execute<List<OBJECTIVE_TYPE>>(request);
+
+            return keywordList;
+        }
+    }
+}

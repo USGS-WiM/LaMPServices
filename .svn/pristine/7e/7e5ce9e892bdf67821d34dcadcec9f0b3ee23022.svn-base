@@ -1,0 +1,177 @@
+﻿@* Comments: 
+02.28.13 - TR - Integrating the services
+02.06.13 - TR - Created 
+
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+  * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Project Publication
+ */
+ *@
+
+@{
+    ViewBag.Title = "Project Publications";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@*<div id="loading"><div id="loadingcontent"><p id="loadingspinner" style=""><img src="@Url.Content("~/Assets/Images/loading1.gif")"  /></p></div></div>*@
+
+<div id="dataTitle">
+    <div class="title">Project Publications</div>
+</div>
+<br clear="all" />
+<hr class="headerUnderline" />
+@{
+    Boolean pubs = false;
+}
+@using (Html.BeginForm("ProjPublications3", "Project", FormMethod.Post))
+{
+    <div class="siteColumn">
+
+    @if (Session["Publications"] != null) 
+    {
+        <div class="ui-grid-a">           
+            <div class="ui-block-a">Publications:</div>
+            <div class="ui-block-b"><textarea readonly="readonly" class="textarea ui-shadow-inset" name="Publications" rows="2" cols="30">@Session["Publications"]</textarea></div>
+        </div>
+        pubs = true;
+    }
+    
+       <input type="hidden" name="ProjName" value='@Session["projectName"]' />
+
+        @* Project Name *@
+        <div class="ui-grid-a">           
+            <div class="ui-block-a">Project Name:</div>
+            <div class="ui-block-b"><label>@Session["projectName"]</label></div>
+        </div>
+
+        @* Publication Title: *@
+        <div class="ui-grid-a">
+             <div class="ui-block-a">Publication Title:</div>
+             <div class="ui-block-b"><input type="text" id="pubTitle" name="Title" class="stnTextInput ui-shadow-inset" /></div>
+        </div>
+        
+        @* Publication Description: *@
+        <div class="ui-grid-a">
+             <div class="ui-block-a">Publication Description:</div>
+             <div class="ui-block-b"><input type="text" name="pubDescript" class="stnTextInput ui-shadow-inset" /></div>
+        </div>
+        
+        @* Publication URL: *@
+        <div class="ui-grid-a">           
+            <div class="ui-block-a">Publication URL:</div>
+            <div class="ui-block-b"><input type="text" name="pubURL" class="stnTextInput ui-shadow-inset" /></div>
+        </div>
+
+        @* Add Aother Publication: (checkbox) *@
+        <div class="ui-grid-a">
+            <div data-role="fieldcontain">
+                <div class="ui-block-a">Add Another Publication? (will post & refresh page)</div>
+                <div class="ui-block-b"><input type="checkbox" id="OtherPub" onclick="PubClick();" /></div>
+           </div>
+       </div>
+    </div>
+        
+    <br clear="all" />
+    <br />
+    <div id="formSubmitDiv" class="formSection">
+        <div class="leftSideSubmit">
+            <div class="submitDiv"><div class="darkButtonBorder"><input type="submit" name="Create" class="submit" value="Proceed to Sites" /></div></div>
+            <div class="cancelDiv"><div class="lightButtonBorder"><input id="resetButton" type="reset" class="cancel" value="Go Back to Contacts" onclick="location.href='@Url.Action("ProjContacts2", "Project")' " /></div></div>
+        </div>
+    </div> 
+}
+<script type="text/javascript">
+    function cancelClick() {
+        $("#loading").fadeIn();
+        window.location.href = '@Url.Action("Details", "Sites", new { id = ViewData["SiteId"] })'
+    };
+</script>
+<script type="text/javascript">
+    function loading() {
+        $("#loading").fadeIn();
+    }
+</script>
+<script type="text/javascript">
+    //want to add another contact. post this one, come back here with empty fields except project
+    function PubClick() {
+
+        var PubTitle = document.getElementById("pubTitle").value;
+        var checkBoxCntrl = document.getElementById("OtherPub");
+        if ('@pubs' == 'True') {
+
+        }
+        if (checkBoxCntrl.checked == true) {
+            $.ajax({
+                url: '@Url.Action("PostAndReturnPubs", "Project")',
+                type: 'GET',
+                data: { PName: PubTitle },
+                success: function (response) {
+                    if (response) {
+                        window.location.href = '@Url.Action("ProjPublications3", "Project")'
+                    }
+                }
+            });
+        }
+    }
+</script>
+
+
+<script type="text/javascript">
+
+    $("#form0").submit(function () {
+        var MISSING = "ui-req";
+
+        var requiredInput = $('input[class*="required"]');
+        var requiredSelect = $('select[class*="required"]');
+        var Ierr = false;
+        var Serr = false;
+        var missingMsg = "The highlighted fields are required.";
+
+        // Reset the previously highlighted form elements  
+        requiredInput.each(function (index) {
+            $(this).removeClass(MISSING);
+            $(this).addClass("ui-shadow-inset");
+        });
+        // Reset the previously highlighted form elements  
+        requiredSelect.each(function (index) {
+            $(this).removeClass(MISSING);
+            $(this).addClass("ui-shadow-inset");
+        });
+        // Perform form validation  
+        requiredInput.each(function (index) {
+            if ($(this).val() == null || $(this).val() == "") {
+                $(this).addClass(MISSING);
+                $(this).removeClass("ui-shadow-inset");
+                Ierr = true;
+                //                $("#errorSection").append(missingMsg);
+            }
+        });
+        // Perform form validation  
+        requiredSelect.each(function (index) {
+            var ind = $(this).context.selectedIndex;
+            if (ind == -1) {
+                $(this).addClass(MISSING);
+                Serr = true;
+                //                $("#errorSection").append(missingMsg);
+            }
+        });
+        if (Ierr == true || Serr == true) {
+            $("#errorSection").append(missingMsg);
+        }
+        // Check if validation fails
+        if (Ierr == true) {
+            return false;
+        }
+        // Check if validation fails
+        if (Serr == true) {
+            return false;
+        }
+
+    });
+
+</script>

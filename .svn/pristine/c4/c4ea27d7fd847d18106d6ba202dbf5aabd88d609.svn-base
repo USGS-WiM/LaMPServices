@@ -1,0 +1,388 @@
+﻿//------------------------------------------------------------------------------
+//----- ResourceTypeHandler -----------------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2012 WiM - USGS
+
+//    authors:  Jeremy K. Newson USGS Wisconsin Internet Mapping
+//              
+//  
+//   purpose:   Handles resource type resources through the HTTP uniform interface.
+//              Equivalent to the controller in MVC.
+//
+//discussion:   Handlers are objects which handle all interaction with resources in 
+//              this case the resources are POCO classes derived from the EF. 
+//               https://github.com/openrasta/openrasta/wiki/Handlers
+//
+//     
+#region Comments
+// 04.02.13 - jkn - Created public user for get requests
+// 05.02.12 - jkn - Created
+#endregion   
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+using LaMPServices.Authentication;
+using OpenRasta.Web;
+using OpenRasta.Security;
+
+namespace LaMPServices.Handlers
+{
+    public class ResourceHandler:HandlerBase
+    {
+        #region Routed Methods
+
+        #region GetMethods
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get()
+        {
+            List<RESOURCE_TYPE> resourceList;
+
+                using (LaMPDSEntities aLaMPRDS = GetRDS())
+                {
+
+                    resourceList = aLaMPRDS.RESOURCE_TYPE.OrderBy(r => r.RESOURCE_TYPE_ID).ToList();
+
+                    if (resourceList != null)
+                        resourceList.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+                    
+                }//end using
+
+            return new OperationResult.OK { ResponseResource = resourceList };
+        }//end httpMethod get
+
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get(Int32 resourceTypeId)
+        {
+            RESOURCE_TYPE aResource;
+
+            //return BadRequest if ther is no ID
+            if (resourceTypeId <= 0)
+            { return new OperationResult.BadRequest(); }
+
+            using (LaMPDSEntities aLaMPRDS = GetRDS())
+            {
+                aResource = aLaMPRDS.RESOURCE_TYPE.SingleOrDefault(r => r.RESOURCE_TYPE_ID == resourceTypeId);
+
+                if (aResource != null)
+                    aResource.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+
+            }//end using
+    
+            return new OperationResult.OK { ResponseResource = aResource };
+        }//end httpMethod get
+
+        [HttpOperation(HttpMethod.GET, ForUriName = "GetSiteResourceTypes")]
+        public OperationResult GetSiteResourceTypes(Int32 siteId)
+        {
+            List<RESOURCE_TYPE> resourceList;
+
+            //return BadRequest if ther is no ID
+            if (siteId <= 0)
+            { return new OperationResult.BadRequest(); }
+
+                using (LaMPDSEntities aLaMPRDS = GetRDS())
+                {
+                    resourceList = aLaMPRDS.SITE_RESOURCE.Where(cr => cr.SITE_ID == siteId)
+                                                                .Select(cr=>cr.RESOURCE_TYPE)
+                                                                        .OrderBy(r=>r.RESOURCE_TYPE_ID).ToList();
+
+                    if (resourceList != null)
+                        resourceList.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+
+                }//end using
+
+            return new OperationResult.OK { ResponseResource = resourceList };
+        }//end httpMethod get
+
+        #endregion
+
+        #region PostMethods
+        /// 
+        /// Force the user to provide authentication 
+        /// 
+        [RequiresRole(AdminRole)]
+        [HttpOperation(HttpMethod.POST)]
+        public OperationResult Post(RESOURCE_TYPE aResource)
+        {
+            //Return BadRequest if missing required fields
+            if (String.IsNullOrEmpty(aResource.RESOURCE_NAME))
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    if (!Exists(aLaMPRDS.RESOURCE_TYPE, ref aResource))
+                    {
+                        //set ID
+                        //aResource.RESOURCE_TYPE_ID = GetNextResourceID(aLaMPRDS.RESOURCE_TYPE);
+
+                        aLaMPRDS.RESOURCE_TYPE.AddObject(aResource);
+                        aLaMPRDS.SaveChanges();
+                    }
+
+                    if (aResource != null)
+                        aResource.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+
+                }// end using
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = aResource };
+        }
+
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.POST, ForUriName = "AddSiteResourceType")]
+        public OperationResult AddSiteResourceType(Int32 siteId, RESOURCE_TYPE aResourceType)
+        {
+            SITE_RESOURCE aSiteResource = null;
+            List<RESOURCE_TYPE> resourceList = null;
+            //Return BadRequest if missing required fields
+            if (siteId <= 0 || String.IsNullOrEmpty(aResourceType.RESOURCE_NAME))
+            { return new OperationResult.BadRequest(); }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    //check if valid project
+                    if (aLaMPRDS.SITE.First(c => c.SITE_ID == siteId) == null)
+                        return new OperationResult.BadRequest { Description = "Site does not exist" };
+
+                    //check authorization
+                    if (!IsAuthorizedToEdit(aLaMPRDS.SITE.FirstOrDefault(c => c.SITE_ID == siteId).PROJECT.DATA_MANAGER.USERNAME))
+                        return new OperationResult.Forbidden { Description = "Not Authorized" };
+
+                    if (!Exists(aLaMPRDS.RESOURCE_TYPE, ref aResourceType))
+                    {
+                        //set obj
+                        aLaMPRDS.RESOURCE_TYPE.AddObject(aResourceType);
+                        aLaMPRDS.SaveChanges();
+                    }//end if
+
+                    //add to catalolg
+                    //first check if Site already contains resource
+                    if (aLaMPRDS.SITE_RESOURCE.FirstOrDefault(cr => cr.RESOURCE_TYPE_ID == aResourceType.RESOURCE_TYPE_ID &&
+                                                                         cr.SITE_ID == siteId) == null)
+                    {//create one
+                        aSiteResource = new SITE_RESOURCE();
+                        //set ID and create siteResource
+                        aSiteResource.SITE_ID = siteId;
+                        aSiteResource.RESOURCE_TYPE_ID = aResourceType.RESOURCE_TYPE_ID;
+
+                        aLaMPRDS.SITE_RESOURCE.AddObject(aSiteResource);
+                        aLaMPRDS.SaveChanges();
+                    }//end if
+
+                    //return the list of contacts associated with project
+                    resourceList = aLaMPRDS.RESOURCE_TYPE.Where(r => r.SITE_RESOURCE.Any(cr => cr.SITE_ID == siteId)).ToList();
+
+                    if (resourceList != null)
+                        resourceList.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+
+                }// end using
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = resourceList };
+        }
+
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.POST)]
+        public OperationResult Post(List<RESOURCE_TYPE> resourceList)
+        {
+            //Return BadRequest if missing required fields
+            if (resourceList.Count <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    for (int i = 0; i < resourceList.Count; i++)
+                    {
+                        RESOURCE_TYPE item = resourceList[i];
+                        if (!Exists(aLaMPRDS.RESOURCE_TYPE, ref item))
+                        {
+                            aLaMPRDS.RESOURCE_TYPE.AddObject(item);
+                            aLaMPRDS.SaveChanges();
+                            //update
+                        }
+                        //update publications to pass back
+                        resourceList[i] = item;
+
+                    }//next item
+
+                    if (resourceList != null)
+                        resourceList.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+                }// end using
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = resourceList };
+        }
+        #endregion
+
+        #region PutMethods
+
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.PUT)]
+        public OperationResult Put(Int32 resourceTypeId, RESOURCE_TYPE instance)
+        {
+            //Return BadRequest if missing required fields
+            if ((resourceTypeId <= 0))
+            {return new OperationResult.BadRequest();}
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    RESOURCE_TYPE ObjectToBeUpdated = aLaMPRDS.RESOURCE_TYPE.SingleOrDefault(r => r.RESOURCE_TYPE_ID == resourceTypeId);
+
+                    //RESOURCE
+                    ObjectToBeUpdated.RESOURCE_NAME = (string.IsNullOrEmpty(instance.RESOURCE_NAME) ?
+                        ObjectToBeUpdated.RESOURCE_NAME : instance.RESOURCE_NAME);
+
+                    aLaMPRDS.SaveChanges();
+
+                    if (instance != null)
+                        instance.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+                
+                }// end using
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = instance };
+        }
+
+        #endregion
+
+        #region DeleteMethods
+
+        [RequiresRole(AdminRole)]
+        [HttpOperation(HttpMethod.DELETE)]
+        public OperationResult Delete(Int32 resourceTypeId)
+        {
+            //Return BadRequest if missing required fields
+            if (resourceTypeId <= 0)
+            {return new OperationResult.BadRequest();}
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    RESOURCE_TYPE ObjectToBeDeleted = aLaMPRDS.RESOURCE_TYPE.SingleOrDefault(r => r.RESOURCE_TYPE_ID == resourceTypeId);
+              
+                    //delete it
+                    aLaMPRDS.RESOURCE_TYPE.DeleteObject(ObjectToBeDeleted);
+
+                    aLaMPRDS.SaveChanges();
+
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { };
+        }
+
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.DELETE, ForUriName = "RemoveSiteResourceType")]
+        public OperationResult RemoveSiteResourceType(Int32 siteId, RESOURCE_TYPE aResourceType)
+        {
+            //Return BadRequest if missing required fields
+            if (siteId <= 0 || String.IsNullOrEmpty(aResourceType.RESOURCE_NAME))
+            { return new OperationResult.BadRequest(); }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //check if valid project
+                    if (aLaMPRDS.SITE.First(c => c.SITE_ID == siteId) == null)
+                        return new OperationResult.BadRequest { Description = "Site does not exist" };
+
+                    //check authorization
+                    if (!IsAuthorizedToEdit(aLaMPRDS.SITE.FirstOrDefault(c => c.SITE_ID == siteId).PROJECT.DATA_MANAGER.USERNAME))
+                        return new OperationResult.Forbidden { Description = "Not Authorized" };
+
+                    //remove from catalolg
+                    SITE_RESOURCE thisCatRes = aLaMPRDS.SITE_RESOURCE.FirstOrDefault(cr => cr.RESOURCE_TYPE_ID == aResourceType.RESOURCE_TYPE_ID &&
+                                                                         cr.SITE_ID == siteId);
+                    if (thisCatRes != null)
+                    {//remove it
+                        aLaMPRDS.SITE_RESOURCE.DeleteObject(thisCatRes);
+                        aLaMPRDS.SaveChanges();
+                    }//end if
+
+                    //return the list of contacts associated with project
+                }// end using
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { };
+        }
+
+        #endregion
+
+        #endregion
+        #region "Helper Methods"
+        private Boolean Exists(System.Data.Objects.IObjectSet<RESOURCE_TYPE> resources, ref RESOURCE_TYPE aResource)
+        {
+            RESOURCE_TYPE existingResource;
+            RESOURCE_TYPE thisResource = aResource;
+            //check if it exists
+            try
+            {
+                existingResource = resources.FirstOrDefault(r => string.Equals(r.RESOURCE_NAME.ToUpper(),thisResource.RESOURCE_NAME.ToUpper()));
+
+                if (existingResource == null)
+                    return false;
+
+                //if exists then update ref contact
+                aResource = existingResource;
+                return true;
+
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        //private decimal GetNextResourceID(System.Data.Objects.IObjectSet<RESOURCE_TYPE> resources)
+        //{
+        //    decimal nextKey = 1;
+        //    if (resources.Count() > 0)
+        //    {
+        //        nextKey = resources.OrderByDescending(r=>r.RESOURCE_TYPE_ID).First().RESOURCE_TYPE_ID + 1;
+        //    }
+
+        //    return nextKey;
+        //}
+        #endregion
+    }//end ResourceTypeHandler
+}//end namespace

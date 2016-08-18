@@ -1,0 +1,127 @@
+﻿@*
+Comments:
+03.05.13 - TR - Created
+*@
+
+@*
+/* Authors:
+ *      Jonathan Baier (jbaier@usgs.gov)
+ * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Display lookup table listing
+ */
+ *@
+
+@using LaMPServices;
+
+@{
+    ViewBag.Title = "Lookups";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@*<div id="loading"><div id="loadingcontent"><p id="loadingspinner" style=""><img src="@Url.Content("~/Assets/Images/loading1.gif")"  /></p></div></div>
+*@
+<div id="dataTitle">
+    <div class="title">Lookups</div>    
+</div>
+<br clear="all" />
+
+<hr class="headerUnderline" />
+
+    <br />
+@*<div>
+    
+    <div>
+        <table id="site-table-a">
+            <thead>
+                <tr>
+                    <th style="width:.1em" scope="col"></th>
+                    <th style="width:7em" scope="col">Organization Name</th>
+                    <th style="width:.3em" scope="col">State</th>
+                    <th style="width:2em" scope="col">Short Name</th>
+                    <th style="width:3em" scope="col">Division</th>
+                    <th style="width:3em" scope="col">Section</th>
+                </tr>
+            </thead>
+            <tbody>                    
+                
+            @{
+                foreach (ORGANIZATION org in ViewData["organizations"] as List<ORGANIZATION>)
+                {
+                    <tr>
+                        <td>@Html.ActionLink("Edit", "OrganizationEdit", new { id = org.ORGANIZATION_ID })</td>
+                        <td>@org.NAME</td>
+                        <td>@org.STATE</td>
+                        <td>@org.SHORTNAME</td>
+                        <td>@org.DIVISION</td>
+                        <td>@org.SECTION</td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+*@
+<div class="lookupColumn">
+    <div class="lookupSection">
+        <div class="subSectionHeader"><label class="bold">Organizations</label></div>          
+        <div class="subSectionContent">
+            <br />
+            <div>
+                @Html.ActionLink("Add Organizations", "OrgCreate", "Lookups", null, new { @class = "LaMPButton blue", onclick = "loading();" })
+            </div>
+            <br />
+            <div>
+                @{
+                    foreach (ORGANIZATION organiz in ViewData["organizations"] as List<ORGANIZATION>)
+                    {
+                        <div class="row">
+                            @Html.ActionLink(@organiz.SHORTNAME, "OrganizationEdit", "Lookups", new { id = organiz.ORGANIZATION_ID }, null)
+                            <br />
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="lookupColumn">
+    <div class="lookupSection">
+        <div class="subSectionHeader"><label class="bold">Keywords</label></div>          
+        <div class="subSectionContent">
+            <br />
+            <div>
+                @Html.ActionLink("Add Keyword", "KeywordCreate", "Lookups", null, new { @class = "LaMPButton blue", onclick = "loading();" })
+            </div>
+            <br />
+            <div>
+                @{
+                    foreach (KEYWORD k in ViewData["keywords"] as List<KEYWORD>)
+                    {
+                        <div class="row">
+                            @Html.ActionLink(@k.TERM, "KeywordEdit", "Lookups", new { id = k.KEYWORD_ID }, null)
+                            <br />
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>
+<br />
+<br clear="all" />
+
+
+<script type="text/javascript">
+function loading() {
+$("#loading").fadeIn();
+};    
+</script>
+<script type="text/javascript">
+$("#deleteClick").click(function () {
+$("#loading").fadeIn();
+});       
+</script>

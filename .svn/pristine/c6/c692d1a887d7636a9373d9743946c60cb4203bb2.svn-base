@@ -1,0 +1,705 @@
+﻿@*
+Comments:
+05.15.14 - TR - Created
+
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+ * Copyright:
+ *      2014 USGS - WiM
+ * Purpose:
+ *      Display lookup table listing
+ */
+ *@
+
+@using LaMPWeb.Assets.Resources;
+@using LaMPServices;
+
+@{
+    ViewBag.Title = "Pick lists";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div id="loading"><div id="loadingcontent"><p id="loadingspinner" style=""><img src="@Url.Content("~/Assets/Images/loading1.gif")"  /></p></div></div>
+
+<div id="dataTitle">
+    <div class="title">Pick lists and organizations</div>    
+</div>
+<br clear="all" />
+
+<hr class="headerUnderline" />
+
+@if (ViewData["LoggedInRole"] == "Admin")
+{
+    <div class="dashboardColumn" style="width:46%;margin-left:32px">
+
+        <div class="subSection">
+            @* Frequency Type Lookup A1*@
+            <div class="subSectionHeader"><span class="bold">FREQUENCY TYPES</span></div>          
+            <div class="subSectionContent">
+                @using (Html.BeginForm("FreqType", "Lookups", FormMethod.Post, null))
+                {
+                    <select id="freqDD" class="lampSelectInput" name="FREQUENCY_TYPE_ID" data-native-menu="false" data-mini="true">
+				        <option value="0">Choose Frequency Type to Edit or Delete</option>
+                        @foreach (FREQUENCY_TYPE ft in ViewData["FreqTypes"] as List<FREQUENCY_TYPE>)
+                        {
+                            <option value='@ft.FREQUENCY_TYPE_ID'>@ft.FREQUENCY</option> 
+                        }
+                    </select>
+                    <br />	<br />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Edit" />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Add New" />
+                    <input type="button" onclick="RemoveFreq();" class="LaMPButton blue" value="Delete" />          
+                }   
+            </div>
+        </div>
+
+        <br />
+    
+        <div class="subSection">
+            @* Media Type Lookup A2*@
+            <div class="subSectionHeader"><span class="bold">MEDIA TYPES</span></div>          
+            <div class="subSectionContent">
+                @using (Html.BeginForm("MediaType", "Lookups", FormMethod.Post, null))
+                {
+                    <select id="mediaDD" class="lampSelectInput" name="MEDIA_TYPE_ID" data-native-menu="false" data-mini="true">
+					    <option value="0">Choose Deployment Priority to Edit or Delete</option>
+                        @foreach (MEDIA_TYPE MedT in ViewData["MediaType"] as List<MEDIA_TYPE>)
+                        {
+                            <option value='@MedT.MEDIA_TYPE_ID'>@MedT.MEDIA</option> 
+                        }
+                    </select>
+                    <br />	<br />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Edit" />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Add New" />
+                    <input type="button" onclick="RemoveMedT();" class="LaMPButton blue" value="Delete" />      
+                }                         
+            </div>
+        </div>
+    
+        <br />
+
+        <div class="subSection">
+            @* Organization Lookup A3*@
+            <div class="subSectionHeader"><span class="bold">ORGANIZATIONS</span></div>          
+            <div class="subSectionContent">
+                @using (Html.BeginForm("Organization", "Lookups", FormMethod.Post, null))
+                {
+                    <select id="OrgDD" class="lampSelectInput" name="ORGANIZATION_ID" data-native-menu="false" data-mini="true">
+					    <option value="0">Choose Organization to Edit or Delete</option>
+                        @foreach (ORGANIZATION org in ViewData["Organization"] as List<ORGANIZATION>)
+                        {
+                            if (!string.IsNullOrEmpty(org.SECTION))
+                            {
+                                <option value='@org.ORGANIZATION_ID'>@(org.NAME),  @(org.DIVISION), @(org.SECTION) </option>
+                            }
+                            else if (!string.IsNullOrEmpty(org.DIVISION))
+                            {
+                                <option value='@org.ORGANIZATION_ID'>@(org.NAME),  @(org.DIVISION) </option>
+                            }
+                            else
+                            {
+                                <option value='@org.ORGANIZATION_ID'>@(org.NAME) ----- </option>
+                            }
+                        }
+                    </select>
+                    <br />	<br />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Edit" />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Add New" />
+                    <input type="button" onclick="RemoveOrg();" class="LaMPButton blue" value="Delete" />          
+                }                          
+        </div>
+        </div>    
+
+        <br />
+
+        <div class="subSection">
+            @* Resource Type Lookup A4*@
+            <div class="subSectionHeader"><span class="bold">RESOURCE TYPES</span></div>          
+            <div class="subSectionContent">
+                @using (Html.BeginForm("ResourceType", "Lookups", FormMethod.Post, null))
+                {
+                    <select id="ResTypeDD" class="lampSelectInput" name="RESOURCE_TYPE_ID" data-native-menu="false" data-mini="true">
+					    <option value="0">Choose Resource Type to Edit or Delete</option>
+                        @foreach (RESOURCE_TYPE rt in ViewData["ResourceTypes"] as List<RESOURCE_TYPE>)
+                        {
+                            <option value='@rt.RESOURCE_TYPE_ID'>@rt.RESOURCE_NAME</option> 
+                        }
+                    </select>
+                    <br />	<br />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Edit" />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Add New" />
+                    <input type="button" onclick="RemoveResType();" class="LaMPButton blue" value="Delete" />          
+                }
+            </div>
+        </div>
+
+        <br />
+    
+        <div class="subSection">
+            @* Project Status Lookup B4*@
+            <div class="subSectionHeader"><span class="bold">PROJECT STATUS</span></div>          
+            <div class="subSectionContent">
+                @using (Html.BeginForm("ProjStatus", "Lookups", FormMethod.Post, null))
+                {
+                    <select id="ProjStatusDD" class="lampSelectInput" name="PROJ_STATUS_ID" data-native-menu="false" data-mini="true">
+				        <option value="0">Choose Status to Edit or Delete</option>
+                        @foreach (PROJ_STATUS ps in ViewData["ProjStatus"] as List<PROJ_STATUS>)
+                        {
+                            <option value='@ps.PROJ_STATUS_ID'>@ps.STATUS_VALUE</option> 
+                        }
+                    </select>
+                    <br />	<br />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Edit" />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Add New" />
+                    <input type="button" onclick="RemovePS();" class="LaMPButton blue" value="Delete" />         
+                }
+            </div>
+        </div>
+    </div> @* end dashboard *@
+
+    <div class="dashboardColumn" style="width:50%">
+    
+        <div class="subSection">
+            @* Lake Types Lookup B1*@
+            <div class="subSectionHeader"><span class="bold">LAKE TYPES</span></div>          
+            <div class="subSectionContent">
+                @using (Html.BeginForm("LakeType", "Lookups", FormMethod.Post, null))
+                {
+                    <select id="LakeTDD" class="lampSelectInput" name="LAKE_TYPE_ID" data-native-menu="false" data-mini="true">
+					    <option value="0">Choose Lake Type to Edit or Delete</option>
+                        @foreach (LAKE_TYPE aLT in ViewData["LakeTypes"] as List<LAKE_TYPE>)
+                        {
+                            <option value='@aLT.LAKE_TYPE_ID'>@aLT.LAKE</option> 
+                        }
+                    </select>
+                    <br />	<br />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Edit" />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Add New" />
+                    <input type="button" onclick="RemoveLT();" class="LaMPButton blue" value="Delete" />          
+                }       
+            </div>
+        </div>    
+
+        <br />
+
+        <div class="subSection">
+            @* Objective Type Lookup B2*@
+            <div class="subSectionHeader"><span class="bold">OBJECTIVE TYPES</span></div>          
+            <div class="subSectionContent">
+                @using (Html.BeginForm("ObjectiveType", "Lookups", FormMethod.Post, null))
+                {
+                    <select id="ObjDD" class="lampSelectInput" name="OBJECTIVE_TYPE_ID" data-native-menu="false" data-mini="true">
+					    <option value="0">Choose Objective Type to Edit or Delete</option>
+                        @foreach (OBJECTIVE_TYPE obj in ViewData["ObjectiveType"] as List<OBJECTIVE_TYPE>)
+                        {
+                            <option value='@obj.OBJECTIVE_TYPE_ID'>@obj.OBJECTIVE</option> 
+                        }
+                    </select>
+                    <br />	<br />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Edit" />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Add New" />
+                    <input type="button" onclick="RemoveObj();" class="LaMPButton blue" value="Delete" /> 
+                }
+            </div>
+        </div>
+    
+        <br />
+
+        <div class="subSection">
+            @* Paramter Type Lookup B3*@
+            <div class="subSectionHeader"><span class="bold">PARAMETER TYPES</span></div>          
+            <div class="subSectionContent">
+                @using (Html.BeginForm("ParamType", "Lookups", FormMethod.Post, null))
+                {
+                    <select id="ParamDD" class="lampSelectInput" name="PARAMETER_TYPE_ID" data-native-menu="false" data-mini="true">
+					    <option value="0">Choose Parameter Type to Edit or Delete</option>
+                        @foreach (PARAMETER_TYPE ptype in ViewData["ParameterTypes"] as List<PARAMETER_TYPE>)
+                        {
+                            <option value='@ptype.PARAMETER_TYPE_ID'>@ptype.PARAMETER</option> 
+                        }
+                    </select>
+                    <br />	<br />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Edit" />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Add New" />
+                    <input type="button" onclick="RemovePT();" class="LaMPButton blue" value="Delete" />         
+                }        
+            </div>
+        </div>
+    
+        <br />
+
+        <div class="subSection">
+            @* Project Length Lookup B4*@
+            <div class="subSectionHeader"><span class="bold">PROJECT LENGTH</span></div>          
+            <div class="subSectionContent">
+                @using (Html.BeginForm("ProjDuration", "Lookups", FormMethod.Post, null))
+                {
+                    <select id="DurationDD" class="lampSelectInput" name="PROJ_DURATION_ID" data-native-menu="false" data-mini="true">
+					    <option value="0">Choose Length Type to Edit or Delete</option>
+                        @foreach (PROJ_DURATION pd in ViewData["ProjDurations"] as List<PROJ_DURATION>)
+                        {
+                            <option value='@pd.PROJ_DURATION_ID'>@pd.DURATION_VALUE</option> 
+                        }
+                    </select>
+                    <br />	<br />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Edit" />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Add New" />
+                    <input type="button" onclick="RemovePD();" class="LaMPButton blue" value="Delete" />         
+                }
+            </div>
+        </div>
+
+        <br />
+
+        <div class="subSection">
+            @* Site Status Lookup B4*@
+            <div class="subSectionHeader"><span class="bold">SITE STATUS</span></div>          
+            <div class="subSectionContent">
+                @using (Html.BeginForm("StatusType", "Lookups", FormMethod.Post, null))
+                {
+                    <select id="SiteStatusDD" class="lampSelectInput" name="STATUS_ID" data-native-menu="false" data-mini="true">
+					    <option value="0">Choose Status Type to Edit or Delete</option>
+                        @foreach (STATUS_TYPE st in ViewData["SiteStatusTypes"] as List<STATUS_TYPE>)
+                        {
+                            <option value='@st.STATUS_ID'>@st.STATUS</option> 
+                        }
+                    </select>
+                    <br />	<br />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Edit" />
+                    <input type="submit" name="Create" onclick="loading();" class="LaMPButton blue" value="Add New" />
+                    <input type="button" onclick="RemoveSiStat();" class="LaMPButton blue" value="Delete" />         
+                }
+            </div>
+        </div>
+
+    </div> @* end dashboardColumn *@
+}
+else
+{
+    @* --------------- dm logged in ---------------------- *@
+    <div>   
+
+        <div class="subSection" style="float:left;margin-right:1em;margin-bottom:1em;">
+            <div class="subSectionHeader">
+                <span style="float:left;">
+                    <input type="button" style="padding:0;background:none;border:none;color:#F37A49;margin-top:-1px;" id="freButton" onclick="OpenClick(this);" value="[ + ]" />
+                </span>&nbsp;&nbsp;
+                <span class="bold">FREQUENCY TYPES</span>
+            </div>          
+            <div id="freContents" class="subSectionContent" style="display:none;">
+                <ul>
+                    @foreach (FREQUENCY_TYPE ft in ViewData["FreqTypes"] as List<FREQUENCY_TYPE>)
+                    {
+                        <li style="list-style-type:square;">@ft.FREQUENCY</li>
+                    }
+                </ul>
+            </div>
+        </div>
+
+        <div class="subSection" style="float:left;margin-right:1em;margin-bottom:1em;">
+            <div class="subSectionHeader">
+                <span style="float:left;">
+                    <input type="button" style="padding:0;background:none;border:none;color:#F37A49;margin-top:-1px;" id="lakButton" onclick="OpenClick(this);" value="[ + ]" />
+                </span>&nbsp;&nbsp;
+                <span class="bold">LAKE TYPES</span>
+            </div>          
+            <div id="lakContents" class="subSectionContent" style="display:none;">    
+                <ul>				
+                    @foreach (LAKE_TYPE aLT in ViewData["LakeTypes"] as List<LAKE_TYPE>)
+                    {
+                        <li style="list-style-type:square;">@aLT.LAKE</li> 
+                    }
+                 </ul>
+            </div>
+        </div>
+        
+        <div class="subSection" style="float:left;margin-right:1em;margin-bottom:1em;">
+            <div class="subSectionHeader">
+                <span style="float:left;">
+                    <input type="button" style="padding:0;background:none;border:none;color:#F37A49;margin-top:-1px;" id="medButton" onclick="OpenClick(this);" value="[ + ]" />
+                </span>&nbsp;&nbsp;
+                <span class="bold">MEDIA TYPES</span>
+            </div>          
+            <div id="medContents" class="subSectionContent" style="display:none;">    
+                <ul>
+		            @foreach (MEDIA_TYPE MedT in ViewData["MediaType"] as List<MEDIA_TYPE>)
+                    {
+                        <li style="list-style-type:square;">@MedT.MEDIA</li> 
+                    }
+                </ul>
+            </div>
+        </div>
+
+        <div class="subSection" style="float:left;margin-right:1em;margin-bottom:1em;">
+            <div class="subSectionHeader">
+                <span style="float:left;">
+                    <input type="button" style="padding:0;background:none;border:none;color:#F37A49;margin-top:-1px;" id="objButton" onclick="OpenClick(this);" value="[ + ]" />
+                </span>&nbsp;&nbsp;
+                <span class="bold">OBJECTIVE TYPES</span>
+            </div>          
+            <div id="objContents" class="subSectionContent" style="display:none;">
+                 <ul>
+	                @foreach (OBJECTIVE_TYPE obj in ViewData["ObjectiveType"] as List<OBJECTIVE_TYPE>)
+                    {
+                        <li style="list-style-type:square;">@obj.OBJECTIVE</li> 
+                    }
+                </ul>
+            </div>
+        </div>
+        
+        <div class="subSection" style="float:left;margin-right:1em">
+            <div class="subSectionHeader">
+                <span style="float:left;">
+                    <input type="button" style="padding:0;background:none;border:none;color:#F37A49;margin-top:-1px;" id="orgButton" onclick="OpenClick(this);" value="[ + ]" />
+                </span>&nbsp;&nbsp;
+                <span class="bold">ORGANIZATIONS</span>
+            </div>          
+            <div id="orgContents" class="subSectionContent" style="display:none;">    
+                <ul>			
+                    @foreach (ORGANIZATION org in ViewData["Organization"] as List<ORGANIZATION>)
+                    {
+                        if (!string.IsNullOrEmpty(org.SECTION))
+                        {   
+                            <li style="list-style-type:square;">@(org.NAME),  @(org.DIVISION), @(org.SECTION) </li>
+                        }
+                        else if (!string.IsNullOrEmpty(org.DIVISION))
+                        {
+                            <li style="list-style-type:square;">@(org.NAME),  @(org.DIVISION) </li>
+                        }
+                        else
+                        {
+                            <li style="list-style-type:square;">@(org.NAME)</li>
+                        }
+                    }
+                </ul>
+            </div>
+        </div>     
+
+        <div class="subSection" style="float:left;margin-right:1em;margin-bottom:1em;">
+            <div class="subSectionHeader">
+                <span style="float:left;">
+                    <input type="button" style="padding:0;background:none;border:none;color:#F37A49;margin-top:-1px;" id="parButton" onclick="OpenClick(this);" value="[ + ]" />
+                </span>&nbsp;&nbsp;
+                <span class="bold">PARAMETER TYPES</span>
+            </div>          
+             <div id="parContents" class="subSectionContent" style="display:none;">    
+                <ul>
+		            @foreach (PARAMETER_TYPE ptype in ViewData["ParameterTypes"] as List<PARAMETER_TYPE>)
+                    {
+                        <li style="list-style-type:square;">@ptype.PARAMETER</li> 
+                    }
+                </ul>
+            </div>
+        </div>
+        
+        <div class="subSection" style="float:left;margin-right:1em;margin-bottom:1em;">
+            <div class="subSectionHeader">
+                <span style="float:left;">
+                    <input type="button" style="padding:0;background:none;border:none;color:#F37A49;margin-top:-1px;" id="prLButton" onclick="OpenClick(this);" value="[ + ]" />
+                </span>&nbsp;&nbsp;
+                <span class="bold">PROJECT LENGTH</span>
+            </div>          
+             <div id="prLContents" class="subSectionContent" style="display:none;">        
+                <ul>
+		            @foreach (PROJ_DURATION pd in ViewData["ProjDurations"] as List<PROJ_DURATION>)
+                    {
+                         <li style="list-style-type:square;">@pd.DURATION_VALUE</li> 
+                    }
+                </ul>
+            </div>            
+        </div>
+
+        <div class="subSection" style="float:left;margin-right:1em;margin-bottom:1em;">
+            <div class="subSectionHeader">
+                <span style="float:left;">
+                    <input type="button" style="padding:0;background:none;border:none;color:#F37A49;margin-top:-1px;" id="prSButton" onclick="OpenClick(this);" value="[ + ]" />
+                </span>&nbsp;&nbsp;<span class="bold">PROJECT STATUS</span>
+            </div>          
+             <div id="prSContents" class="subSectionContent" style="display:none;">    
+                <ul>
+                    @foreach (PROJ_STATUS ps in ViewData["ProjStatus"] as List<PROJ_STATUS>)
+                    {
+                        <li style="list-style-type:square;">@ps.STATUS_VALUE</li> 
+                    }
+                </ul>
+            </div>
+        </div>
+
+        <div class="subSection" style="float:left;margin-right:1em;margin-bottom:1em;">
+             <div class="subSectionHeader">
+                <span style="float:left;">
+                    <input type="button" style="padding:0;background:none;border:none;color:#F37A49;margin-top:-1px;" id="resButton" onclick="OpenClick(this);" value="[ + ]" />
+                </span>&nbsp;&nbsp;
+                <span class="bold">RESOURCE TYPES</span>
+            </div>          
+             <div id="resContents" class="subSectionContent" style="display:none;">    
+                <ul>
+                    @foreach (RESOURCE_TYPE rt in ViewData["ResourceTypes"] as List<RESOURCE_TYPE>)
+                    {
+                        <li style="list-style-type:square;">@rt.RESOURCE_NAME</li> 
+                    }
+                </ul>
+            </div>
+        </div>
+
+        <div class="subSection" style="float:left;margin-right:1em;margin-bottom:1em;">
+             <div class="subSectionHeader">
+                <span style="float:left;">
+                    <input type="button" style="padding:0;background:none;border:none;color:#F37A49;margin-top:-1px;" id="siSButton" onclick="OpenClick(this);" value="[ + ]" />
+                </span>&nbsp;&nbsp;
+                <span class="bold">SITE STATUS TYPES</span>
+            </div>          
+             <div id="siSContents" class="subSectionContent" style="display:none;">    
+                <ul>
+                    @foreach (STATUS_TYPE st in ViewData["SiteStatusTypes"] as List<STATUS_TYPE>)
+                    {
+                        <li style="list-style-type:square;">@st.STATUS</li> 
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+}
+<br clear="all" />
+
+
+<script type="text/javascript">
+    function loading() {
+        $("#loading").fadeIn();
+    };    
+
+    $("#deleteClick").click(function () {
+        $("#loading").fadeIn();
+    });       
+
+    function RemoveFreq() {
+        var answer = confirm("Are you sure you want to delete this Frequency Type?");
+        if (answer == true) {
+            $("#loading").fadeIn();
+            var toDelete = $("#freqDD").val();
+            $.ajax({
+                url: '@Url.Action("FreqTypeDelete", "Lookups")',
+                data: { id: toDelete },
+                success: function (response) {
+                    if (response == "True") {
+                        window.location.href = '@Url.Action("Index", "Lookups")';
+                    }
+                    else if (response == "False") {
+                        window.location.href = '@Url.Action("Index", "Lookups")';
+                        alert("Delete was unsuccessful");
+                    }
+                }
+            });
+        }
+    }
+    
+    function RemoveMedT() {
+        var answer = confirm("Are you sure you want to delete this Media Type?");
+        if (answer == true) {
+            $("#loading").fadeIn();
+            var toDelete = $("#mediaDD").val();
+            $.ajax({
+                url: '@Url.Action("MediaTypeDelete", "Lookups")',
+                data: { id: toDelete },
+                success: function (response) {
+                    if (response == "True") {
+                        window.location.href = '@Url.Action("Index", "Lookups")';
+                    }
+                    else if (response == "False") {
+                        window.location.href = '@Url.Action("Index", "Lookups")';
+                        alert("Delete was unsuccessful");
+                    }
+                }
+            });
+        }
+    }
+    
+    function RemoveOrg() {
+        var answer = confirm("Are you sure you want to delete this Organization?");
+        if (answer == true) {
+            $("#loading").fadeIn();
+            var toDelete = $("#OrgDD").val();
+            $.ajax({
+                url: '@Url.Action("OrganizationDelete", "Lookups")',
+                data: { id: toDelete },
+                success: function (response) {
+                    if (response == "True") {
+                        window.location.href = '@Url.Action("Index", "Lookups")';
+                    }
+                    else if (response == "False") {
+                        window.location.href = '@Url.Action("Index", "Lookups")';
+                        alert("Delete was unsuccessful");
+                    }
+                }
+            });
+        }
+    }
+          
+    function RemoveResType() {
+        var answer = confirm("Are you sure you want to delete this Resource Type?");
+        if (answer == true) {
+            $("#loading").fadeIn();
+            var toDelete = $("#ResTypeDD").val();
+            $.ajax({
+                url: '@Url.Action("ResourceTypeDelete", "Lookups")',
+                data: { id: toDelete },
+                success: function (response) {
+                    if (response == "True") {
+                        window.location.href = '@Url.Action("Index", "Lookups")';
+                    }
+                    else if (response == "False") {
+                        window.location.href = '@Url.Action("Index", "Lookups")';
+                        alert("Delete was unsuccessful");
+                    }
+                }
+            });
+        }
+    }
+ 
+    function RemovePS() {
+        var answer = confirm("Are you sure you want to delete this Project Status?");
+        if (answer == true) {
+            $("#loading").fadeIn();
+            var toDelete = $("#ProjStatusDD").val();
+            $.ajax({
+                url: '@Url.Action("ProjStatusDelete", "Lookups")',
+                data: { id: toDelete },
+                success: function (response) {
+                    if (response == "True") {
+                        window.location.href = '@Url.Action("Index", "Lookups")';
+                    }
+                    else if (response == "False") {
+                        window.location.href = '@Url.Action("Index", "Lookups")';
+                        alert("Delete was unsuccessful");
+                    }
+                }
+            });
+        }
+    }      
+
+    function RemoveLT() {
+        var answer = confirm("Are you sure you want to delete this Lake Type?");
+        if (answer == true) {
+            $("#loading").fadeIn();
+            var toDelete = $("#LakeTDD").val();
+            $.ajax({
+                url: '@Url.Action("LakeTypeDelete", "Lookups")',
+                data: { id: toDelete },
+                success: function (response) {
+                    if (response == "True") {
+                        window.location.href = '@Url.Action("Index", "Lookups")';
+                    }
+                    else if (response == "False") {
+                        window.location.href = '@Url.Action("Index", "Lookups")';
+                        alert("Delete was unsuccessful");
+                    }
+                }
+            });
+        }
+    }
+   
+    function RemoveObj() {
+        var answer = confirm("Are you sure you want to delete this Objective Point?");
+        if (answer == true) {
+            $("#loading").fadeIn();
+            var toDelete = $("#ObjDD").val();
+            $.ajax({
+                url: '@Url.Action("ObjectiveTypeDelete", "Lookups")',
+                data: { id: toDelete },
+                success: function (response) {
+                    if (response == "True") {
+                        window.location.href = '@Url.Action("Index", "Lookups")';
+                    }
+                    else if (response == "False") {
+                        window.location.href = '@Url.Action("Index", "Lookups")';
+                        alert("Delete was unsuccessful");
+                    }
+                }
+            });
+        }
+    }
+
+    function RemovePT() {
+        var answer = confirm("Are you sure you want to delete this Parameter Type?");
+        if (answer == true) {
+            $("#loading").fadeIn();
+            var toDelete = $("#ParamDD").val();
+            $.ajax({
+                url: '@Url.Action("ParamTypeDelete", "Lookups")',
+                data: { id: toDelete },
+                success: function (response) {
+                    if (response == "True") {
+                        window.location.href = '@Url.Action("Index", "Lookups")';
+                    }
+                    else if (response == "False") {
+                        window.location.href = '@Url.Action("Index", "Lookups")';
+                        alert("Delete was unsuccessful");
+                    }
+                }
+            });
+        }
+    }
+
+    function RemovePD() {
+        var answer = confirm("Are you sure you want to delete this Project Length?");
+        if (answer == true) {
+            $("#loading").fadeIn();
+            var toDelete = $("#DurationDD").val();
+            $.ajax({
+                url: '@Url.Action("ProjDurationDelete", "Lookups")',
+                data: { id: toDelete },
+                success: function (response) {
+                    if (response == "True") {
+                        window.location.href = '@Url.Action("Index", "Lookups")';
+                    }
+                    else if (response == "False") {
+                        window.location.href = '@Url.Action("Index", "Lookups")';
+                        alert("Delete was unsuccessful");
+                    }
+                }
+            });
+        }
+    }
+
+    function RemoveSiStat() {
+        var answer = confirm("Are you sure you want to delete this Site Status Type?");
+        if (answer == true) {
+            $("#loading").fadeIn();
+            var toDelete = $("#SiteStatusDD").val();
+            $.ajax({
+                url: '@Url.Action("StatusTypeDelete", "Lookups")',
+                data: { id: toDelete },
+                success: function (response) {
+                    if (response == "True") {
+                        window.location.href = '@Url.Action("Index", "Lookups")';
+                    }
+                    else if (response == "False") {
+                        window.location.href = '@Url.Action("Index", "Lookups")';
+                        alert("Delete was unsuccessful");
+                    }
+                }
+            });
+        }
+    }
+
+    function OpenClick(thisOne) {
+        var startOfId = thisOne.id.substring(0,3);
+        var idContents = "#" + startOfId + "Contents";   
+        var thisID = "#" + thisOne.id;     
+        //show contents and change sign (+/-)
+        if ($(idContents).css('display') == 'none') {            
+            //show contents , set to -
+            $(idContents).css('display', 'block');
+            $(thisID).prop('value', '[ - ]');
+        }
+        else {  
+            //hide contents and change to +
+            $(idContents).css('display', 'none');
+            $(thisID).prop('value', '[ + ]');
+        }
+    }
+    
+</script>

@@ -1,0 +1,361 @@
+﻿//------------------------------------------------------------------------------
+//----- SiteResource -----------------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2012 WiM - USGS
+
+//    authors:  Jeremy K. Newson USGS Wisconsin Internet Mapping
+//              Tonia Roddick USGS Wisconsin Internet Mapping
+//  
+//   purpose:   Site resources.
+//              Equivalent to the model in MVC.
+//
+//discussion:   Resources are plain-old CLR objects (POCO) the resources are POCO classes derived from the EF
+//              SiteResource contains additional rederers of the derived EF POCO classes. 
+//              https://github.com/openrasta/openrasta/wiki/Resources
+//
+//     
+
+#region Comments
+// 01.08.13 - tr - Created
+#endregion
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+using System.Xml.Serialization;
+
+namespace LaMPServices.Resources
+{
+
+    [XmlRoot("ArrayOfSITE")]
+    public class SiteList
+    {
+        [XmlElement(typeof(SimpleSite),
+        ElementName = "Site"),
+        XmlElement(typeof(SitePoint),
+        ElementName = "SitePoint")]
+        public List<SiteBase> Sites { get; set; }
+
+    }
+
+    public class SiteBase : HypermediaEntity
+    {
+        [XmlElement(DataType = "int",
+        ElementName = "SITE_ID")]
+        public Int32 SITE_ID { get; set; }
+
+        [XmlElement(DataType = "string",
+        ElementName = "NAME")]
+        public String NAME { get; set; }
+
+
+        #region Overrided Methods
+
+        protected override string getRelativeURI(refType rType)
+        {
+            string uriString = "";
+            switch (rType)
+            {
+                case refType.GET:
+                case refType.PUT:
+                case refType.DELETE:
+
+                    uriString = string.Format("Sites/{0}", this.SITE_ID);
+                    break;
+
+                case refType.POST:
+                    uriString = "Sites";
+                    break;
+
+            }
+            return uriString;
+        }
+        #endregion
+
+    }
+
+    /* Light version of Site Object, only contains ID and Site_No */
+    public class SimpleSite : SiteBase
+    {
+        public SimpleSite()
+        {
+            SITE_ID = -1;
+            NAME = "";
+        }
+    }
+
+    /* Medium version of Site Object, contains ID, Site_No, and Lat/Long coordinates */
+    public class SitePoint : SiteBase
+    {
+        [XmlElement(DataType = "decimal",
+        ElementName = "Latitude")]
+        public decimal? latitude { get; set; }
+
+        [XmlElement(DataType = "decimal",
+        ElementName = "Longitude")]
+        public decimal? longitude { get; set; }
+
+        public SitePoint()
+        {
+            SITE_ID = -1;
+            NAME = "";
+        }
+    }
+    
+    /* full details of Site Object  */
+    public class DetailSite : SiteBase
+    {
+        [XmlElement(DataType = "SITE",
+        ElementName = "Site")]
+        public SITE siteDetail { get; set; }
+
+        public DetailSite()
+        {
+            SITE_ID = -1;
+            NAME = "";
+        }
+    }
+
+    public class SiteLayer : FeatureBase
+    {
+        #region "Fields"
+        private string _name;
+        private string _startDate;
+        private string _endDate;
+        private string _projectID;
+        private string _samplePlatform;
+        private string _additionalInfo;
+        private string _description;
+        private string _waterbody;
+        private string _statusTypeID;
+        private string _lakeTypeID;
+        private string _country;
+        private string _stateProvince;
+        private string _watershedHUC8;
+        private string _url;
+        #endregion
+        #region "Properties"
+        public Int32 SITE_ID { get; set; }
+        public string NAME
+        {
+            get { return _name; }
+            set { _name = LimitLength(value, 200); }
+        }
+        public DateTime? START_DATE { get; set; }
+        public DateTime? END_DATE { get; set; }
+        public Int32 PROJECT_ID { get; set; }
+
+        public string SAMPLE_PLATFORM
+        {
+            get { return _samplePlatform; }
+            set { _samplePlatform = LimitLength(value, 255); }
+        }
+        public string ADDITIONAL_INFO
+        {
+            get { return _additionalInfo; }
+            set { _additionalInfo = LimitLength(value, 1000); }
+        }
+        public string DESCRIPTION
+        {
+            get { return _description; }
+            set { _description = LimitLength(value, 255); }
+        }
+        public string WATERBODY
+        {
+            get { return _waterbody; }
+            set { _waterbody = LimitLength(value, 255); }
+        }
+        public Int32 STATUS_TYPE_ID { get; set; }
+
+        public Int32 LAKE_TYPE_ID { get; set; }
+
+        public string COUNTRY
+        {
+            get { return _country; }
+            set { _country = LimitLength(value, 25); }
+        }
+        public string STATE_PROVINCE
+        {
+            get { return _stateProvince; }
+            set { _stateProvince = LimitLength(value, 25); }
+        }
+        public string WATERSHED_HUC8
+        {
+            get { return _watershedHUC8; }
+            set { _watershedHUC8 = LimitLength(value, 8); }
+        }
+        public string URL
+        {
+            get { return _url; }
+            set { _url = LimitLength(value, 255); }
+        }
+        #endregion
+        #region "Constructor"
+        public SiteLayer(SITE site)
+            : base()
+        {
+            this.SITE_ID = Convert.ToInt32(site.SITE_ID);
+            this.NAME = !string.IsNullOrEmpty(site.NAME) ? site.NAME : string.Empty;
+            this.START_DATE = ((DateTime?)site.START_DATE != null) ? site.START_DATE : null;
+            this.END_DATE = ((DateTime?)site.END_DATE != null) ? site.END_DATE : null;
+            this.PROJECT_ID = Convert.ToInt32(site.PROJECT_ID);
+            this.SAMPLE_PLATFORM = !string.IsNullOrEmpty(site.SAMPLE_PLATFORM) ? site.SAMPLE_PLATFORM : string.Empty;
+            this.ADDITIONAL_INFO = !string.IsNullOrEmpty(site.ADDITIONAL_INFO) ? site.ADDITIONAL_INFO : string.Empty;
+            this.DESCRIPTION = !string.IsNullOrEmpty(site.DESCRIPTION) ? site.DESCRIPTION : string.Empty;
+            this.LATITUDE = Convert.ToDouble(site.LATITUDE);
+            this.LONGITUDE = Convert.ToDouble(site.LONGITUDE);
+            this.WATERBODY = !string.IsNullOrEmpty(site.WATERBODY) ? site.WATERBODY : string.Empty;
+            this.STATUS_TYPE_ID = Convert.ToInt32(site.STATUS_TYPE_ID);
+            this.LAKE_TYPE_ID = Convert.ToInt32(site.LAKE_TYPE_ID);
+            this.COUNTRY = !string.IsNullOrEmpty(site.COUNTRY) ? site.COUNTRY : string.Empty;
+            this.STATE_PROVINCE = !string.IsNullOrEmpty(site.STATE_PROVINCE) ? site.STATE_PROVINCE : string.Empty;
+            this.WATERSHED_HUC8 = !string.IsNullOrEmpty(site.WATERSHED_HUC8) ? site.WATERSHED_HUC8 : string.Empty;
+        }//end SiteLayer
+        #endregion
+    }//end class SiteLayer
+
+    public class SiteMapModel 
+    {
+
+        [XmlElement(typeof(decimal),
+        ElementName = "SiteId")]
+        public decimal SiteId { get; set; }
+
+        [XmlElement(typeof(string),
+        ElementName = "Name")]
+        public string Name { get; set; }
+
+        [XmlElement(typeof(decimal),
+        ElementName = "Latitude")]
+        public decimal? latitude { get; set; }
+
+        [XmlElement(typeof(decimal),
+        ElementName = "longitude")]
+        public decimal? longitude { get; set; }
+
+        [XmlElement(typeof(string),
+        ElementName = "StartDate")]
+        public string StartDate { get; set; }
+
+        [XmlElement(typeof(string),
+        ElementName = "EndDate")]
+        public string EndDate { get; set; }
+
+        [XmlElement(typeof(string),
+        ElementName = "SamplePlatform")]
+        public string SamplePlatform { get; set; }
+
+        [XmlElement(typeof(string),
+        ElementName = "AdditionalInfo")]
+        public string AdditionalInfo { get; set; }
+
+        [XmlElement(typeof(string),
+        ElementName = "Description")]
+        public string Description { get; set; }
+
+        [XmlElement(typeof(string),
+        ElementName = "Waterbody")]
+        public string Waterbody { get; set; }
+
+        [XmlElement(typeof(string),
+        ElementName = "GreatLake")]
+        public string GreatLake { get; set; }
+
+        [XmlElement(typeof(string),
+        ElementName = "Status")]
+        public string Status { get; set; }
+
+        [XmlElement(typeof(string),
+        ElementName = "Country")]
+        public string Country { get; set; }
+
+        [XmlElement(typeof(string),
+        ElementName = "State")]
+        public string State { get; set; }
+
+        [XmlElement(typeof(string),
+        ElementName = "WatershedHUC8")]
+        public string WatershedHUC8 { get; set; }
+        
+        [XmlElement(typeof(string),
+        ElementName = "URL")]
+        public string URL { get; set; }
+
+        [XmlElement(typeof(string),
+        ElementName = "Resources")]
+        public string Resources { get; set; }
+
+        [XmlElement(typeof(string),
+        ElementName = "Frequency")]
+        public string Frequency { get; set; }
+
+        [XmlElement(typeof(string),
+        ElementName = "Media")]
+        public string Media { get; set; }
+
+        [XmlElement(typeof(ParameterGroups),
+        ElementName = "Parameters")]
+        public ParameterGroups Parameters { get; set; }
+
+        [XmlElement(typeof(PROJECT),
+        ElementName = "aProject")]
+        public PROJECT aProject { get; set; }
+
+        [XmlElement(typeof(List<ORGANIZATION>),
+        ElementName = "ProjOrgs")]
+        public List<ORGANIZATION> ProjOrgs { get; set; }
+
+        [XmlElement(typeof(string),
+        ElementName = "ProjectObjectives")]
+        public string ProjectObjectives { get; set; }
+
+        [XmlElement(typeof(string),
+        ElementName = "ProjectKeywords")]
+        public string ProjectKeywords { get; set; }
+
+        [XmlElement(typeof(DATA_HOST),
+        ElementName = "ProjectData")]
+        public DATA_HOST ProjectData { get; set; }
+
+        [XmlElement(typeof(List<PUBLICATION>),
+        ElementName = "ProjectPubs")]
+        public List<PUBLICATION> ProjectPubs { get; set; }
+
+        [XmlElement(typeof(List<ContactModel>),
+        ElementName = "ProjectContacts")]
+        public List<ContactModel> ProjectContacts { get; set; }
+    }
+
+    public class ContactModel
+    {
+        [XmlElement(typeof(string),
+        ElementName = "ContactName")]
+        public string ContactName { get; set; }
+
+        [XmlElement(typeof(string),
+        ElementName = "ContactOrgName")]
+        public string ContactOrgName { get; set; }
+
+        [XmlElement(typeof(string),
+        ElementName = "ContactEmail")]
+        public string ContactEmail { get; set; }
+
+        [XmlElement(typeof(string),
+        ElementName = "ContactPhone")]
+        public string ContactPhone { get; set; }
+    
+    }
+
+
+}//end namespace
+
+
+
+
+

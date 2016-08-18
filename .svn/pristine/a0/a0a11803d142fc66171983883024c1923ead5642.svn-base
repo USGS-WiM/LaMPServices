@@ -1,0 +1,174 @@
+﻿@*Comments:
+03.10.13 - TR - created
+*@
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+  * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *     Project Details 
+ */
+ *@
+@using System.Configuration;
+@using LaMPServices;
+@using LaMPWeb;
+@using LaMPWeb.Assets.Resources;
+
+@{
+    ViewBag.Title = "Project Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@model LaMPServices.PROJECT
+<script src="@Url.Content("~/Assets/Scripts/jquery.unobtrusive-ajax.js")" type="text/javascript"></script> 
+
+@{ 
+    DATA_HOST thisHost = new DATA_HOST();
+    if (ViewData.ContainsKey("dataHost"))
+    {   
+        List<DATA_HOST> DataHosts = ViewData["dataHost"] as List<DATA_HOST>;
+        thisHost = DataHosts[0];
+    }
+}
+
+<div id="loading"><div id="loadingcontent"><p id="loadingspinner" style=""><img src="@Url.Content("~/Assets/Images/loading1.gif")"  /></p></div></div>
+
+
+<div id="dataTitle">                                                        
+    <div class="title">Project: @Model.NAME</div>
+    
+    <span id="errorSection" class="failureNotification"><asp:Literal ID="ErrorMessage" runat="server"></asp:Literal></span>
+</div>
+<br clear="all" />
+
+<hr class="headerUnderline" />
+@Html.ActionLink("Edit", "ProjectEdit", new {id = Model.PROJECT_ID}, new {@class="LaMPButton icon blue", @onclick="loading();"})
+
+<br /><br />
+<div class="detailColumn">
+    
+@* Project Name: (PROJECT)*@
+<div class="detailDiv">          
+    <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjName_Lbl)</span>
+    <label class="inline">@Model.NAME</label>
+</div>
+
+@* Organizations: (PROJECT_COOPERATORS)*@
+<div class="detailDiv">
+    <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjOrg_Lbl)</span>
+    <label class="inline">
+        @foreach (ORGANIZATION o in ViewData["projOrgs"] as List<ORGANIZATION>)
+        {  @string.Format("- {0}", o.NAME);
+            if (o.DIVISION != null)
+            { @string.Format(", {0}", o.DIVISION); }
+            if (o.SECTION != null)
+            { @string.Format(", {0}", o.SECTION); }
+            <br />
+        }
+    </label>
+</div>
+
+@* Project Start Date: (PROJECT)*@
+<div class="detailDiv">
+    <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjStartDate_Lbl)</span>
+    <label class="inline">@( ((DateTime)Model.START_DATE).ToShortDateString() )</label>
+</div>
+
+@* Project End Date: (PROJECT)*@
+<div class="detailDiv">
+    <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjEndDate_Lbl)</span>
+    <label class="inline">@( Model.END_DATE != null ? ((DateTime)Model.END_DATE).ToShortDateString() : "" )</label>
+</div>
+        
+@* Project Objectives: (PROJECT_OBJECTIVES)*@
+<div class="detailDiv">
+    <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjObj_Lbl)</span>
+    <label class="inline">
+        @if (ViewData.ContainsKey("projObjectives"))
+        {
+            foreach (OBJECTIVE_TYPE ot in ViewData["projObjectives"] as List<OBJECTIVE_TYPE>)
+            {  
+                @string.Format("- {0}", ot.OBJECTIVE);<br />
+            }
+        }
+    </label>
+</div>
+
+@* Project Description: (PROJECT)*@
+<div class="detailDiv">
+    <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjDescript_Lbl)</span>
+    <textarea class="textAreaDetails inline" cols="30" rows="4" readonly="readonly">@Model.DESCRIPTION</textarea>
+</div>
+
+@* Project Keywords: (PROJECT_KEYWORDS)*@
+<div class="detailDiv">
+    <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjKeywords_Lbl)</span>
+    <label class="inline">
+        @if (ViewData.ContainsKey("projKeywords"))
+        {
+                foreach (KEYWORD k in ViewData["projKeywords"] as List<KEYWORD>)
+                {       
+                @string.Format("- {0}", k.TERM); <br />
+                }
+        }
+    </label>
+</div>
+
+    @* Project Website: (PROJECT)*@
+    <div class="detailDiv">
+        <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjWebsite_Lbl)</span>
+        <label style="overflow:auto" class="inline">@Model.URL</label>
+    </div>
+
+    @* Additional Project Information: (PROJECT)*@
+    <div class="detailDiv">
+        <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjAddInfo_Lbl)</span>
+        <textarea class="textAreaDetails inline" cols="30" rows="4" readonly="readonly">@Model.ADDITIONAL_INFO</textarea>
+	
+    </div>
+
+        @* Data Management System: (PROJECT)*@
+    <div class="detailDiv">
+        <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjDataMngSys_Lbl)</span>
+        <label class="inline">@( (thisHost.DATA_HOST_ID != null) ? thisHost.DESCRIPTION : "" )</label>
+    </div>
+
+        @* Data Hosting Entity: (DATA_HOST)*@
+    <div class="detailDiv">
+        <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjDataHost_Lbl)</span>
+        <label class="inline">@( (thisHost.DATA_HOST_ID != null) ? thisHost.HOST_NAME : "" )</label>
+    </div>
+
+        @* Data Portal URL: (DATA_HOST)*@
+    <div class="detailDiv">
+        <span class="bold ui-label-a">@Html.Label(ProjectStrings.ProjDataPortal_Lbl)</span>
+        <label style="overflow:auto" class="inline">@( (thisHost.DATA_HOST_ID != null) ? thisHost.PORTAL_URL : "")</label>
+    </div>
+</div>
+
+
+<script language="javascript">
+    $("#editButton").click(function () {
+        $("#form0").submit();
+    });       
+</script>
+
+<div class="infoBoxColumn">
+
+@* -------------- Info Boxes  -----------*@
+
+    @{Html.RenderAction("ContactInfoBox", "Contact", new { id = Model.PROJECT_ID }); }
+    <br />
+    @{Html.RenderAction("PubInfoBox", "Publication", new { id = Model.PROJECT_ID }); }
+    <br />
+    @{Html.RenderAction("SiteInfoBox", "Site", new { id = Model.PROJECT_ID }); }
+    <br />
+</div>
+
+<br clear="all" />       
+
+<script type="text/javascript">
+    function loading() {
+        $("#loading").fadeIn();
+    };
+</script>

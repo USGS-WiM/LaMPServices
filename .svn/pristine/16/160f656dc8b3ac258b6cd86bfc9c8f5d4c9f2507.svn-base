@@ -1,0 +1,246 @@
+﻿//------------------------------------------------------------------------------
+//----- ParameterTypeHandler -----------------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2012 WiM - USGS
+
+//    authors:  Jeremy K. Newson USGS Wisconsin Internet Mapping
+//              
+//  
+//   purpose:   Handles parameter type resources through the HTTP uniform interface.
+//              Equivalent to the controller in MVC.
+//
+//discussion:   Handlers are objects which handle all interaction with resources in 
+//              this case the resources are POCO classes derived from the EF. 
+//               https://github.com/openrasta/openrasta/wiki/Handlers
+//
+//     
+#region Comments
+// 05.02.12 - jkn - Created
+#endregion   
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+using LaMPServices.Authentication;
+using OpenRasta.Web;
+using OpenRasta.Security;
+
+namespace LaMPServices.Handlers
+{
+    public class ParameterTypeHandler:HandlerBase
+    {
+        #region Routed Methods
+
+        #region GetMethods
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get()
+        {
+            List<PARAMETER_TYPE> parameters;
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    parameters = aLaMPRDS.PARAMETER_TYPE.OrderBy(p => p.PARAMETER_TYPE_ID).ToList();
+
+                }//end using
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = parameters };
+        }//end httpMethod get
+
+
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get(Int32 parameterTypeId)
+        {
+            PARAMETER_TYPE aParameterType;
+
+            //return BadRequest if ther is no ID
+            if (parameterTypeId <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    aParameterType = aLaMPRDS.PARAMETER_TYPE.Single(p => p.PARAMETER_TYPE_ID == parameterTypeId);
+
+                }//end using
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = aParameterType };
+        }//end httpMethod get
+
+        #endregion
+
+        #region PostMethods
+        /// 
+        /// Force the user to provide authentication 
+        /// 
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.POST, ForUriName = "CreateParameterType")]
+        public OperationResult Post(PARAMETER_TYPE aParameterType)
+        {
+            //Return BadRequest if missing required fields
+            if (String.IsNullOrEmpty(aParameterType.PARAMETER))
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    decimal nextKey = 1;
+                    if (aLaMPRDS.PARAMETER_TYPE.Count() > 0)
+                    {
+                        nextKey = aLaMPRDS.PARAMETER_TYPE.OrderByDescending(p => p.PARAMETER_TYPE_ID).First().PARAMETER_TYPE_ID + 1;
+                    }
+
+                    //set ID
+                    aParameterType.PARAMETER_TYPE_ID = nextKey;
+
+                    aLaMPRDS.PARAMETER_TYPE.AddObject(aParameterType);
+
+                    aLaMPRDS.SaveChanges();
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = aParameterType };
+        }
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.POST, ForUriName = "CreateParameterTypeList")]
+        public OperationResult Post(List<PARAMETER_TYPE> aParameters)
+        {
+            //Return BadRequest if missing required fields
+            if (aParameters.Count <= 0)
+            {return new OperationResult.BadRequest();}
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //get last key in repository
+                    decimal nextKey = 1;
+                    if (aLaMPRDS.PARAMETER_TYPE.Count() > 0)
+                    {
+                        nextKey = aLaMPRDS.PARAMETER_TYPE.OrderByDescending(p => p.PARAMETER_TYPE_ID).First().PARAMETER_TYPE_ID + 1;
+                    }
+
+                    foreach (PARAMETER_TYPE item in aParameters)
+                    {
+                        //update database ID
+                        item.PARAMETER_TYPE_ID = nextKey;
+                        aLaMPRDS.PARAMETER_TYPE.AddObject(item);
+                        nextKey += 1;
+
+                    }//next item
+
+                    aLaMPRDS.SaveChanges();
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = aParameters };
+        }
+        #endregion
+
+        #region PutMethods
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.PUT, ForUriName = "UpdateParameterType")]
+        public OperationResult Post(Int32 parameterTypeId, PARAMETER_TYPE instance)
+        {
+            //Return BadRequest if missing required fields
+            if ((parameterTypeId <= 0))
+            {return new OperationResult.BadRequest();}
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    PARAMETER_TYPE ObjectToBeUpdated = aLaMPRDS.PARAMETER_TYPE.Single(p => p.PARAMETER_TYPE_ID == parameterTypeId);
+
+                    //Parameter
+                    ObjectToBeUpdated.PARAMETER = (string.IsNullOrEmpty(instance.PARAMETER) ?
+                        ObjectToBeUpdated.PARAMETER : instance.PARAMETER);
+
+
+                    //Citation
+                    ObjectToBeUpdated.PARAMETER_GROUP = (string.IsNullOrEmpty(instance.PARAMETER_GROUP) ?
+                        ObjectToBeUpdated.PARAMETER_GROUP : instance.PARAMETER_GROUP);
+
+
+                    aLaMPRDS.SaveChanges();
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = instance };
+        }
+        
+        #endregion
+
+        #region DeleteMethods
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.DELETE, ForUriName = "DeleteParameterType")]
+        public OperationResult Post(Int32 parameterTypeId)
+        {
+            //Return BadRequest if missing required fields
+            if (parameterTypeId <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    PARAMETER_TYPE ObjectToBeDeleted = aLaMPRDS.PARAMETER_TYPE.Single(p => p.PARAMETER_TYPE_ID == parameterTypeId);
+                    //delete it
+                    aLaMPRDS.PARAMETER_TYPE.DeleteObject(ObjectToBeDeleted);
+
+                    aLaMPRDS.SaveChanges();
+
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { };
+        }
+
+        #endregion
+
+        #endregion
+
+    }//end ParameterTypeHandler
+}//end namespace

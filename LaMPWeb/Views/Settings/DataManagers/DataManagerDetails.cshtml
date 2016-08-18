@@ -1,0 +1,106 @@
+﻿@* Comments:
+10.01.14 - TR - Created 
+
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+ * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Display details of a Data Manager 
+ */
+ *@
+@using LaMPServices;
+@using LaMPWeb.Assets.Resources;
+
+@model LaMPServices.DATA_MANAGER
+           
+
+@{
+    ViewBag.Title = "Data Manager Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+}
+
+
+<div id="dataTitle">
+    <div class="title">
+     @Html.ActionLink("All Data Managers", "Index", "DataManager", null, new { onclick = "loading();" })
+     | Data Manager: @(Model.FNAME + " " + Model.LNAME) &nbsp;&nbsp;
+     </div>
+    
+    @if (ViewData["Role"] == "Admin")
+    {
+        <div>
+            @Html.ActionLink("Delete", "DataManagerDelete", new { id = Model.DATA_MANAGER_ID }, new { onclick = "return confirm('Are you sure you want to delete Data Manager " + Model.FNAME + " " + Model.LNAME + "?');", @class = "LaMPButton blue" })
+        </div>
+    }
+    </div>
+
+<br clear="all" />
+@*using (Ajax.BeginForm("DataManagerEdit", "DataManager", new { id = Model.DATA_MANAGER_ID }, new AjaxOptions() { HttpMethod = "GET", OnSuccess = "edit_successActions" }, new { onclick = "loading();", style = "float:left; margin-right: 1em" }))*@
+    
+<hr class="headerUnderline" />
+@if (Model.USERNAME == User.Identity.Name || ViewData["LoggedInRole"] == "Admin")
+{
+    using (Html.BeginForm("DataManagerEdit", "DataManager", new { id = Model.DATA_MANAGER_ID }, FormMethod.Get, new { @onclick = "loading();", @style = "float:left; margin-right: 1em" }))
+    {     
+        <div>
+            <input type="submit" class="LaMPButton icon blue editIcon" value="Edit Data Manager"/>
+        </div>
+        <br clear="all" />            
+    }
+    using (Ajax.BeginForm("DataManagerPassword", "DataManager", new { id = Model.DATA_MANAGER_ID }, new AjaxOptions() { HttpMethod = "GET" }, new { @onclick = "loading();" }))
+    {     
+        <div><input type="submit" class="LaMPButton icon blue" value="Change Password" /></div>
+        <br clear="all" />            
+    }
+}   
+                  
+<br />
+<input type="hidden" name="DATA_MANAGER_ID" value="@Model.DATA_MANAGER_ID" />
+
+<div class="siteColumn">
+
+    @{if (ViewData.ContainsKey("Error"))
+      {
+          <div style="color:Red">There was an error. The password was not updated. Please contact the administrator for assistance.</div>
+    }}
+    <div>
+        <span class="bold ui-label-a" style="width:10em">First Name:</span>
+        <label class="inline">@Model.FNAME</label>
+    </div>
+
+    <div>
+        <span class="bold ui-label-a" style="width:10em">Last Name</span>
+        <label class="inline">@Model.LNAME</label>
+    </div>
+    
+    <div>
+        <span class="bold ui-label-a" style="width:10em">User Name:</span>
+        <label class="inline">@Model.USERNAME</label>
+    </div>
+    
+    <div>
+        <span class="bold ui-label-a" style="width:10em">Organization</span>
+        <label class="inline">@( ViewData.ContainsKey("thisOrg") ? ViewData["thisOrg"] : "")</label>
+    </div>
+
+    <div>
+        <span class="bold ui-label-a" style="width:10em">Role:</span>
+        <label class="inline">@( ViewData.ContainsKey("thisRole") ? ViewData["thisRole"] : "")</label>
+    </div>
+    
+    <div>
+        <span class="bold ui-label-a" style="width:10em">Phone:</span>
+        <label class="inline">@Model.PHONE</label>
+    </div>
+
+    <div>
+        <span class="bold ui-label-a" style="width:10em">Email:</span>
+        <label class="inline">@Model.EMAIL</label>
+    </div>
+
+</div>

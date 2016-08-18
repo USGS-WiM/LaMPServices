@@ -1,0 +1,620 @@
+﻿@* Comments:
+07.30.13 - TR - Created 
+
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+ * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Display Edit page of a Site 
+ */
+ *@
+@using LaMPServices;
+@using LaMPWeb.Assets.Resources;
+
+           
+@{
+    ViewBag.Title = "Site Edit";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    List<RESOURCE_TYPE> SiteResources = ViewData["SiteResources"] as List<RESOURCE_TYPE>;
+    List<MEDIA_TYPE> SiteMedia = ViewData["MediaList"] as List<MEDIA_TYPE>;
+    List<FREQUENCY_TYPE> SiteFreq = ViewData["FrequencyList"] as List<FREQUENCY_TYPE>;
+
+    List<PARAMETER_TYPE> PhysicalPs = ViewData["PhysicalP"] as List<PARAMETER_TYPE>;
+    List<PARAMETER_TYPE> ChemicalPs = ViewData["ChemicalP"] as List<PARAMETER_TYPE>;
+    List<PARAMETER_TYPE> BiologicalPs = ViewData["BiologicalP"] as List<PARAMETER_TYPE>;
+    List<PARAMETER_TYPE> MicrobiolPs = ViewData["MicrobiolP"] as List<PARAMETER_TYPE>;
+    List<PARAMETER_TYPE> ToxicologicalPs = ViewData["ToxicologicalP"] as List<PARAMETER_TYPE>;
+    
+}
+
+@model LaMPWeb.Models.SiteModel
+           
+<div id="dataTitle">                                                        
+    <div class="title">Project: @Html.ActionLink(@Model.aProject.NAME, "ProjectDetails", "Project", new { id = @Model.aProject.PROJECT_ID }, new { onclick = "loading();" }), Site: @Model.aSite.NAME</div>
+    <span id="errorSection" class="failureNotification"><asp:Literal ID="ErrorMessage" runat="server"></asp:Literal></span>
+</div>
+<br clear="all" />
+
+<hr class="headerUnderline" />
+<div id="loading"><div id="loadingcontent"><p id="loadingspinner" style=""><img src="@Url.Content("~/Assets/Images/loading1.gif")"  /></p></div></div>
+<style type="text/css">
+    table, table td 
+    {
+        border: none;
+    }
+</style>
+
+<script src="@Url.Content("~/Assets/Scripts/jquery.unobtrusive-ajax.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Assets/Scripts/jquery.validate.min.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Assets/Scripts/jquery.validate.unobtrusive.min.js")" type="text/javascript"></script>
+
+@using (Html.BeginForm("SiteEdit1", "Site", new { id = Model.aSite.SITE_ID, projId = Model.aProject.PROJECT_ID }, FormMethod.Post, new { @id = "form0" }))
+{
+    
+    <input type="hidden" id="CatID" name="aSite.SITE_ID" value="@Model.aSite.SITE_ID" />
+    <input type="hidden" id="CatProjId" name="aSite.PROJECT_ID" value="@Model.aSite.PROJECT_ID" />
+    
+    
+    <div class="ui-grid-a">
+        <div class="ui-block-a"><span class="required">Site Name:</span></div>
+        <div class="ui-block-b"><input type="text" id="LocName" name="aSite.NAME" class="required lampTextInput ui-shadow-inset" value="@Model.aSite.NAME" /></div>
+    </div>
+
+    <div class="ui-grid-a">
+        <div class="ui-block-a"><span class="required">Latitude:</span></div>
+        <div class="ui-block-b"><input type="text" id="LocLat" name="aSite.LATITUDE" class="required lampTextInput ui-shadow-inset" value="@Model.aSite.LATITUDE" /></div>
+    </div>
+
+    <div class="ui-grid-a">
+        <div class="ui-block-a"><span class="required">Longitude:</span></div>
+        <div class="ui-block-b"><input type="text" id="LocLong" name="aSite.LONGITUDE" class="required lampTextInput ui-shadow-inset" value="@Model.aSite.LONGITUDE" /></div>
+    </div>
+
+    <div class="ui-grid-a">
+        <div class="ui-block-a"><span class="required">Country:</span></div>
+        <div class="ui-block-b"><select id="Countrydropdown" class="required lampSelectInput" name="aSite.COUNTRY">
+            <option value="0"></option>
+				@foreach (string c in ViewData["countries"] as List<string>)
+    {
+                    <option @( c == Model.aSite.COUNTRY ? "selected" : "") value="@c">@c</option> 
+    }      
+            </select>
+            <br /></div>
+        <div class="ui-block-c notes">Which country is this site located in?</div>
+    </div>
+
+    <div class="ui-grid-a">
+        <div class="ui-block-a"><span class="required">State/Province:</span></div>
+        <div class="ui-block-b"><select id="statesdropdown" class="required lampSelectInput" name="aSite.STATE_PROVINCE">
+				<option value="0"></option>
+                @foreach (string s in ViewData["states"] as List<string>)
+                {
+                    <option @( s == Model.aSite.STATE_PROVINCE ? "selected" : "") value="@s">@s</option> 
+                }      
+            </select>
+            <br /></div>
+        <div class="ui-block-c notes">Which state (U.S. only) or province (Canada only) is this site located in?</div>
+    </div>
+
+    <div class="ui-grid-a">
+        <div class="ui-block-a"><span class="required">Lake:</span></div>
+        <div class="ui-block-b"><select id="Lakedropdown" class="required lampSelectInput" name="aSite.LAKE_TYPE_ID">
+				<option value="0"></option>
+                @foreach (LAKE_TYPE l in ViewData["Lakes"] as List<LAKE_TYPE>)
+                {
+                    <option @( l.LAKE_TYPE_ID == Model.aSite.LAKE_TYPE_ID ? "selected" : "") value="@l.LAKE_TYPE_ID">@l.LAKE</option> 
+                }
+                </select>
+                <br />	</div>
+        <div class="ui-block-c notes">Which Great Lake (or Lakewide Management Plan) is this site associated with?</div>
+    </div>
+
+        
+    <div class="ui-grid-a">
+        <div class="ui-block-a">Waterbody:</div>
+        <div class="ui-block-b"><input type="text" name="aSite.WATERBODY" class="lampTextInput ui-shadow-inset" value="@Model.aSite.WATERBODY" /></div>
+        <div class="ui-block-c notes">Identify any additional waterbodies this site is associated with. Separate distinct waterbody names with a comma.</div>
+    </div>
+
+    <div class="ui-grid-a">
+        <div class="ui-block-a">Watershed (8-digit HUC):</div>
+        <div class="ui-block-b"><input type="text" name="aSite.WATERSHED_HUC8" class="lampTextInput ui-shadow-inset" value="@Model.aSite.WATERSHED_HUC8" /></div>
+        <div class="ui-block-c notes">Enter the 8-digit HUC (hydrologic unit code, ex. 04030204) for this site.</div>
+    </div>
+
+    <div class="ui-grid-a">
+        <div class="ui-block-a">Site Description:</div>
+        <div class="ui-block-b"><textarea class="lampTextInput ui-shadow-inset" id="SiteDesc" name="aSite.DESCRIPTION" rows="2" cols="30">@Model.aSite.DESCRIPTION</textarea></div>
+        <div class="ui-block-c notes">Include any site description or additional location information here.</div>
+    </div>      
+
+    <div class="ui-grid-a">
+        <div class="ui-block-a">Status:</div>
+        <div class="ui-block-b">
+                <select id="Statusdropdown" class="lampSelectInput" name="aSite.STATUS_TYPE_ID">
+					@foreach (STATUS_TYPE st in ViewData["statusTypes"] as List<STATUS_TYPE>)
+     {
+                        <option @( st.STATUS_ID == Model.aSite.STATUS_TYPE_ID ? "selected" : "") value="@st.STATUS_ID">@st.STATUS</option> 
+     }
+                </select>
+                <br />
+        </div>
+        <div class="ui-block-c notes">Indicate if your site is currently being monitored (at any sampling frequency).</div>
+    </div>
+    
+    <br clear="all" />
+    <hr />    
+    
+    @* --------------------------- resource component -------------------*@
+    <br />
+
+        <table id="ResourceTable" cellspacing="0" cellpadding="0" style="clear:left; margin-left:15px">
+            <thead>
+                <tr>
+                    <td style="width:3%"></td>
+                    <td><b>Resource Component</b></td> 
+                </tr>
+            </thead>
+            <tbody>
+                @{  if (SiteResources != null)
+                    {
+                        int tResrow;
+                        decimal siteResID;
+                        for (var a = 0; a <= SiteResources.Count - 1; a++)
+                        {
+                            tResrow = a + 1;
+                            siteResID = SiteResources[a].RESOURCE_TYPE_ID;
+                            <tr id="ResTr@(tResrow)">
+                                <td><a onclick="RemovethisLine(ResTr@(tResrow), @(siteResID));"><img src="@Url.Content("~/Assets/Images/Close.fw.png")"/></a></td>
+                                <td>@SiteResources[a].RESOURCE_NAME</td>
+                            </tr>
+                        }
+                    }
+}
+            </tbody>
+        </table>
+
+        <div id="MoreRes" class="hidden">
+            <div class="ui-grid-a">
+                <div data-role="fieldcontain">
+                    <div class="ui-block-a">@Html.Label(ProjectStrings.SiteRes_Lbl)</div>
+                    <div class="ui-block-b">
+                        <select id="resourcesDD" class="lampSelectInput" name="resources">
+                            <option value="0">Choose a Resource</option>
+					        @foreach (RESOURCE_TYPE res in ViewData["resourceTypes"] as List<RESOURCE_TYPE>)
+             {
+                                <option value="@res.RESOURCE_TYPE_ID">@res.RESOURCE_NAME</option> 
+             }
+                        </select>
+                        <br />	
+                    </div>
+                    <div class="ui-block-c notes">Select where the sampling or analysis occurred. Select one, click Add Resource. Can add many.</div>
+                </div>
+            </div>
+
+            <div class="ui-grid-a">
+                <div data-role="fieldcontain">
+                    <div class="ui-block-a"><input type="button" value="Add Resource To This Site" onclick="AddResourceRow();" /></div>
+                </div>
+            </div>
+        </div>
+        
+        @* hidden inputs to store id each Objective added *@
+        <input type="hidden" id="resourceIDs" name="ResourceTypes" value="@Model.ResourceTypes" />
+        <input type="hidden" id="resIDsRemove" name="ResourcesToRemove" />
+        
+        <div id="AddMoreResButton">
+            <div class="ui-grid-a">
+                <div data-role="fieldcontain">
+                    <div class="ui-block-a"><input type="button" value="Add More Resources To This Site" onclick="ShowAddRes();" /></div>
+                </div>
+            </div>
+        </div>
+        
+           
+    @* --------------------------- resource component -------------------*@
+    <br clear="all" />
+    <hr />
+    @* --------------------------- media component -------------------*@
+    <br />
+
+        <table id="MediaTable" cellspacing="0" cellpadding="0" style="clear:left; margin-left:15px">
+            <thead>
+                <tr>
+                    <td style="width:3%"></td>
+                    <td><b>Media</b></td> 
+                </tr>
+            </thead>
+            <tbody>
+                @{  if (SiteMedia != null)
+                    {
+                        int tMedrow;
+                        decimal siteMedID;
+                        for (var a = 0; a <= SiteMedia.Count - 1; a++)
+                        {
+                            tMedrow = a + 1;
+                            siteMedID = SiteMedia[a].MEDIA_TYPE_ID;
+                            <tr id="MedTr@(tMedrow)">
+                                <td><a onclick="RemoveMedLine(MedTr@(tMedrow), @(siteMedID));"><img src="@Url.Content("~/Assets/Images/Close.fw.png")"/></a></td>
+                                <td>@SiteMedia[a].MEDIA</td>
+                            </tr>
+                        }
+                    }
+}
+            </tbody>
+        </table>
+
+        <div id="MoreMed" class="hidden">
+            <div class="ui-grid-a">
+                <div data-role="fieldcontain">
+                    <div class="ui-block-a">@Html.Label(ProjectStrings.SiteMed_Lbl)</div>
+                    <div class="ui-block-b">
+                        <select id="mediaDD" class="lampSelectInput" name="media">
+                            <option value="0">Choose a Media</option>
+					        @foreach (MEDIA_TYPE med in ViewData["mediaTypes"] as List<MEDIA_TYPE>)
+             {
+                                <option value="@med.MEDIA_TYPE_ID">@med.MEDIA</option> 
+             }
+                        </select>
+                        <br />	
+                    </div>
+                    <div class="ui-block-c notes">Select what type of media was sampled or analyzed here. Select one, click Add Media. Can add many.</div>
+                </div>
+            </div>
+
+            <div class="ui-grid-a">
+                <div data-role="fieldcontain">
+                    <div class="ui-block-a"><input type="button" value="Add Media To This Site" onclick="AddMediaRow();" /></div>
+                </div>
+            </div>
+        </div>
+        
+        @* hidden inputs to store id each Objective added *@
+        <input type="hidden" id="mediaIDs" name="MediaTypes" value="@Model.MediaTypes" />
+        <input type="hidden" id="medIDsRemove" name="MediaToRemove" />
+        
+        <div id="AddMoreMedButton">
+            <div class="ui-grid-a">
+                <div data-role="fieldcontain">
+                    <div class="ui-block-a"><input type="button" value="Add More Media To This Site" onclick="ShowAddMed();" /></div>
+                </div>
+            </div>
+        </div>
+        
+        <br clear="all" />
+    
+    @* --------------------------- media component -------------------*@
+    <br clear="all" />
+    <hr />
+      @* --------------------------- Sampling Frequency -------------------*@
+    <br />
+
+        <table id="FrequencyTable" cellspacing="0" cellpadding="0" style="clear:left; margin-left:15px">
+            <thead>
+                <tr>
+                    <td style="width:3%"></td>
+                    <td><b>Sampling Frequency</b></td> 
+                </tr>
+            </thead>
+            <tbody>
+                @{  if (SiteFreq != null)
+                    {
+                        int tFreqrow;
+                        decimal siteFreqID;
+                        for (var a = 0; a <= SiteFreq.Count - 1; a++)
+                        {
+                            tFreqrow = a + 1;
+                            siteFreqID = SiteFreq[a].FREQUENCY_TYPE_ID;
+                            <tr id="FreqTr@(tFreqrow)">
+                                <td><a onclick="RemoveFreqLine(FreqTr@(tFreqrow), @(siteFreqID));"><img src="@Url.Content("~/Assets/Images/Close.fw.png")"/></a></td>
+                                <td>@SiteFreq[a].FREQUENCY</td>
+                            </tr>
+                        }
+                    }
+}
+            </tbody>
+        </table>
+
+        <div id="MoreFreq" class="hidden">
+            <div class="ui-grid-a">
+                <div data-role="fieldcontain">
+                    <div class="ui-block-a">@Html.Label(ProjectStrings.SiteFreq_Lbl)</div>
+                    <div class="ui-block-b">
+                        <select id="frequencyDD" class="lampSelectInput" name="frequency">
+                            <option value="0">Choose a Frequency</option>
+					        @foreach (FREQUENCY_TYPE freq in ViewData["frequencyTypes"] as List<FREQUENCY_TYPE>)
+             {
+                                <option value="@freq.FREQUENCY_TYPE_ID">@freq.FREQUENCY</option> 
+             }
+                        </select>
+                        <br />	
+                    </div>
+                    <div class="ui-block-c notes">Indicate how frequently this site was sampled or analyzed. Select one, click Add Media. Can add many.</div>
+                </div>
+            </div>
+
+            <div class="ui-grid-a">
+                <div data-role="fieldcontain">
+                    <div class="ui-block-a"><input type="button" value="Add Frequency To This Site" onclick="AddFrequencyRow();" /></div>
+                </div>
+            </div>
+        </div>
+        
+        @* hidden inputs to store id each Objective added *@
+        <input type="hidden" id="frequencyIDs" name="FrequencyTypes" value="@Model.FrequencyTypes" />
+        <input type="hidden" id="freqIDsRemove" name="FrequencyToRemove" />
+        
+        <div id="AddMoreFreqButton">
+            <div class="ui-grid-a">
+                <div data-role="fieldcontain">
+                    <div class="ui-block-a"><input type="button" value="Add More Frequencies To This Site" onclick="ShowAddFreq();" /></div>
+                </div>
+            </div>
+        </div>
+        
+        <br clear="all" />
+        <hr />
+    
+    @* --------------------------- sampling frequency -------------------*@
+
+    <div class="ui-grid-a">
+        <div class="ui-block-a">Sampling Start Date:</div>
+        <div class="ui-block-b"><input type="text" id="startDate" name="aSite.START_DATE" class="lampSelectInput datepicker" value="@( ((DateTime)Model.aSite.START_DATE).ToShortDateString())" /></div>
+    </div>
+        
+    <div class="ui-grid-a">
+        <div class="ui-block-a">Sampling End Date:</div>
+        <div class="ui-block-b"><input type="text" id="endDate" name="aSite.END_DATE" class="lampSelectInput datepicker" value="@( Model.aSite.END_DATE != null ? ((DateTime)Model.aSite.END_DATE).ToShortDateString() : "")" /></div>
+        <div class="ui-block-c notes">If sampling is ongoing, leave blank.</div>
+    </div>
+
+    <div class="ui-grid-a">
+        <div class="ui-block-a">Sampling Platform:</div>
+        <div class="ui-block-b"><input type="text" name="aSite.SAMPLE_PLATFORM" class="lampTextInput ui-shadow-inset" value="@Model.aSite.SAMPLE_PLATFORM" /></div>
+        <div class="ui-block-c notes">Include information about the type of sampling equipment used here. Separate terms with a comma.</div>
+    </div>
+
+    <div class="ui-grid-a">
+        <div class="ui-block-a">Additional Site Information:</div>
+        <div class="ui-block-b"><textarea class="lampTextInput ui-shadow-inset" name="aSite.ADDITIONAL_INFO" rows="2" cols="30">@Model.aSite.ADDITIONAL_INFO</textarea></div>
+        <div class="ui-block-c notes">Include any other sampling or site-specific information here.</div>
+    </div>         
+
+    <div class="ui-grid-a">
+        <div class="ui-block-a">Site URL:</div>
+        <div class="ui-block-b"><input type="text" name="aSite.URL" class="lampTextInput ui-shadow-inset" value="@Model.aSite.URL" /></div>
+        <div class="ui-block-c notes">If site-specific data is available online, enter URL here.</div>
+    </div>       
+    
+    <br clear="all" />
+    <hr />
+    
+    <div class="ui-grid-a">
+        <div class="ui-block-a">Parameters:</div>
+        <div class="ui-block-b">@Html.ActionLink("Edit Parameters", "AddParameters", null, new { @id = "ParamLink" })<div id="successParam" class="notes" style="padding-left:10px; visibility:hidden">Parameters Updated.</div></div>
+        <div class="ui-block-c notes">Enter parameters for this site.</div>
+    </div>   
+     
+    
+    <input type="hidden" id="SiteParams" name="SiteParameters" value="@Model.SiteParameters" />
+    <div id="ParamDialog" title="Add Parameters"></div>
+    
+    <br clear="all" />
+    <br />
+
+    <div id="formSubmitDiv" class="formSection">
+        <div class="leftSideSubmit">
+            <div class="cancelDiv"><div class="lightButtonBorder"><input id="resetButton" type="reset" class="cancel" value="Cancel" onclick="stopClick();" /></div></div>
+            <div class="submitDiv"><div class="darkButtonBorder"><input type="submit" name="Create" class="submit" value="Save" /></div></div>
+        </div>
+    </div>
+}
+   
+<script type="text/javascript">
+    function stopClick() {
+        //cancel from edit page, sent back to details
+        var id = $("#CatID").val();
+        var projectId = $("#CatProjId").val();
+        var answer = confirm("Continue without saving any changes?");
+        if (answer) {
+            $("#loading").fadeIn();
+            window.location.href = '@Url.Action("SiteDetails", "Site")' + "/" + id + "?projId=" + projectId;
+        }
+    }
+
+
+// ----------RESOURCE -----------------
+    function ShowAddRes() {
+        $("#AddMoreResButton").hide();
+        $("#MoreRes").show();
+    }
+   //Add Resource to Site Click method. add to the table below, add id to hidden div (can have multiple adds)
+    var trowID;
+    function AddResourceRow() {
+        var ResID = $("#resourcesDD").val();
+        if (ResID == 0) {
+            alert("Choose a Resource first");
+        }
+        else {
+            var ResName = $("#resourcesDD option:selected").text();
+            $("#resourcesDD").val("");
+            var thisRow = $("#ResourceTable tr").length;
+            trowID = "ResTr" + thisRow;
+            $("#ResourceTable > tbody:last").append('<tr id=' + trowID + '><td><a onclick="RemovethisLine(' + trowID + ', ' + ResID + ')"><img src="@Url.Content("~/Assets/Images/Close.fw.png")"/></a></td><td>' + ResName + '</td></tr>');
+            //store id's to pass to controller. see if any IDs in there yet
+            if ($("#resourceIDs").val() == "") {
+                $("#resourceIDs").val(ResID);
+            }
+            else {
+                $("#resourceIDs").val($("#resourceIDs").val() + "," + ResID);
+            }
+        }
+    }
+
+    function RemovethisLine(trowID, ResID) {
+        //remove the row
+        $("#" + trowID.id + "").remove();
+        //remove id from hidden field, and add to removedid field
+        $("#resourceIDs").val($("#resourceIDs").val().replace(ResID, ""));
+        if ($("#resIDsRemove").val() == "") {
+            $("#resIDsRemove").val(ResID);
+        }
+        else {
+            $("#resIDsRemove").val($("#resIDsRemove").val() + ", " + ResID);
+        }         
+    }
+
+    
+    
+    // ----------MEDIA ------------------   
+    function ShowAddMed() {
+        $("#AddMoreMedButton").hide();
+        $("#MoreMed").show();
+    }
+    //Add Media to Site Click method. add to the table below, add id to hidden div (can have multiple adds)
+    var trowID;
+    function AddMediaRow() {
+        var MedID = $("#mediaDD").val();
+        if (MedID == 0) {
+            alert("Choose a Media first");
+        }
+        else {
+            var MedName = $("#mediaDD option:selected").text();
+            $("#mediaDD").val("");
+            var thisRow = $("#MediaTable tr").length;
+            trowID = "MedTr" + thisRow;
+            $("#MediaTable > tbody:last").append('<tr id=' + trowID + '><td><a onclick="RemoveMediaLine(' + trowID + ', ' + MedID + ')"><img src="@Url.Content("~/Assets/Images/Close.fw.png")"/></a></td><td>' + MedName + '</td></tr>');
+            //store id's to pass to controller. see if any IDs in there yet
+            if ($("#mediaIDs").val() == "") {
+                $("#mediaIDs").val(MedID);
+            }
+            else {
+                $("#mediaIDs").val($("#mediaIDs").val() + "," + MedID);
+            }
+        }
+    }
+
+    function RemoveMedLine(trowID, MedID) {
+        //remove the row
+        $("#" + trowID.id + "").remove();
+        //remove id from hidden field, and add to removedid field
+        $("#mediaIDs").val($("#mediaIDs").val().replace(MedID, ""));
+        if ($("#medIDsRemove").val() == "") {
+            $("#medIDsRemove").val(MedID);
+        }
+        else {
+            $("#medIDsRemove").val($("#medIDsRemove").val() + ", " + MedID);
+        }
+    }
+
+    // ----------FREQUENCY ------------------
+    function ShowAddFreq() {
+        $("#AddMoreFreqButton").hide();
+        $("#MoreFreq").show();
+    }
+    //Add Frequency to Site Click method. add to the table below, add id to hidden div (can have multiple adds)
+    var trowID;
+    function AddFrequencyRow() {
+        var FreqID = $("#frequencyDD").val();
+        if (FreqID == 0) {
+            alert("Choose a Sampling Frequency first");
+        }
+        else {
+            var FreqName = $("#frequencyDD option:selected").text();
+            $("#frequencyDD").val("");
+            var thisRow = $("#FrequencyTable tr").length;
+            trowID = "FreqTr" + thisRow;
+            $("#FrequencyTable > tbody:last").append('<tr id=' + trowID + '><td><a onclick="RemoveFrequencyLine(' + trowID + ', ' + FreqID + ')"><img src="@Url.Content("~/Assets/Images/Close.fw.png")"/></a></td><td>' + FreqName + '</td></tr>');
+            //store id's to pass to controller. see if any IDs in there yet
+            if ($("#frequencyIDs").val() == "") {
+                $("#frequencyIDs").val(FreqID);
+            }
+            else {
+                $("#frequencyIDs").val($("#frequencyIDs").val() + "," + FreqID);
+            }
+        }
+    }
+
+    function RemoveFreqLine(trowID, FreqID) {
+        //remove the row
+        $("#" + trowID.id + "").remove();
+        //remove id from hidden field, and add to removedid field
+        $("#frequencyIDs").val($("#frequencyIDs").val().replace(FreqID, ""));
+        if ($("#freqIDsRemove").val() == "") {
+            $("#freqIDsRemove").val(FreqID);
+        }
+        else {
+            $("#freqIDsRemove").val($("#freqIDsRemove").val() + ", " + FreqID);
+        }
+    }
+
+
+    $("#form0").submit(function () {
+        var MISSING = "ui-req";
+        var SelMISSING = "ui-Sel-req";
+
+        var requiredInput = $('input[class*="required"]');
+        var requiredSelect = $('select[class*="required"]');
+        var requiredTextArea = $('textarea[class*="required"]');
+
+        var Ierr = false;
+        var Serr = false;
+        var Terr = false;
+        var missingMsg = "The highlighted fields are required.";
+
+        // Reset the previously highlighted input fields  
+        requiredInput.each(function (index) {
+            $(this).removeClass(MISSING);
+            $(this).addClass("ui-shadow-inset");
+        });
+        // Reset the previously highlighted select fields  
+        requiredSelect.each(function (index) {
+            $(this).removeClass(MISSING);
+            $(this).addClass("ui-shadow-inset");
+        });
+        // Reset the previously highlighted textarea fields  
+        requiredTextArea.each(function (index) {
+            $(this).removeClass(MISSING);
+            $(this).addClass("ui-shadow-inset");
+        });
+        // Perform form validation (input field)
+        requiredInput.each(function (index) {
+            if ($(this).val() == null || $(this).val() == "") {
+                $(this).addClass(MISSING);
+                $(this).removeClass("ui-shadow-inset");
+                Ierr = true;
+            }
+        });
+        // Perform form validation (select field) 
+        requiredSelect.each(function (index) {
+            var ind = $(this).context.selectedIndex;
+            if (ind == 0) {
+                $(this).addClass(SelMISSING);
+                Serr = true;
+            }
+        });
+        // Perform form validation (textarea field)
+        requiredTextArea.each(function (index) {
+            if ($(this).val() == null || $(this).val() == "") {
+                $(this).addClass(MISSING);
+                $(this).removeClass("ui-shadow-inset");
+                Terr = true;
+            }
+        });
+        // Check if validation fails
+        if (Ierr == true || Serr == true || Terr == true) {
+            $("#errorSection").append(missingMsg);
+            return false;
+        }
+        else {
+            loading();
+            return true;
+        }
+    });
+
+</script>

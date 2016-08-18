@@ -1,0 +1,17 @@
+D:\TMRData\WIMprojects\LAMPServices\LaMPServices\bin\LaMPServices.dll
+D:\TMRData\WIMprojects\LAMPServices\LaMPServices\bin\LaMPServices.pdb
+D:\TMRData\WIMprojects\LAMPServices\LaMPServices\bin\MoreLinq.dll
+D:\TMRData\WIMprojects\LAMPServices\LaMPServices\bin\Newtonsoft.Json.dll
+D:\TMRData\WIMprojects\LAMPServices\LaMPServices\bin\OpenRasta.Codecs.WebForms.dll
+D:\TMRData\WIMprojects\LAMPServices\LaMPServices\bin\OpenRasta.dll
+D:\TMRData\WIMprojects\LAMPServices\LaMPServices\bin\OpenRasta.Hosting.AspNet.dll
+D:\TMRData\WIMprojects\LAMPServices\LaMPServices\bin\RestSharp.dll
+D:\TMRData\WIMprojects\LAMPServices\LaMPServices\bin\OpenRasta.Codecs.WebForms.pdb
+D:\TMRData\WIMprojects\LAMPServices\LaMPServices\bin\OpenRasta.Hosting.AspNet.pdb
+D:\TMRData\WIMprojects\LAMPServices\LaMPServices\bin\OpenRasta.pdb
+D:\TMRData\WIMprojects\LAMPServices\LaMPServices\bin\MoreLinq.xml
+D:\TMRData\WIMprojects\LAMPServices\LaMPServices\bin\Newtonsoft.Json.pdb
+D:\TMRData\WIMprojects\LAMPServices\LaMPServices\bin\Newtonsoft.Json.xml
+D:\TMRData\WIMprojects\LAMPServices\LaMPServices\obj\Debug\LaMPServices.csprojResolveAssemblyReference.cache
+D:\TMRData\WIMprojects\LAMPServices\LaMPServices\obj\Debug\LaMPServices.dll
+D:\TMRData\WIMprojects\LAMPServices\LaMPServices\obj\Debug\LaMPServices.pdb

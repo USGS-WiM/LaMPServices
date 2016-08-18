@@ -1,0 +1,271 @@
+﻿//------------------------------------------------------------------------------
+//----- ContactHandler -----------------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2012 WiM - USGS
+
+//    authors:  Jeremy K. Newson USGS Wisconsin Internet Mapping
+//              
+//  
+//   purpose:   Handles Contact resources through the HTTP uniform interface.
+//              Equivalent to the controller in MVC.
+//
+//discussion:   Handlers are objects which handle all interaction with resources in 
+//              this case the resources are POCO classes derived from the EF. 
+//               https://github.com/openrasta/openrasta/wiki/Handlers
+//
+//     
+#region Comments
+// 04.23.12 - jkn - Created
+#endregion                          
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+using LaMPServices.Authentication;
+using OpenRasta.Web;
+using OpenRasta.Security;
+
+namespace LaMPServices.Handlers
+{
+    public class ContactHandler: HandlerBase
+    {
+        #region Routed Methods
+
+        #region GetMethods
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get()
+        {
+            List<CONTACT> aContact;
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    aContact = aLaMPRDS.CONTACTS.OrderBy(c => c.CONTACT_ID).ToList();
+                }//end using
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = aContact };
+        }//end httpMethod get
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get(Int32 contactId)
+        {
+            CONTACT aContact;
+
+            //return BadRequest if ther is no ID
+            if (contactId <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                 {
+                     aContact = aLaMPRDS.CONTACTS.Single(c => c.CONTACT_ID == contactId);
+
+                 }//end using
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = aContact };
+        }//end httpMethod get
+
+        #endregion
+
+        #region PostMethods
+        /// 
+        /// Force the user to provide authentication 
+        /// 
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.POST)]
+        public OperationResult Post(CONTACT aContact)
+        {
+            //Return BadRequest if missing required fields
+            if (String.IsNullOrEmpty(aContact.NAME))
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                 {
+                    //check if it exists
+                    CONTACT existingContact = aLaMPRDS.CONTACTS.FirstOrDefault(c => c.NAME.Trim().ToUpper() == aContact.NAME.Trim().ToUpper() &&
+                                                                                   (c.EMAIL.Trim().ToUpper() == aContact.EMAIL.Trim().ToUpper() || string.IsNullOrEmpty(aContact.EMAIL)) &&
+                                                                                   (c.PHONE.Trim().ToUpper() == aContact.PHONE.Trim().ToUpper() || string.IsNullOrEmpty(aContact.EMAIL)) &&
+                                                                                   (c.ORGANIZATION_ID.Value == aContact.ORGANIZATION_ID.Value || !aContact.ORGANIZATION_ID.HasValue));
+
+                    if( existingContact == null)
+                    {
+                        decimal nextKey = 1;
+                        if (aLaMPRDS.CATALOG_S.Count() > 0)
+                        {
+                            nextKey = aLaMPRDS.CONTACTS.OrderByDescending(c => c.CONTACT_ID).First().CONTACT_ID + 1;
+                        }
+
+                        //set ID
+                        aContact.CONTACT_ID = nextKey;
+
+                        aLaMPRDS.CONTACTS.AddObject(aContact);
+
+                        aLaMPRDS.SaveChanges();
+                    }
+                    else
+                    {
+                        //return existing contact
+                        aContact = existingContact;
+                    }
+
+
+              
+                 }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = aContact };
+        }
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.POST, ForUriName = "CreateContactList")]
+        public OperationResult Post(List<CONTACT> aContacts)
+        {
+            //Return BadRequest if missing required fields
+            if (aContacts.Count <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    decimal nextKey = 1;
+                    if (aLaMPRDS.CATALOG_S.Count() > 0)
+                    {
+                        nextKey = aLaMPRDS.CONTACTS.OrderByDescending(c => c.CONTACT_ID).First().CONTACT_ID + 1;
+                    }
+                    
+                    foreach (CONTACT item in aContacts)
+                    {
+                        //update database ID
+                        item.CONTACT_ID = nextKey;
+                        aLaMPRDS.CONTACTS.AddObject(item);
+
+                        nextKey += 1;
+                    }//next item
+                
+                    aLaMPRDS.SaveChanges();
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = aContacts };
+        }
+        #endregion
+
+        #region PutMethods
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.PUT, ForUriName = "UpdateContact")]
+        public OperationResult Post(Int32 ContactId, CONTACT instance)
+        {
+            //Return BadRequest if missing required fields
+            if ((ContactId <= 0))
+            {
+                return new OperationResult.BadRequest();
+            }
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    CONTACT ObjectToBeUpdated = aLaMPRDS.CONTACTS.Single(c => c.CONTACT_ID == ContactId);
+
+                    //Name
+                    ObjectToBeUpdated.NAME = (string.IsNullOrEmpty(instance.NAME) ?
+                        ObjectToBeUpdated.NAME : instance.NAME);
+
+                    //Email
+                    ObjectToBeUpdated.EMAIL = (string.IsNullOrEmpty(instance.EMAIL) ?
+                        ObjectToBeUpdated.EMAIL : instance.EMAIL);
+
+                    //Phone
+                    ObjectToBeUpdated.PHONE = (string.IsNullOrEmpty(instance.PHONE) ?
+                        ObjectToBeUpdated.PHONE : instance.PHONE);
+
+                    //OrganizationId
+                    ObjectToBeUpdated.ORGANIZATION_ID = (int.Equals(instance.ORGANIZATION_ID, ObjectToBeUpdated.ORGANIZATION_ID) ?
+                        ObjectToBeUpdated.ORGANIZATION_ID : instance.ORGANIZATION_ID);
+
+                    aLaMPRDS.SaveChanges();
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = instance };
+        }
+
+
+        #endregion
+
+        #region DeleteMethods
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.DELETE, ForUriName = "DeleteOrganization")]
+        public OperationResult Post(Int32 OrgId)
+        {
+            //Return BadRequest if missing required fields
+            if (OrgId <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    ORGANIZATION ObjectToBeDeleted = aLaMPRDS.ORGANIZATIONS.Single(o => o.ORGANIZATION_ID == OrgId);
+                    //delete it
+                    aLaMPRDS.ORGANIZATIONS.DeleteObject(ObjectToBeDeleted);
+
+                    aLaMPRDS.SaveChanges();
+
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { };
+        }
+
+        #endregion
+
+        #endregion
+
+    }//end ContactHandler
+}//end namespace

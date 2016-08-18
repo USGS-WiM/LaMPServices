@@ -1,0 +1,20 @@
+﻿@* Comments: 
+03.05.13 - TR - Created 
+
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+  * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Edit page for Organization
+ */
+ *@@{
+    ViewBag.Title = "OrganizationEdit";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@model LaMPServices.ORGANIZATION
+           
+<h2>OrganizationEdit</h2>

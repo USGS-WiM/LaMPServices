@@ -1,0 +1,56 @@
+﻿@* Comments: 
+03.11.13 - TR - Created 
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+  * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Partial view for Viewing list of sites for a project
+ */
+ *@
+
+@using LaMPServices;
+@using LaMPWeb.Models;
+           
+@{ 
+    List<SITE> theseSites = new List<SITE>();
+    if (ViewData.ContainsKey("SiteList"))
+    {
+        theseSites = ViewData["SiteList"] as List<SITE>;
+    }
+    PROJECT thisProject = ViewData["project"] as PROJECT;
+}
+
+<div class="subSection softHeader">
+        <label class="bold Lpadded">SITES</label>
+        <hr class="infoUnderline" />
+        <div>Number of Sites: @(ViewData.ContainsKey("SiteCount")?ViewData["SiteCount"]:"0")</div>
+        <br />
+        <div id="siteList" style="height: 120px; overflow:auto">
+            <ul>
+            @if (theseSites.Count >= 1)
+            {
+                foreach (SITE s in theseSites)
+                {
+                    if (s.NAME != null)
+                    {
+                        <li>@Html.ActionLink(s.NAME, "SiteDetails", "Site", new { id = s.SITE_ID, projId = s.PROJECT_ID }, new { onclick = "loading();" })</li>
+                        @*<li>@Html.ActionLink(s.NAME, "SiteDetailsGrid", "Site", new { projId = s.PROJECT_ID }, new { onclick = "loading();" })</li>*@
+                    }
+                    else
+                    {
+                        <li>@Html.ActionLink(s.SITE_ID.ToString(), "SiteDetails", "Site", new { id = s.SITE_ID, projId = s.PROJECT_ID }, new { onclick = "loading();" })</li>
+                    }
+                }
+            }
+            </ul>
+        </div>
+
+        <div style="padding-left:5px; width:110px; float:left; padding-top:12px">@Html.ActionLink("Add new Site", "SiteCreate1", "Site", new { id = thisProject.PROJECT_ID, From = "Details" }, new { @class = "LaMPButton blue", onclick = "loading();" })</div>   	
+        <div style="padding-left:5px; padding-top:12px">@Html.ActionLink("View All Sites", "SiteDetailsGrid", "Site", new { projId = thisProject.PROJECT_ID, From = "Details" }, new { @class = "LaMPButton blue", onclick = "loading();" })</div>   	
+        <br />
+    </div>
+    <br />

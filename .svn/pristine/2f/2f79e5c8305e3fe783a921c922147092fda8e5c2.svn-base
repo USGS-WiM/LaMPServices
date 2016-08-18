@@ -1,0 +1,118 @@
+﻿@* Comments:
+12.22.14 - TR - Created 
+
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+ * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Display details of all sites for a project 
+ */
+ *@
+@using LaMPServices;
+@using LaMPWeb.Assets.Resources;
+@using LaMPWeb.Models;
+           
+@{
+    ViewBag.Title = "Site Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}@*
+
+<script src="@Url.Content("~/Assets/Scripts/handsontable/dist/jquery.handsontable.full.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Assets/Scripts/handsontable/lib/bootstrap-typeahead.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Assets/Scripts/handsontable/lib/jquery-context-menu/jquery.contextMenu.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Assets/Scripts/handsontable/lib/jquery-context-menu/jquery.ui.position.js")"  type="text/javascript"></script>
+<link  href="@Url.Content("~/Assets/Scripts/handsontable/lib/jQuery-contextMenu/jquery.contextMenu.css")" rel="stylesheet" type="text/css" />
+<link href="@Url.Content("~/Assets/Styles/jquery.handsontable.full.css")" rel="stylesheet" type="text/css" />
+*@
+
+@model SiteGridModel
+
+@{
+    PROJECT thisProject = ViewData["Project"] as PROJECT;
+
+    List<SiteGridModel> TheseSites = ViewData["SiteList"] as List<SiteGridModel>;
+   
+}
+           
+<div id="dataTitle">                                                        
+   <div class="title">Project: @Html.ActionLink(thisProject.NAME, "ProjectDetails", "Project", new { id = thisProject.PROJECT_ID }, new { onclick = "loading();" })</div>
+</div>
+<br clear="all" />
+
+<hr class="headerUnderline" />
+<div>&nbsp;&nbsp;
+    
+   @*  @Html.ActionLink("Edit All", "AllSiteEdit", "Site", new { projId = thisProject.PROJECT_ID }, new { @style="margin-right:10px", @class = "LaMPButton blue" })*@
+   @Html.ActionLink("Return to Project Details", "ProjectDetails", "Project", new { id = thisProject.PROJECT_ID }, new { @class = "LaMPButton blue", @onclick = "loading();" })
+</div> <br />
+<div>This table shows all sites entered for this project. Click on the gray edit button in the far left column to edit an individual site.
+<br />
+If your site list is long, you may not be able to see the horizontal scroll bar located at the end of the list. To view hidden columns. click anywhere in the table and use your right/left arrows to scroll the table view to the right or left.</div>
+<br clear="all" />
+
+
+<input type="hidden" value="@thisProject.PROJECT_ID" id="project" />
+<div id="theDetails" style="overflow:auto">
+    <table id="AllSites" class="tablesorter">
+        <thead>
+            <tr>
+                <th></th><th style="padding-right:18px" class="header">Site Name</th><th style="padding-right:18px" class="header">Latitude</th>
+                <th style="padding-right:18px" class="header">Longitude</th><th style="padding-right:18px" class="header" style="padding-right:18px">State/Prov</th>
+                <th style="padding-right:18px" class="header">Country</th><th style="padding-right:18px" class="header">Lake</th>
+                <th style="padding-right:18px" style="padding-right:18px" class="header">Waterbody</th>
+                <th style="padding-right:18px" class="header">Watershed HUC8</th><th style="padding-right:18px" class="header">Description</th>
+                <th style="padding-right:18px" class="header">Status</th><th style="padding-right:18px" class="header">Resource Component</th>
+                <th style="padding-right:18px" class="header">Media</th><th style="padding-right:18px" class="header">Sampling Frequency</th>
+                <th style="padding-right:18px" class="header">Sampling Start Date</th><th style="padding-right:18px" class="header">Sampling End Date</th>
+                <th style="padding-right:18px" class="header">Sampling Platform</th><th style="padding-right:18px" class="header">Additional Info</th>
+                <th style="padding-right:18px" class="header">Site Website</th><th style="padding-right:18px" class="header">Parameters</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (SiteGridModel sgm in TheseSites)
+            {
+                <tr><td style="text-align:center;padding-top:10px;">@Html.ActionLink("Edit", "SiteEdit1", "Site", new { id = sgm.SiteID, projID = thisProject.PROJECT_ID }, new { @class = "LaMPButton blue" })</td>
+                    <td>@sgm.NAME</td><td>@sgm.LATITUDE</td><td>@sgm.LONGITUDE</td><td>@sgm.STATE_PROVINCE</td><td>@sgm.COUNTRY</td><td>@sgm.LAKE</td>
+                    <td>@sgm.WATERBODY</td><td>@sgm.WATERSHED_HUC8</td><td>@sgm.DESCRIPTION</td><td>@sgm.STATUS</td><td>@sgm.ResourceTypes</td><td>@sgm.MediaTypes</td>
+                    <td>@sgm.FrequencyTypes</td><td>@sgm.START_DATE</td><td>@sgm.END_DATE</td><td>@sgm.SAMPLE_PLATFORM</td>
+                    <td>@sgm.ADDITIONAL_INFO</td><td>@sgm.URL</td><td>@sgm.Parameters</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+
+
+</div>
+<style type="text/css">
+    table
+    {   
+        border-collapse: collapse;
+    }
+    table tr th, table tr td
+    {
+        border: black 1px solid;
+    }
+    table tr:nth-child(even)
+    {
+        background: #F2F2F2;
+    }
+    table tr:nth-child(odd)
+    {
+        background: #fff;
+    }
+</style>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $("#AllSites").tablesorter({
+            headers: {
+                0: { sorter: false }
+            }
+        });
+    });
+</script>

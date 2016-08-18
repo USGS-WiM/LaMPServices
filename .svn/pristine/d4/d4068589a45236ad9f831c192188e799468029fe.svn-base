@@ -1,0 +1,80 @@
+﻿@* Comments:
+07.17.13 - TR - Created 
+
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+ * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Display edit page for a Publication 
+ */
+ *@
+@using LaMPServices;
+@using LaMPWeb.Assets.Resources;
+
+@model LaMPServices.PUBLICATION
+           
+
+@{
+    ViewBag.Title = "Publication Edit";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    PROJECT thisProject = ViewData["Project"] as PROJECT;
+}
+
+           
+<div id="loading"><div id="loadingcontent"><p id="loadingspinner" style=""><img src="@Url.Content("~/Assets/Images/loading1.gif")"  /></p></div></div>
+
+<div id="dataTitle">                                                        
+    <div class="title">Project: @Html.ActionLink(thisProject.NAME, "ProjectDetails", "Project", new { id = thisProject.PROJECT_ID }, new { onclick = "loading();" }), Publication: @Model.TITLE</div>
+</div>
+<br clear="all" />
+
+<hr class="headerUnderline" />
+
+@using (Html.BeginForm("PublicationEdit", "Publication", new { id = Model.PUBLICATION_ID, projId = thisProject.PROJECT_ID }, FormMethod.Post))
+{
+    <input type="hidden" id="PubId" name="PUBLICATION_ID" value="@Model.PUBLICATION_ID" />
+    <input type="hidden" id="projId" name="PROJECT_ID" value="@thisProject.PROJECT_ID" />
+    
+    @* Publication Title: *@
+    <div class="ui-grid-a">
+        <div class="ui-block-a">Publication Title:</div>
+        <div class="ui-block-b" style="width:70%"><input type="text" id="pubTitle" name="TITLE" class="lampTextInput ui-shadow-inset" value="@Model.TITLE" /></div>
+    </div>
+               
+    @* Publication Description: *@
+    <div class="ui-grid-a">
+        <div class="ui-block-a">Publication Description:</div>
+        <div class="ui-block-b" style="width:70%"><textarea class="lampTextInput ui-shadow-inset" name="DESCRIPTION" rows="4" cols="30">@Model.DESCRIPTION</textarea></div>
+    </div>
+        
+    @* Publication URL: *@
+    <div class="ui-grid-a">           
+        <div class="ui-block-a">Publication Website or Location:</div>
+        <div class="ui-block-b" style="width:70%"><input type="text" id="pubURL" name="URL" class="lampTextInput ui-shadow-inset" value="@Model.URL" /></div>
+    </div>
+        
+    <br clear="all" />    
+    <br />
+    
+    <div id="formSubmitDiv" class="formSection">
+        <div class="leftSideSubmit">
+            <div class="cancelDiv"><div class="lightButtonBorder"><input id="resetButton" type="reset" class="cancel" value="Cancel" onclick="stopClick();" /></div></div>
+            <div class="submitDiv"><div class="darkButtonBorder"><input type="submit" onclick="loading();" name="Create" class="submit" value="Save" /></div></div>
+        </div>
+    </div>
+}
+
+<script type="text/javascript">
+    function stopClick() {
+        //cancel from a create page (contacts, publications), sent back to project details
+        var id = $("#PubId").val();
+        var projId = $("#projId").val();
+        $("#loading").fadeIn();
+        window.location.href = '/LaMPWeb/Publication/PublicationDetails/' + id + '?projId=' + projId;
+    }
+</script>

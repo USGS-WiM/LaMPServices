@@ -1,0 +1,32 @@
+﻿@* Comments: 
+02.05.13 - TR - Created 
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+  * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Partial view for choosing Keywords
+ */
+ *@
+@*<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.1/themes/base/jquery-ui.css" />
+<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+<script src="http://code.jquery.com/ui/1.10.1/jquery-ui.js"></script>
+*@
+
+@using LaMPServices;
+
+
+    <div class="childrenColumn">
+        <div class="subSection softHeader">
+            <div class="bold">Enter Keywords:</div>
+            <br />
+            <span>Comma-separate keywords</span>
+            <input class="lampTextInput ui-shadow-inset" name="keywords" type="text" />
+            <br />
+            <br />	
+        </div> 
+        <br />    
+    </div>

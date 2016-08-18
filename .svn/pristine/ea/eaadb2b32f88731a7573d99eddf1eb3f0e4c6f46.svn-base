@@ -1,0 +1,184 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Schema Namespace="LaMPDSModel.Store" Alias="Self" Provider="Oracle.DataAccess.Client" ProviderManifestToken="11.2" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns="http://schemas.microsoft.com/ado/2009/02/edm/ssdl">
+  <EntityContainer Name="LaMPDSModelStoreContainer">
+    <EntitySet Name="CATALOG_" EntityType="LaMPDSModel.Store.CATALOG_" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="CATALOG_PARAMETERS" EntityType="LaMPDSModel.Store.CATALOG_PARAMETERS" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="CONTACT" EntityType="LaMPDSModel.Store.CONTACT" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="FREQUENCY_TYPE" EntityType="LaMPDSModel.Store.FREQUENCY_TYPE" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="KEYWORD" EntityType="LaMPDSModel.Store.KEYWORD" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="LAMP_GROUP_TYPE" EntityType="LaMPDSModel.Store.LAMP_GROUP_TYPE" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="LOCATION" EntityType="LaMPDSModel.Store.LOCATION" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="MEDIA_TYPE" EntityType="LaMPDSModel.Store.MEDIA_TYPE" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="ORGANIZATION" EntityType="LaMPDSModel.Store.ORGANIZATION" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="PARAMETER_TYPE" EntityType="LaMPDSModel.Store.PARAMETER_TYPE" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="PROJECT" EntityType="LaMPDSModel.Store.PROJECT" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="PROJECT_CONTACTS" EntityType="LaMPDSModel.Store.PROJECT_CONTACTS" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="PROJECT_COOPERATORS" EntityType="LaMPDSModel.Store.PROJECT_COOPERATORS" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="PROJECT_KEYWORDS" EntityType="LaMPDSModel.Store.PROJECT_KEYWORDS" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="PROJECT_PUBLICATIONS" EntityType="LaMPDSModel.Store.PROJECT_PUBLICATIONS" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="PUBLICATION" EntityType="LaMPDSModel.Store.PUBLICATION" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="RESOURCE_TYPE" EntityType="LaMPDSModel.Store.RESOURCE_TYPE" store:Type="Tables" Schema="LAMPADMIN" />
+    <EntitySet Name="STATUS_TYPE" EntityType="LaMPDSModel.Store.STATUS_TYPE" store:Type="Tables" Schema="LAMPADMIN" />
+  </EntityContainer>
+  <EntityType Name="CATALOG_">
+    <Key>
+      <PropertyRef Name="CATALOG_ID" />
+    </Key>
+    <Property Name="CATALOG_ID" Type="number" Nullable="false" />
+    <Property Name="START_DATE" Type="date" />
+    <Property Name="END_DATE" Type="date" />
+    <Property Name="LOCATION_ID" Type="number" />
+    <Property Name="PARAMETER_TYPE_ID" Type="number" />
+    <Property Name="RESOURCE_TYPE_ID" Type="number" />
+    <Property Name="MEDIA_TYPE_ID" Type="number" />
+    <Property Name="PROJECT_ID" Type="number" />
+    <Property Name="FREQUENCY_TYPE_ID" Type="number" />
+    <Property Name="SAMPLE_PLATFORM" Type="nchar" MaxLength="255" />
+    <Property Name="COMMENTS" Type="nchar" MaxLength="255" />
+  </EntityType>
+  <EntityType Name="CATALOG_PARAMETERS">
+    <Key>
+      <PropertyRef Name="ID" />
+    </Key>
+    <Property Name="ID" Type="number" Nullable="false" />
+    <Property Name="CATALOG_ID" Type="number" />
+    <Property Name="PARAMETER_TYPE_ID" Type="number" />
+  </EntityType>
+  <EntityType Name="CONTACT">
+    <Key>
+      <PropertyRef Name="CONTACT_ID" />
+    </Key>
+    <Property Name="CONTACT_ID" Type="number" Nullable="false" />
+    <Property Name="NAME" Type="nchar" MaxLength="100" />
+    <Property Name="EMAIL" Type="nchar" MaxLength="100" />
+    <Property Name="PHONE" Type="nchar" MaxLength="100" />
+    <Property Name="ORGANIZATION_ID" Type="number" />
+  </EntityType>
+  <EntityType Name="FREQUENCY_TYPE">
+    <Key>
+      <PropertyRef Name="FREQUENCY_TYPE_ID" />
+    </Key>
+    <Property Name="FREQUENCY_TYPE_ID" Type="number" Nullable="false" />
+    <Property Name="FREQUENCY" Type="nchar" MaxLength="50" />
+  </EntityType>
+  <EntityType Name="KEYWORD">
+    <Key>
+      <PropertyRef Name="KEYWORDS_ID" />
+    </Key>
+    <Property Name="KEYWORDS_ID" Type="number" Nullable="false" />
+    <Property Name="TERM" Type="nchar" MaxLength="30" />
+  </EntityType>
+  <EntityType Name="LAMP_GROUP_TYPE">
+    <Key>
+      <PropertyRef Name="LAMP_GROUP_TYPE_ID" />
+    </Key>
+    <Property Name="LAMP_GROUP_TYPE_ID" Type="number" Nullable="false" />
+    <Property Name="LAMP_GROUP" Type="nchar" MaxLength="30" />
+  </EntityType>
+  <EntityType Name="LOCATION">
+    <Key>
+      <PropertyRef Name="LOCATION_ID" />
+    </Key>
+    <Property Name="LOCATION_ID" Type="number" Nullable="false" />
+    <Property Name="PROJECT_NAME" Type="nvarchar2" MaxLength="255" />
+    <Property Name="NAME" Type="nchar" MaxLength="255" />
+    <Property Name="DESCRIPTION" Type="nchar" MaxLength="255" />
+    <Property Name="LATITUDE" Type="float" Precision="126" />
+    <Property Name="LONGITUDE" Type="float" Precision="126" />
+    <Property Name="LAKE_NAME" Type="nchar" MaxLength="255" />
+    <Property Name="STATUS_TYPE_ID" Type="number" />
+    <Property Name="LAMP_GROUP_ID" Type="number" />
+  </EntityType>
+  <EntityType Name="MEDIA_TYPE">
+    <Key>
+      <PropertyRef Name="MEDIA_TYPE_ID" />
+    </Key>
+    <Property Name="MEDIA_TYPE_ID" Type="number" Nullable="false" />
+    <Property Name="MEDIA" Type="nchar" MaxLength="20" />
+  </EntityType>
+  <EntityType Name="ORGANIZATION">
+    <Key>
+      <PropertyRef Name="ORGANIZATION_ID" />
+    </Key>
+    <Property Name="ORGANIZATION_ID" Type="number" Nullable="false" />
+    <Property Name="NAME" Type="nchar" MaxLength="50" />
+    <Property Name="STATE" Type="nchar" MaxLength="50" />
+    <Property Name="SHORTNAME" Type="nchar" MaxLength="50" />
+    <Property Name="DIVISION" Type="nchar" MaxLength="255" />
+  </EntityType>
+  <EntityType Name="PARAMETER_TYPE">
+    <Key>
+      <PropertyRef Name="PARAMETER_TYPE_ID" />
+    </Key>
+    <Property Name="PARAMETER_TYPE_ID" Type="number" Nullable="false" />
+    <Property Name="PARAMETER" Type="nchar" MaxLength="50" />
+    <Property Name="PARAMETER_GROUP" Type="nchar" MaxLength="255" />
+  </EntityType>
+  <EntityType Name="PROJECT">
+    <Key>
+      <PropertyRef Name="PROJECT_ID" />
+    </Key>
+    <Property Name="PROJECT_ID" Type="number" Nullable="false" />
+    <Property Name="NAME" Type="nvarchar2" MaxLength="255" />
+    <Property Name="START_DATE" Type="date" />
+    <Property Name="END_DATE" Type="date" />
+    <Property Name="OBJECTIVE" Type="nchar" MaxLength="255" />
+    <Property Name="DATA_MANAGEMENT_SYSTEM" Type="nchar" MaxLength="255" />
+    <Property Name="URL" Type="nchar" MaxLength="255" />
+    <Property Name="COMMENTS" Type="nchar" MaxLength="255" />
+  </EntityType>
+  <EntityType Name="PROJECT_CONTACTS">
+    <Key>
+      <PropertyRef Name="PROJECT_CONTACTS_ID" />
+    </Key>
+    <Property Name="PROJECT_CONTACTS_ID" Type="number" Nullable="false" />
+    <Property Name="PROJECT_ID" Type="number" />
+    <Property Name="CONTACT_ID" Type="number" />
+  </EntityType>
+  <EntityType Name="PROJECT_COOPERATORS">
+    <Key>
+      <PropertyRef Name="PROJECT_COOPERATOR_ID" />
+    </Key>
+    <Property Name="PROJECT_COOPERATOR_ID" Type="number" Nullable="false" />
+    <Property Name="PROJECT_ID" Type="number" />
+    <Property Name="ORGANIZATION_ID" Type="number" />
+  </EntityType>
+  <EntityType Name="PROJECT_KEYWORDS">
+    <Key>
+      <PropertyRef Name="PROJECT_KEYWORDS_ID" />
+    </Key>
+    <Property Name="PROJECT_KEYWORDS_ID" Type="number" Nullable="false" />
+    <Property Name="PROJECT_ID" Type="number" />
+    <Property Name="KEYWORD_ID" Type="number" />
+  </EntityType>
+  <EntityType Name="PROJECT_PUBLICATIONS">
+    <Key>
+      <PropertyRef Name="PROJECT_PUBLICATION_ID" />
+    </Key>
+    <Property Name="PROJECT_PUBLICATION_ID" Type="number" Nullable="false" />
+    <Property Name="PROJECT_ID" Type="number" />
+    <Property Name="PUBLICATION_ID" Type="number" />
+  </EntityType>
+  <EntityType Name="PUBLICATION">
+    <Key>
+      <PropertyRef Name="PUBLICATION_ID" />
+    </Key>
+    <Property Name="PUBLICATION_ID" Type="number" Nullable="false" />
+    <Property Name="CITATION" Type="nchar" MaxLength="254" />
+    <Property Name="URL" Type="nchar" MaxLength="30" />
+  </EntityType>
+  <EntityType Name="RESOURCE_TYPE">
+    <Key>
+      <PropertyRef Name="RESOURCE_TYPE_ID" />
+    </Key>
+    <Property Name="RESOURCE_TYPE_ID" Type="number" Nullable="false" />
+    <Property Name="RESOURCE_NAME" Type="nchar" MaxLength="30" />
+  </EntityType>
+  <EntityType Name="STATUS_TYPE">
+    <Key>
+      <PropertyRef Name="STATUS_ID" />
+    </Key>
+    <Property Name="STATUS_ID" Type="number" Nullable="false" />
+    <Property Name="STATUS" Type="nchar" MaxLength="50" />
+  </EntityType>
+</Schema>

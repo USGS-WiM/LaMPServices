@@ -1,0 +1,740 @@
+﻿using System;
+using System.Data;
+using System.Data.EntityClient;
+using System.Data.Metadata.Edm;
+using System.Data.Objects;
+using System.Data.Objects.DataClasses;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+using LaMPServices.Authentication;
+using OpenRasta.Web;
+using OpenRasta.Security;
+
+namespace LaMPServices.Handlers
+{
+    public abstract class HandlerBase
+    {
+        #region Constants
+        //Roles must match DB Role Table
+        protected const string AdminRole = "ADMIN";
+        protected const string ManagerRole = "MANAGER";
+        #endregion
+
+        #region "Base Properties"
+        
+        private String connectionString = @"metadata=res://*/LaMPDSModel.csdl|res://*/LaMPDSModel.ssdl|res://*/LaMPDSModel.msl;provider=Oracle.DataAccess.Client;provider connection string=""DATA SOURCE=LAMPRDS;USER ID={0};PASSWORD={1}""";
+
+        // will be automatically injected by DI in OpenRasta
+        // must be public
+        public ICommunicationContext Context { get; set; }
+
+        public string username
+        {
+            get { return Context.User.Identity.Name; }
+        }
+
+        /// <summary>
+        /// adds links to related/associated objects
+        /// </summary>
+        /// <param name="baseURI"></param>
+        static public string baseURL 
+        {
+            get
+            { return ""; }
+        }
+
+        #endregion
+
+        #region "Base Methods"
+        public bool IsAuthorized(string role)
+        {
+            return Context.User.IsInRole(role);
+        }
+        
+        public bool IsAuthorizedToEdit(string OwnerUserName)
+        {
+            if (OwnerUserName.Equals(username,StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            if (IsAuthorized(AdminRole))
+                return true;
+
+
+            return false;
+        }
+       
+        protected LaMPDSEntities GetRDS(EasySecureString password)
+        {
+            //return new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR"));
+            return new LaMPDSEntities(string.Format(connectionString, Context.User.Identity.Name, password.decryptString()));
+        }
+        
+        protected EasySecureString GetSecuredPassword()
+        {
+            //return new EasySecureString("cafOR4_yR");
+            return new EasySecureString(LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password);
+        }
+
+        protected DATA_MANAGER GetLoggedInDataManager(LaMPDSEntities aRDS)
+        {
+            DATA_MANAGER manager = aRDS.DATA_MANAGER.FirstOrDefault(dm => dm.USERNAME.ToUpper().Equals(username.ToUpper(),StringComparison.CurrentCultureIgnoreCase));
+           
+            return manager;
+        }
+
+        protected DateTime? ValidDate(string date)
+        {
+            DateTime tempDate;
+            try
+            {
+                if (date == null) return null;
+                if (!DateTime.TryParse(date, out tempDate))
+                {
+                    //try oadate
+                    tempDate = DateTime.FromOADate(Convert.ToDouble(date));
+
+                }
+
+
+                return tempDate;
+                // 
+            }
+            catch (Exception)
+            {
+
+                return null;
+            }
+
+        }//end ValidDate
+
+        public string GetState(State state)
+        {
+            switch (state)
+            {
+                case State.AL:
+                    return "ALABAMA";
+
+                case State.AK:
+                    return "ALASKA";
+
+                case State.AS:
+                    return "AMERICAN SAMOA";
+
+                case State.AZ:
+                    return "ARIZONA";
+
+                case State.AR:
+                    return "ARKANSAS";
+
+                case State.CA:
+                    return "CALIFORNIA";
+
+                case State.CO:
+                    return "COLORADO";
+
+                case State.CT:
+                    return "CONNECTICUT";
+
+                case State.DE:
+                    return "DELAWARE";
+
+                case State.DC:
+                    return "DISTRICT OF COLUMBIA";
+
+                case State.FM:
+                    return "FEDERATED STATES OF MICRONESIA";
+
+                case State.FL:
+                    return "FLORIDA";
+
+                case State.GA:
+                    return "GEORGIA";
+
+                case State.GU:
+                    return "GUAM";
+
+                case State.HI:
+                    return "HAWAII";
+
+                case State.ID:
+                    return "IDAHO";
+
+                case State.IL:
+                    return "ILLINOIS";
+
+                case State.IN:
+                    return "INDIANA";
+
+                case State.IA:
+                    return "IOWA";
+
+                case State.KS:
+                    return "KANSAS";
+
+                case State.KY:
+                    return "KENTUCKY";
+
+                case State.LA:
+                    return "LOUISIANA";
+
+                case State.ME:
+                    return "MAINE";
+
+                case State.MH:
+                    return "MARSHALL ISLANDS";
+
+                case State.MD:
+                    return "MARYLAND";
+
+                case State.MA:
+                    return "MASSACHUSETTS";
+
+                case State.MI:
+                    return "MICHIGAN";
+
+                case State.MN:
+                    return "MINNESOTA";
+
+                case State.MS:
+                    return "MISSISSIPPI";
+
+                case State.MO:
+                    return "MISSOURI";
+
+                case State.MT:
+                    return "MONTANA";
+
+                case State.NE:
+                    return "NEBRASKA";
+
+                case State.NV:
+                    return "NEVADA";
+
+                case State.NH:
+                    return "NEW HAMPSHIRE";
+
+                case State.NJ:
+                    return "NEW JERSEY";
+
+                case State.NM:
+                    return "NEW MEXICO";
+
+                case State.NY:
+                    return "NEW YORK";
+
+                case State.NC:
+                    return "NORTH CAROLINA";
+
+                case State.ND:
+                    return "NORTH DAKOTA";
+
+                case State.MP:
+                    return "NORTHERN MARIANA ISLANDS";
+
+                case State.OH:
+                    return "OHIO";
+
+                case State.OK:
+                    return "OKLAHOMA";
+
+                case State.OR:
+                    return "OREGON";
+
+                case State.PW:
+                    return "PALAU";
+
+                case State.PA:
+                    return "PENNSYLVANIA";
+
+                case State.PR:
+                    return "PUERTO RICO";
+
+                case State.RI:
+                    return "RHODE ISLAND";
+
+                case State.SC:
+                    return "SOUTH CAROLINA";
+
+                case State.SD:
+                    return "SOUTH DAKOTA";
+
+                case State.TN:
+                    return "TENNESSEE";
+
+                case State.TX:
+                    return "TEXAS";
+
+                case State.UT:
+                    return "UTAH";
+
+                case State.VT:
+                    return "VERMONT";
+
+                case State.VI:
+                    return "VIRGIN ISLANDS";
+
+                case State.VA:
+                    return "VIRGINIA";
+
+                case State.WA:
+                    return "WASHINGTON";
+
+                case State.WV:
+                    return "WEST VIRGINIA";
+
+                case State.WI:
+                    return "WISCONSIN";
+
+                case State.WY:
+                    return "WYOMING";
+            }
+
+            throw new Exception("Not Available");
+        }
+        public State GetStateByName(string name)
+        {
+            switch (name.ToUpper())
+            {
+                case "ALABAMA":
+                case "AL":
+                case "ALA":
+                    return State.AL;
+
+                case "ALASKA":
+                case "AK":
+                    return State.AK;
+
+                case "AMERICAN SAMOA":
+                case "AS":
+                    return State.AS;
+
+                case "ARIZONA":
+                case "AZ":
+                case "ARIZ":
+                    return State.AZ;
+
+                case "ARKANSAS":
+                case "AR":
+                case "ARK":
+                    return State.AR;
+
+                case "CALIFORNIA":
+                case "CA":
+                case "CALIF":
+                    return State.CA;
+
+                case "COLORADO":
+                case "CO":
+                case "COLO":
+                    return State.CO;
+
+                case "CONNECTICUT":
+                case "CT":
+                case "CONN":
+                    return State.CT;
+
+                case "DELAWARE":
+                case "DE":
+                case "DEL":
+                    return State.DE;
+
+                case "DISTRICT OF COLUMBIA":
+                case "DC":
+                case "D.C.":
+                    return State.DC;
+
+                case "FEDERATED STATES OF MICRONESIA":
+                case "FM":
+                case "FSM":
+                    return State.FM;
+
+                case "FLORIDA":
+                case "FL":
+                case "FLA":
+                    return State.FL;
+
+                case "GEORGIA":
+                case "GA":
+                    return State.GA;
+
+                case "GUAM":
+                case "GU":
+                    return State.GU;
+
+                case "HAWAII":
+                case "HI":
+                    return State.HI;
+
+                case "IDAHO":
+                case "ID":
+                    return State.ID;
+
+                case "ILLINOIS":
+                case "IL":
+                case "ILL.":
+                    return State.IL;
+
+                case "INDIANA":
+                case "IN":
+                case "IND":
+                    return State.IN;
+
+                case "IOWA":
+                case "IA":
+                    return State.IA;
+
+                case "KANSAS":
+                case "KS":
+                case "KANS":
+                    return State.KS;
+
+                case "KENTUCKY":
+                case "KY":
+                    return State.KY;
+
+                case "LOUISIANA":
+                case "LA":
+                    return State.LA;
+
+                case "MAINE":
+                case "ME":
+                    return State.ME;
+
+                case "MARSHALL ISLANDS":
+                case "MH":
+                    return State.MH;
+
+                case "MARYLAND":
+                case "MD":
+                    return State.MD;
+
+                case "MASSACHUSETTS":
+                case "MA":
+                case "MASS":
+                    return State.MA;
+
+                case "MICHIGAN":
+                case "MI":
+                case "MICH":
+                    return State.MI;
+
+                case "MINNESOTA":
+                case "MN":
+                case "MINN":
+                    return State.MN;
+
+                case "MISSISSIPPI":
+                case "MS":
+                case "MISS":
+                    return State.MS;
+
+                case "MISSOURI":
+                case "MO":
+                    return State.MO;
+
+                case "MONTANA":
+                case "MT":
+                case "MONT":
+                    return State.MT;
+
+                case "NEBRASKA":
+                case "NE":
+                case "NEBR":
+                    return State.NE;
+
+                case "NEVADA":
+                case "NV":
+                case "NEV":
+                    return State.NV;
+
+                case "NEW HAMPSHIRE":
+                case "NH":
+                    return State.NH;
+
+                case "NEW JERSEY":
+                case "NJ":
+                    return State.NJ;
+
+                case "NEW MEXICO":
+                case "NM":
+                    return State.NM;
+
+                case "NEW YORK":
+                case "NY":
+                    return State.NY;
+
+                case "NORTH CAROLINA":
+                case "NC":
+                    return State.NC;
+
+                case "NORTH DAKOTA":
+                case "ND":
+                    return State.ND;
+
+                case "NORTHERN MARIANA ISLANDS":
+                case "MP":
+                    return State.MP;
+
+                case "OHIO":
+                case "OH":
+                    return State.OH;
+
+                case "OKLAHOMA":
+                case "OK":
+                case "OKLA":
+                    return State.OK;
+
+                case "OREGON":
+                case "OR":
+                case "ORE":
+                    return State.OR;
+
+                case "PALAU":
+                case "PW":
+                    return State.PW;
+
+                case "PENNSYLVANIA":
+                case "PA":
+                    return State.PA;
+
+                case "PUERTO RICO":
+                case "PR":
+                    return State.PR;
+
+                case "RHODE ISLAND":
+                case "RI":
+                    return State.RI;
+
+                case "SOUTH CAROLINA":
+                case "SC":
+                    return State.SC;
+
+                case "SOUTH DAKOTA":
+                case "SD":
+                    return State.SD;
+
+                case "TENNESSEE":
+                case "TN":
+                case "TENN":
+                    return State.TN;
+
+                case "TEXAS":
+                case "TX":
+                case "TEX":
+                    return State.TX;
+
+                case "UTAH":
+                case "UT":
+                    return State.UT;
+
+                case "VERMONT":
+                case "VT":
+                    return State.VT;
+
+                case "VIRGIN ISLANDS":
+                case "VI":
+                    return State.VI;
+
+                case "VIRGINIA":
+                case "VA":
+                    return State.VA;
+
+                case "WASHINGTON":
+                case "WA":
+                case "WASH":
+                    return State.WA;
+
+                case "WEST VIRGINIA":
+                case "WV":
+                case "W.VA":
+                    return State.WV;
+
+                case "WISCONSIN":
+                case "WI":
+                case "WIS":
+                    return State.WI;
+
+                case "WYOMING":
+                case "WY":
+                case "WYO":
+                    return State.WY;
+            }// end switch
+
+            throw new Exception("Not Available");
+        }
+        public enum State
+        {
+            AL,
+            AK,
+            AS,
+            AZ,
+            AR,
+            CA,
+            CO,
+            CT,
+            DE,
+            DC,
+            FM,
+            FL,
+            GA,
+            GU,
+            HI,
+            ID,
+            IL,
+            IN,
+            IA,
+            KS,
+            KY,
+            LA,
+            ME,
+            MH,
+            MD,
+            MA,
+            MI,
+            MN,
+            MS,
+            MO,
+            MT,
+            NE,
+            NV,
+            NH,
+            NJ,
+            NM,
+            NY,
+            NC,
+            ND,
+            MP,
+            OH,
+            OK,
+            OR,
+            PW,
+            PA,
+            PR,
+            RI,
+            SC,
+            SD,
+            TN,
+            TX,
+            UT,
+            VT,
+            VI,
+            VA,
+            WA,
+            WV,
+            WI,
+            WY
+        }
+
+        public Province GetProvinceByName(string name)
+        {
+            switch (name.ToUpper())
+            {
+                case "ALBERTA":
+                case "AB":
+                    return Province.AB;
+                
+                case "BRITISH COLUMBIA":
+                case "COLOMBIE-BRITANNIQUE":
+                case "BC":
+                    return Province.BC;
+
+                case "MANITOBA":
+                case "MB":
+                    return Province.MB;
+
+                case "NEW BRUNSWICK":
+                case "NOUVEAU-BRUNSWICK":
+                case "NB":
+                    return Province.NB;
+
+                case "NEWFOUNDLAND AND LABRADOR":
+                case "TERRE-NEUVE-ET-LABRADOR":
+                case "NL":
+                    return Province.NL;
+
+                case "NOVA SCOTIA":
+                case "NOUVELLE-ÉCOSSE":
+                case "NS":
+                    return Province.NS;
+
+                case "NORTWEST TERRITORIES":
+                case "TERRITOIRES DU NORD-OUEST":
+                case "NT":
+                    return Province.NT;
+
+                case "NUNAVUT":
+                case "NU":
+                    return Province.NU;
+
+                case "ONTARIO":
+                case "ON":
+                    return Province.ON;
+
+                case "PRINCE EDWARD ISLAND":
+                case " 	ÎLE-DU-PRINCE-ÉDOUARD":
+                case "PE":
+                    return Province.PE;
+
+                case "QUEBEC":
+                case "QC":
+                    return Province.QC;
+
+                case "SASKATCHEWAN":
+                case "SK":
+                    return Province.SK;
+
+                case "YUKON":
+                case "YT":
+                    return Province.YT;
+
+            }// end switch
+
+            throw new Exception("Not Available");
+        }
+        public enum Province
+        {
+            AB,
+            BC,
+            MB,
+            NB,
+            NL,
+            NT,
+            NS,
+            NU,
+            ON,
+            PE,
+            QC,
+            SK,
+            YT
+        }
+
+        public Country GetCountryByName(string name)
+        { 
+             switch (name.ToUpper())
+            {
+                case "CANADA":
+                case "CA":
+                case "C.A.":
+                    return Country.CA;
+                
+                case "UNITED STATES OF AMERICA":
+                case "UNITED STATES":
+                case "USA":
+                case "U.S.A":
+                    return Country.USA;
+            }// end switch
+
+             throw new Exception("Not Available");
+        }
+        public enum Country 
+        {
+            USA,
+            CA
+        }
+        #endregion
+
+    }//end class HandlerBase
+
+}//end namespace

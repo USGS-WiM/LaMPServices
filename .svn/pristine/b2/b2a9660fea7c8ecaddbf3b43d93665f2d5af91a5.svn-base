@@ -1,0 +1,405 @@
+﻿//------------------------------------------------------------------------------
+//----- CatalogHandler -----------------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2012 WiM - USGS
+
+//    authors:  Jeremy K. Newson USGS Wisconsin Internet Mapping
+//              
+//  
+//   purpose:   Handles Catalog resources through the HTTP uniform interface.
+//              Equivalent to the controller in MVC.
+//
+//discussion:   Handlers are objects which handle all interaction with resources in 
+//              this case the resources are POCO classes derived from the EF. 
+//              https://github.com/openrasta/openrasta/wiki/Handlers
+//
+//     
+#region Comments
+// 04.26.12 - jkn - Created
+#endregion                          
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+using LaMPServices.Authentication;
+using OpenRasta.Web;
+using OpenRasta.Security;
+
+
+namespace LaMPServices.Handlers
+{
+    public class CatalogHandler:HandlerBase
+    {
+        #region Routed Methods
+
+        #region GetMethods
+
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get(Int32 catalogId)
+        {
+            CATALOG_ aCatalog;
+
+            //return BadRequest if ther is no ID
+            if (catalogId <= 0)
+            {return new OperationResult.BadRequest();}
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                 {
+                     aCatalog = aLaMPRDS.CATALOG_S.SingleOrDefault(c => c.CATALOG_ID == catalogId);
+                   
+                     if (aCatalog != null)
+                         aCatalog.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+                 }//end using
+             }//end using
+
+            return new OperationResult.OK { ResponseResource = aCatalog };
+        }//end httpMethod get
+
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get()
+        {
+            List<CATALOG_> aCatalogList = null;
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    if (IsAuthorized(ManagerRole))
+                    {
+                        aCatalogList = aLaMPRDS.CATALOG_S.Where(c => c.PROJECT.DATA_MANAGER.USERNAME == username).OrderBy(c => c.CATALOG_ID).ToList();
+                    }
+                    else//AdminRole
+                    {
+                        aCatalogList = aLaMPRDS.CATALOG_S.OrderBy(c => c.CATALOG_ID).ToList();
+                    }
+  
+                    
+                    if (aCatalogList != null)
+                        aCatalogList.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+
+                }//end using
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = aCatalogList };
+        }//end httpMethod get
+
+        [HttpOperation(HttpMethod.GET, ForUriName = "GetProjectCatalogs")]
+        public OperationResult GetProjectCatalogs(Int32 projectId)
+        {
+            List<CATALOG_> catalogList = null;
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    
+                        catalogList = aLaMPRDS.PROJECTS.SingleOrDefault(p => p.PROJECT_ID == projectId).CATALOG_.OrderBy(c => c.CATALOG_ID).ToList();
+
+                        if (catalogList != null)
+                            catalogList.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+
+                }//end using
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = catalogList };
+        }//end httpMethod get
+
+        [HttpOperation(HttpMethod.GET, ForUriName = "GetSiteCatalogs")]
+        public OperationResult GetSiteCatalogs(Int32 siteId)
+        {
+            List<CATALOG_> catalogList = null;
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    catalogList = aLaMPRDS.LOCATIONS.SingleOrDefault(s=>s.LOCATION_ID == siteId).CATALOG_.OrderBy(c => c.CATALOG_ID).ToList();
+
+                    if (catalogList != null)
+                        catalogList.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+
+
+                }//end using
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = catalogList };
+        }//end httpMethod get
+
+        [HttpOperation(HttpMethod.GET, ForUriName = "GetResourceCatalogs")]
+        public OperationResult GetResourceCatalogs(Int32 resourceId)
+        {
+            List<CATALOG_> catalogList = null;
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    catalogList = aLaMPRDS.RESOURCE_TYPE.SingleOrDefault(r => r.RESOURCE_TYPE_ID == resourceId).CATALOG_.OrderBy(c => c.CATALOG_ID).ToList();
+
+                    if (catalogList != null)
+                        catalogList.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+
+                }//end using
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = catalogList };
+        }//end httpMethod get
+
+        [HttpOperation(HttpMethod.GET, ForUriName = "GetMediaCatalogs")]
+        public OperationResult GetMediaCatalogs(Int32 mediaId)
+        {
+            List<CATALOG_> catalogList = null;
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    catalogList = aLaMPRDS.MEDIA_TYPE.SingleOrDefault(m => m.MEDIA_TYPE_ID == mediaId).CATALOG_.OrderBy(c => c.CATALOG_ID).ToList();
+
+                    if (catalogList != null)
+                        catalogList.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+                }//end using
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = catalogList };
+        }//end httpMethod get
+
+        [HttpOperation(HttpMethod.GET, ForUriName = "GetParameterCatalogs")]
+        public OperationResult GetParameterCatalogs(Int32 parameterId)
+        {
+            List<CATALOG_> catalogList = null;
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    catalogList = aLaMPRDS.CATALOG_PARAMETERS.Where(p => p.PARAMETER_TYPE_ID == parameterId)
+                                                                            .Select(cp => cp.CATALOG_).OrderBy(c => c.CATALOG_ID).ToList();
+ 
+                    if (catalogList != null)
+                        catalogList.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+                }//end using
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = catalogList };
+        }//end httpMethod get
+        #endregion
+
+        #region PostMethods
+        /// 
+        /// Force the user to provide authentication 
+        /// 
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.POST)]
+        public OperationResult Post(CATALOG_ aCatalog)
+        {
+            //Return BadRequest if missing required fields
+            if (!aCatalog.PROJECT_ID.HasValue)
+            {return new OperationResult.BadRequest();}
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    //Check for existing project
+                    if (!Exists(aLaMPRDS.CATALOG_S,ref aCatalog))
+                    {
+                        //set ID
+                        //aCatalog.CATALOG_ID = GetNextCatalogID(aLaMPRDS.CATALOG_S);
+
+                        aLaMPRDS.CATALOG_S.AddObject(aCatalog);
+                        aLaMPRDS.SaveChanges();
+                    }
+
+                    if (aCatalog != null)
+                        aCatalog.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+                }// end using
+            } //end using
+
+           
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = aCatalog };
+        }
+        #endregion
+
+        #region PutMethods
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.PUT)]
+        public OperationResult PUT(Int32 catalogId, CATALOG_ instance)
+        {
+            //Return BadRequest if missing required fields
+            if ((catalogId <= 0))
+            {
+                return new OperationResult.BadRequest();
+            }
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    CATALOG_ ObjectToBeUpdated = aLaMPRDS.CATALOG_S.SingleOrDefault(c => c.CATALOG_ID == catalogId);
+
+                    if (!ObjectToBeUpdated.PROJECT.DATA_MANAGER.USERNAME.Equals(username, StringComparison.OrdinalIgnoreCase) || !IsAuthorized(AdminRole))
+                        return new OperationResult.Forbidden { Description = "Not Authorized" };
+
+                     //Start date
+                    ObjectToBeUpdated.START_DATE = (DateTime.Equals(instance.START_DATE, ObjectToBeUpdated.START_DATE) ?
+                         ObjectToBeUpdated.START_DATE : instance.START_DATE);
+
+                    //End date
+                    ObjectToBeUpdated.END_DATE = (DateTime.Equals(instance.END_DATE, ObjectToBeUpdated.END_DATE) ?
+                         ObjectToBeUpdated.END_DATE : instance.END_DATE);
+               
+                    //LocationID
+                    ObjectToBeUpdated.LOCATION_ID = (Decimal.Equals(instance.LOCATION_ID, ObjectToBeUpdated.LOCATION_ID) ?
+                         ObjectToBeUpdated.LOCATION_ID : instance.LOCATION_ID);
+
+                    //ResourceTypeID
+                    ObjectToBeUpdated.RESOURCE_TYPE_ID = (Decimal.Equals(instance.RESOURCE_TYPE_ID, ObjectToBeUpdated.RESOURCE_TYPE_ID) ?
+                         ObjectToBeUpdated.RESOURCE_TYPE_ID : instance.RESOURCE_TYPE_ID);
+
+                    //MEDIA_TYPE_ID
+                    ObjectToBeUpdated.MEDIA_TYPE_ID = (Decimal.Equals(instance.MEDIA_TYPE_ID, ObjectToBeUpdated.MEDIA_TYPE_ID) ?
+                         ObjectToBeUpdated.MEDIA_TYPE_ID : instance.MEDIA_TYPE_ID);
+
+                    //PROJECT_ID
+                    ObjectToBeUpdated.PROJECT_ID = (Decimal.Equals(instance.PROJECT_ID, ObjectToBeUpdated.PROJECT_ID) ?
+                         ObjectToBeUpdated.PROJECT_ID : instance.PROJECT_ID);
+
+                    //FREQUENCY_TYPE_ID
+                    ObjectToBeUpdated.FREQUENCY_TYPE_ID = (Decimal.Equals(instance.FREQUENCY_TYPE_ID, ObjectToBeUpdated.FREQUENCY_TYPE_ID) ?
+                         ObjectToBeUpdated.FREQUENCY_TYPE_ID : instance.FREQUENCY_TYPE_ID);
+
+                    //SAMPLE_PLATFORM
+                    ObjectToBeUpdated.SAMPLE_PLATFORM = (string.IsNullOrEmpty(instance.SAMPLE_PLATFORM) ?
+                        ObjectToBeUpdated.SAMPLE_PLATFORM : instance.SAMPLE_PLATFORM);
+
+                    //Comments
+                    ObjectToBeUpdated.COMMENTS = (string.IsNullOrEmpty(instance.COMMENTS) ?
+                        ObjectToBeUpdated.COMMENTS : instance.COMMENTS);
+
+                    aLaMPRDS.SaveChanges();
+
+          
+                }// end using
+            }// end using
+
+          if (instance != null)
+              instance.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = instance };
+        }
+
+        #endregion
+
+        #region DeleteMethods
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.DELETE)]
+        public OperationResult Delete(Int32 catalogId)
+        {
+            //Return BadRequest if missing required fields
+            if (catalogId <= 0)
+            {return new OperationResult.BadRequest();}
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    CATALOG_ ObjectToBeDeleted = aLaMPRDS.CATALOG_S.SingleOrDefault(c => c.CATALOG_ID == catalogId);
+
+                    if (!ObjectToBeDeleted.PROJECT.DATA_MANAGER.USERNAME.Equals(username, StringComparison.OrdinalIgnoreCase) || !IsAuthorized(AdminRole))
+                        return new OperationResult.Forbidden { Description = "Not Authorized" };
+
+                    //delete it
+                    aLaMPRDS.CATALOG_S.DeleteObject(ObjectToBeDeleted);
+
+                    aLaMPRDS.SaveChanges();
+
+                }// end using
+            
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { };
+        }
+
+        #endregion
+
+
+        #endregion
+        #region "Helper Methods"
+        private Boolean Exists(System.Data.Objects.IObjectSet<CATALOG_> catalogs, ref CATALOG_ aCatalog)
+        {
+            CATALOG_ existingCatalog;
+            CATALOG_ thisCatalog = aCatalog;
+            //check if it exists
+            try
+            {
+                existingCatalog = catalogs.FirstOrDefault(c => c.PROJECT_ID == thisCatalog.PROJECT_ID &&
+                                                                                     (c.START_DATE.Value == thisCatalog.START_DATE.Value || !thisCatalog.START_DATE.HasValue) &&
+                                                                                     (c.END_DATE.Value == thisCatalog.END_DATE.Value || !thisCatalog.END_DATE.HasValue) &&
+                                                                                     (c.LOCATION_ID.Value == thisCatalog.LOCATION_ID.Value || !thisCatalog.LOCATION_ID.HasValue) &&
+                                                                                     (c.RESOURCE_TYPE_ID.Value == thisCatalog.RESOURCE_TYPE_ID.Value || !thisCatalog.RESOURCE_TYPE_ID.HasValue) &&
+                                                                                     (c.MEDIA_TYPE_ID.Value == thisCatalog.MEDIA_TYPE_ID.Value || !thisCatalog.MEDIA_TYPE_ID.HasValue) &&
+                                                                                     (c.FREQUENCY_TYPE_ID.Value == thisCatalog.FREQUENCY_TYPE_ID.Value || !thisCatalog.FREQUENCY_TYPE_ID.HasValue) &&
+                                                                                     (c.SAMPLE_PLATFORM.Equals( thisCatalog.SAMPLE_PLATFORM,StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(thisCatalog.SAMPLE_PLATFORM)));
+
+
+                if (existingCatalog == null)
+                    return false;
+
+                //if exists then update ref contact
+                aCatalog = existingCatalog;
+                return true;
+
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        //private decimal GetNextCatalogID(System.Data.Objects.IObjectSet<CATALOG_> catalogs)
+        //{
+        //    decimal nextKey = 1;
+        //    if (catalogs.Count() > 0)
+        //    {
+        //        nextKey = catalogs.OrderByDescending(c => c.CATALOG_ID).First().CATALOG_ID + 1;
+        //    }
+
+        //    return nextKey;
+        //}
+        #endregion
+    }//end CatalogHandler
+}//end namespace

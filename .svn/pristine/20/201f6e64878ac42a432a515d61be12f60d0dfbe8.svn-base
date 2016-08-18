@@ -1,0 +1,29 @@
+﻿@* Comments: 
+03.11.13 - TR - Created 
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+  * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Partial view for Viewing list of sites for a project
+ */
+ *@
+
+@using LaMPServices;
+
+<div class="subSection softHeader">
+        <label class="bold Lpadded">Sites</label>
+        <br />
+        <ul>
+            @foreach (CATALOG_ cat in ViewData["sites"] as List<CATALOG_>)
+            {
+                <li>@cat.CATALOG_ID</li>
+            }
+        </ul>
+        <div style="padding-left:5px">@Html.ActionLink("Add new Site", "SiteSummary1", "Site", new { id = ViewData["projectId"]}, new {@class = "LaMPButton blue", onclick="loading();"})</div>   	
+        <br />
+    </div>
+    <br />

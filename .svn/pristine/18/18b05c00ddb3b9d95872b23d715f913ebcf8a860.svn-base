@@ -1,0 +1,39 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Globalization;
+using System.Web.Mvc;
+using System.Web.Security;
+using System.ComponentModel.DataAnnotations;
+using LaMPServices;
+
+namespace LaMPWeb.Models
+{
+    //not used yet (3.27.13)
+    public class ProjectModel
+    {
+        public PROJECT project { get; set; }
+        public PROJECT_COOPERATORS projOrgs { get; set; }
+        public PROJECT_CONTACTS projContacts { get; set; }
+        public PROJECT_KEYWORDS projKeywords { get; set; }
+        public PROJECT_PUBLICATIONS projPubs { get; set; }
+
+    }
+    //used for index to show information related to project
+    public class ProjectDetails
+    {
+        public decimal ProjId { get; set; }
+        public string ProjName { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        public int NoSites { get; set; }
+    }
+
+    //used for contact Infobox to show contact name and organization name
+    public class ContactInfo
+    {
+        public string Name { get; set; }
+        public string OrgName { get; set; }
+    }
+}

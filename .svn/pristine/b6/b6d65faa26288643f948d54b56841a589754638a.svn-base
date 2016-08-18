@@ -1,0 +1,263 @@
+﻿//------------------------------------------------------------------------------
+//----- LaMPGroupTypeHandler -----------------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2012 WiM - USGS
+
+//    authors:  Jeremy K. Newson USGS Wisconsin Internet Mapping
+//              
+//  
+//   purpose:   Handles media type resources through the HTTP uniform interface.
+//              Equivalent to the controller in MVC.
+//
+//discussion:   Handlers are objects which handle all interaction with resources in 
+//              this case the resources are POCO classes derived from the EF. 
+//               https://github.com/openrasta/openrasta/wiki/Handlers
+//
+//     
+#region Comments
+// 08.21.12 - jkn - Created
+#endregion
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+using LaMPServices.Authentication;
+using OpenRasta.Web;
+using OpenRasta.Security;
+
+namespace LaMPServices.Handlers
+{
+    public class LaMPGroupTypeHandler
+    {
+        #region Properties
+
+        // will be automatically injected by DI in OpenRasta
+        public ICommunicationContext Context { get; set; }
+
+        private string connectionString = @"metadata=res://*/LaMPDSModel.csdl|res://*/LaMPDSModel.ssdl|res://*/LaMPDSModel.msl;provider=Oracle.DataAccess.Client;provider connection string=""DATA SOURCE=LAMPRDS;USER ID={0};PASSWORD={1}""";
+
+        #endregion
+
+        #region Routed Methods
+
+        #region GetMethods
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get()
+        {
+            List<LAMP_GROUP_TYPE> laMPGroupTypes;
+
+            //Get basic authentication password
+            // using (EasySecureString securedPassword = new EasySecureString(
+            //                        LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            /// {
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+
+                laMPGroupTypes = Context.LAMP_GROUP_TYPE.OrderBy(lg => lg.LAMP_GROUP_TYPE_ID).ToList();
+
+            }//end using
+            //  }//end using
+
+            return new OperationResult.OK { ResponseResource = laMPGroupTypes };
+        }//end httpMethod get
+
+
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get(Int32 laMPGroupTypeID)
+        {
+            LAMP_GROUP_TYPE aLaMPGroupType;
+
+            //return BadRequest if ther is no ID
+            if (laMPGroupTypeID <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            // using (EasySecureString securedPassword = new EasySecureString(
+            //                        LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            /// {
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+
+                aLaMPGroupType = Context.LAMP_GROUP_TYPE.Single(lg => lg.LAMP_GROUP_TYPE_ID == laMPGroupTypeID);
+
+
+            }//end using
+            //  }//end using
+
+            return new OperationResult.OK { ResponseResource = aLaMPGroupType };
+        }//end httpMethod get
+
+        #endregion
+
+        #region PostMethods
+        /// 
+        /// Force the user to provide authentication 
+        /// 
+        //[RequiresAuthentication]
+        [HttpOperation(HttpMethod.POST, ForUriName = "CreateLaMPGroupType")]
+        public OperationResult Post(LAMP_GROUP_TYPE aLaMPGroupType)
+        {
+            //Return BadRequest if missing required fields
+            if (String.IsNullOrEmpty(aLaMPGroupType.LAMP_GROUP))
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            //using (EasySecureString securedPassword = new EasySecureString(
+            //                      LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            //{
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+                decimal nextEntityId = 0;
+                //Increment Key
+                LAMP_GROUP_TYPE lastEntity = Context.LAMP_GROUP_TYPE.OrderByDescending(l => l.LAMP_GROUP_TYPE_ID).FirstOrDefault();
+                if (lastEntity != null) nextEntityId = lastEntity.LAMP_GROUP_TYPE_ID + 1;
+
+                //Increment Key
+                aLaMPGroupType.LAMP_GROUP_TYPE_ID = nextEntityId;
+
+                Context.LAMP_GROUP_TYPE.AddObject(aLaMPGroupType);
+
+                Context.SaveChanges();
+            }// end using
+
+            // } end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = aLaMPGroupType };
+        }//end Post
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.POST, ForUriName = "CreateLaMPGroupTypeList")]
+        public OperationResult Post(List<LAMP_GROUP_TYPE> LaMPGroupTypes)
+        {
+            //Return BadRequest if missing required fields
+            if (LaMPGroupTypes.Count <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            //using (EasySecureString securedPassword = new EasySecureString(
+            //                      LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            //{
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+                decimal nextEntityId = 0;
+                //Increment Key
+                LAMP_GROUP_TYPE lastEntity = Context.LAMP_GROUP_TYPE.OrderByDescending(l => l.LAMP_GROUP_TYPE_ID).FirstOrDefault();
+                if (lastEntity != null) nextEntityId = lastEntity.LAMP_GROUP_TYPE_ID + 1;
+                
+                foreach (LAMP_GROUP_TYPE item in LaMPGroupTypes)
+                {
+                    //update database ID
+                    item.LAMP_GROUP_TYPE_ID = nextEntityId;
+
+                    Context.LAMP_GROUP_TYPE.AddObject(item);
+                    nextEntityId += 1;
+
+                }//next item
+
+                Context.SaveChanges();
+            }// end using
+
+            //} end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = LaMPGroupTypes };
+        }
+        #endregion
+
+        #region PutMethods
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.PUT, ForUriName = "UpdateLaMPGroupType")]
+        public OperationResult Post(Int32 laMPGroupTypeId, LAMP_GROUP_TYPE instance)
+        {
+            //Return BadRequest if missing required fields
+            if ((laMPGroupTypeId <= 0))
+            {
+                return new OperationResult.BadRequest();
+            }
+
+
+            //Get basic authentication password
+            //using (EasySecureString securedPassword = new EasySecureString(
+            //                      LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            //{
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+                //fetch the object to be updated (assuming that it exists)
+                LAMP_GROUP_TYPE ObjectToBeUpdated = Context.LAMP_GROUP_TYPE.Single(lg => lg.LAMP_GROUP_TYPE_ID == laMPGroupTypeId);
+
+                //LaMPGroup
+                ObjectToBeUpdated.LAMP_GROUP = (string.IsNullOrEmpty(instance.LAMP_GROUP) ?
+                    ObjectToBeUpdated.LAMP_GROUP : instance.LAMP_GROUP);
+
+                Context.SaveChanges();
+            }// end using
+
+            // } end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = instance };
+        }
+
+
+        #endregion
+
+        #region DeleteMethods
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.DELETE, ForUriName = "DeleteLaMPGroupType")]
+        public OperationResult Post(Int32 laMPGroupTypeId)
+        {
+            //Return BadRequest if missing required fields
+            if (laMPGroupTypeId <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+
+            //Get basic authentication password
+            //using (EasySecureString securedPassword = new EasySecureString(
+            //                      LaMPBasicAuthentication.ExtractBasicHeader(Context.Request.Headers["Authorization"]).Password))
+            //{
+            using (LaMPDSEntities Context = new LaMPDSEntities(string.Format(connectionString, "lampadmin", "cafOR4_yR")))
+            {
+                //fetch the object to be updated (assuming that it exists)
+                LAMP_GROUP_TYPE ObjectToBeDeleted = Context.LAMP_GROUP_TYPE.Single(lg =>lg.LAMP_GROUP_TYPE_ID == laMPGroupTypeId);
+
+                //delete it
+                Context.LAMP_GROUP_TYPE.DeleteObject(ObjectToBeDeleted);
+
+                Context.SaveChanges();
+
+            }// end using
+
+            // } end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { };
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Helper Methods
+        #endregion
+
+    }//end MediaTypeHandler
+}//end namespace

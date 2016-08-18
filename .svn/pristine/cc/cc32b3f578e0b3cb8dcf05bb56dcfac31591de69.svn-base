@@ -1,0 +1,330 @@
+﻿//------------------------------------------------------------------------------
+//----- CatalogHandler -----------------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2012 WiM - USGS
+
+//    authors:  Jeremy K. Newson USGS Wisconsin Internet Mapping
+//              
+//  
+//   purpose:   Handles Catalog resources through the HTTP uniform interface.
+//              Equivalent to the controller in MVC.
+//
+//discussion:   Handlers are objects which handle all interaction with resources in 
+//              this case the resources are POCO classes derived from the EF. 
+//              https://github.com/openrasta/openrasta/wiki/Handlers
+//
+//     
+#region Comments
+// 04.26.12 - jkn - Created
+#endregion                          
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+using LaMPServices.Authentication;
+using OpenRasta.Web;
+using OpenRasta.Security;
+
+
+namespace LaMPServices.Handlers
+{
+    public class DataManagerHandler:HandlerBase
+    {
+
+        #region Routed Methods
+
+        #region GetMethods
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get()
+        {
+            List<DATA_MANAGER> managerList = new List<DATA_MANAGER>();
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                 {
+                     managerList = aLaMPRDS.DATA_MANAGER.OrderBy(m => m.DATA_MANATER_ID).ToList();
+
+                     if (managerList != null)
+                         managerList.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+
+                 }//end using
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = managerList };
+        }//end httpMethod get
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get(Int32 managerId)
+        {
+            DATA_MANAGER aDataManager;
+
+            //return BadRequest if ther is no ID
+            if (managerId <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                 {
+                     aDataManager = aLaMPRDS.DATA_MANAGER.SingleOrDefault(
+                                    m => m.DATA_MANATER_ID == managerId);
+
+                     if (aDataManager != null)
+                         aDataManager.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+
+                 }//end using
+             }//end using
+
+            return new OperationResult.OK { ResponseResource = aDataManager };
+        }//end httpMethod get
+        
+        /// 
+        /// Force the user to provide authentication 
+        /// 
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.GET, ForUriName = "GetByUserName")]
+        public OperationResult Get(string userName)
+        {
+
+            DATA_MANAGER aDataManager;
+
+            //Return BadRequest if there is no ID
+            if (userName == null)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                 {
+                     aDataManager = aLaMPRDS.DATA_MANAGER.SingleOrDefault(
+                              m => m.USERNAME == userName);
+
+                    if (aDataManager != null)
+                        aDataManager.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+
+                }//end using
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = aDataManager };
+        }//end HttpMethod.GET
+
+        #endregion
+
+        #region PostMethods
+        /// 
+        /// Force the user to provide authentication and authorization 
+        ///
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.POST)]
+        public OperationResult Post(DATA_MANAGER aDataManager)
+        {
+            //Return BadRequest if missing required fields
+            if ((string.IsNullOrEmpty(aDataManager.USERNAME)))
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //Get next key
+                    Decimal nextKey = 1;
+                    if (aLaMPRDS.DATA_MANAGER.Count() > 0)
+                    {
+                        nextKey = aLaMPRDS.DATA_MANAGER.OrderByDescending(m => m.DATA_MANATER_ID).First().DATA_MANATER_ID + 1;
+                    }
+
+                    //set ID
+                    aDataManager.DATA_MANATER_ID = nextKey;
+
+                    //Prior to running stored procedure, check if username exists
+                    if (aLaMPRDS.DATA_MANAGER.Where(m => m.USERNAME == aDataManager.USERNAME) != null) return new OperationResult.BadRequest { Description = "Username exists" };
+
+                    // Create user profile using db stored procedure
+                    // stored db throws errors internally but does not pass pass error
+                    //Check if USERNAME exists
+                    //aLaMPRDS.OWNERPROFILE_ADD(aDataManager.USERNAME, "defaultLaMPPassword");
+                    
+
+
+                    aLaMPRDS.DATA_MANAGER.AddObject(aDataManager);
+
+                    aLaMPRDS.SaveChanges();
+
+                }//end using
+            }//end using
+
+            //Return OK instead of created, Flex incorrectly treats 201 as error
+            return new OperationResult.OK { ResponseResource = aDataManager };
+        }//end HttpMethod.POST
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.POST, ForUriName = "CreateCatalogList")]
+        public OperationResult Post(List<CATALOG_> aCatalogs)
+        {
+            //Return BadRequest if missing required fields
+            if (aCatalogs.Count <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    decimal nextKey = 1;
+                    if (aLaMPRDS.CATALOG_S.Count() > 0)
+                    {
+                        nextKey = aLaMPRDS.CATALOG_S.OrderByDescending(c => c.CATALOG_ID).First().CATALOG_ID + 1;
+                    }
+                    
+                    foreach (CATALOG_ item in aCatalogs)
+                    {
+                        item.CATALOG_ID = nextKey;
+                        aLaMPRDS.CATALOG_S.AddObject(item);
+
+                        //increment nextKey
+                        nextKey++;
+                    }//next item
+
+                    aLaMPRDS.SaveChanges();
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = aCatalogs };
+        }
+        #endregion
+
+        #region PutMethods
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.PUT, ForUriName = "UpdateCatalog")]
+        public OperationResult Post(Int32 CatologId, CATALOG_ instance)
+        {
+            //Return BadRequest if missing required fields
+            if ((CatologId <= 0))
+            {
+                return new OperationResult.BadRequest();
+            }
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    CATALOG_ ObjectToBeUpdated = aLaMPRDS.CATALOG_S.Single(c => c.CATALOG_ID == CatologId);
+
+                     //Start date
+                    ObjectToBeUpdated.START_DATE = (DateTime.Equals(instance.START_DATE, ObjectToBeUpdated.START_DATE) ?
+                         ObjectToBeUpdated.START_DATE : instance.START_DATE);
+
+                    //End date
+                    ObjectToBeUpdated.END_DATE = (DateTime.Equals(instance.END_DATE, ObjectToBeUpdated.END_DATE) ?
+                         ObjectToBeUpdated.END_DATE : instance.END_DATE);
+               
+                    //LocationID
+                    ObjectToBeUpdated.LOCATION_ID = (Decimal.Equals(instance.LOCATION_ID, ObjectToBeUpdated.LOCATION_ID) ?
+                         ObjectToBeUpdated.LOCATION_ID : instance.LOCATION_ID);
+
+                    //ParameterTypeID
+                    ObjectToBeUpdated.PARAMETER_TYPE_ID = (Decimal.Equals(instance.PARAMETER_TYPE_ID, ObjectToBeUpdated.PARAMETER_TYPE_ID) ?
+                         ObjectToBeUpdated.PARAMETER_TYPE_ID : instance.PARAMETER_TYPE_ID);
+
+                    //ResourceTypeID
+                    ObjectToBeUpdated.RESOURCE_TYPE_ID = (Decimal.Equals(instance.RESOURCE_TYPE_ID, ObjectToBeUpdated.RESOURCE_TYPE_ID) ?
+                         ObjectToBeUpdated.RESOURCE_TYPE_ID : instance.RESOURCE_TYPE_ID);
+
+                    //MEDIA_TYPE_ID
+                    ObjectToBeUpdated.MEDIA_TYPE_ID = (Decimal.Equals(instance.MEDIA_TYPE_ID, ObjectToBeUpdated.MEDIA_TYPE_ID) ?
+                         ObjectToBeUpdated.MEDIA_TYPE_ID : instance.MEDIA_TYPE_ID);
+
+                    //PROJECT_ID
+                    ObjectToBeUpdated.PROJECT_ID = (Decimal.Equals(instance.PROJECT_ID, ObjectToBeUpdated.PROJECT_ID) ?
+                         ObjectToBeUpdated.PROJECT_ID : instance.PROJECT_ID);
+
+                    //FREQUENCY_TYPE_ID
+                    ObjectToBeUpdated.FREQUENCY_TYPE_ID = (Decimal.Equals(instance.FREQUENCY_TYPE_ID, ObjectToBeUpdated.FREQUENCY_TYPE_ID) ?
+                         ObjectToBeUpdated.FREQUENCY_TYPE_ID : instance.FREQUENCY_TYPE_ID);
+
+                    //SAMPLE_PLATFORM
+                    ObjectToBeUpdated.SAMPLE_PLATFORM = (string.IsNullOrEmpty(instance.SAMPLE_PLATFORM) ?
+                        ObjectToBeUpdated.SAMPLE_PLATFORM : instance.SAMPLE_PLATFORM);
+
+                    //Comments
+                    ObjectToBeUpdated.COMMENTS = (string.IsNullOrEmpty(instance.COMMENTS) ?
+                        ObjectToBeUpdated.COMMENTS : instance.COMMENTS);
+
+                    aLaMPRDS.SaveChanges();
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = instance };
+        }
+
+
+        #endregion
+
+        #region DeleteMethods
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.DELETE, ForUriName = "DeleteCatalog")]
+        public OperationResult Delete(Int32 CatalogId)
+        {
+            //Return BadRequest if missing required fields
+            if (CatalogId <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    CATALOG_ ObjectToBeDeleted = aLaMPRDS.CATALOG_S.Single(c => c.CATALOG_ID == CatalogId);
+                    //delete it
+                    aLaMPRDS.CATALOG_S.DeleteObject(ObjectToBeDeleted);
+
+                    aLaMPRDS.SaveChanges();
+
+                }// end using
+            
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { };
+        }
+
+        #endregion
+
+        #endregion
+
+    }//end CatalogHandler
+}//end namespace

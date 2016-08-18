@@ -1,0 +1,525 @@
+﻿$("#Orgdropdown").change(function () {
+    // choose organization dropdown change: Adjust contents of Divisions dropdown based on Organization choice
+    var thisName = $("#Orgdropdown option:selected").text();
+    var url = '/LaMPWeb/Project/GetDivisionsList/';
+    $.post(url, { name: thisName }, function (data) {
+        populateDD($("#Divdropdown"), $("#Secdropdown"), data);
+    });
+});
+
+function populateDD(select1, select2, data) {
+    //populate the organization division dropdown based on organization dropdown choice (data returned from GetDivisionsList)
+    select1.empty();
+    select2.empty();
+    $.each(data, function (id, option) {
+        select1.append($('<option/>', {
+            value: option.ORGANIZATION_ID,
+            text: option.DIVISION
+        }));
+        select2.append($('<option/>', {
+            value: option.ORGANIZATION_ID,
+            text: option.SECTION
+        }));
+    });
+}     
+
+$("#Divdropdown").change(function () {
+    // Organization division dropdown change: Adjust contents of Section dropdown based on Division choice
+    var thisName = $("#Divdropdown option:selected").text();
+    $.post("/LaMPWeb/Project/GetSectionsList/", { name: thisName }, function (data) {
+        populateDD1($("#Secdropdown"), data);
+    });
+});
+
+function populateDD1(select, data) {
+    // populate organization section dropdown choice based on division choice (data returned from GetSectionsList)
+    select.empty();
+    $.each(data, function (id, option) {
+        select.append($('<option/>', {
+            value: option.ORGANIZATION_ID,
+            text: option.SECTION
+        }));
+    });
+}     
+
+function AddOrgToBox() {
+    // 'add organization' button click (in addOrganization popup) will put selected organization into textarea, clear fields to choose another. (can't post yet because no project id yet) *@
+    var organization = $("#Orgdropdown").val();
+    var divisionID = $("#Divdropdown").val();
+    var sectionID = $("#Secdropdown").val();
+    var textarea = $("#organizationList");
+    $.get("/LaMPWeb/Project/GetOrganization/", { org: organization, div: divisionID, sec: sectionID }, function (response) {
+        populateOrgTextArea(response);
+    });
+}
+
+function populateOrgTextArea(response) {
+    var textarea = $("#organizationList");
+    textarea.show();
+    var textText = textarea.val();
+    if (response.SHORTNAME == null) {
+        alert("Invalid, please ensure an Organization has been chosen");
+    }
+    if (textText == '') {
+        textarea.val(response.SHORTNAME);
+        $("#Orgdropdown").val('')
+        $("#Divdropdown").empty();
+        $("#Secdropdown").empty();
+    }
+    else {
+        textarea.val(textarea.val() + "\n" + response.SHORTNAME);
+        $("#Orgdropdown").val('')
+        $("#Divdropdown").empty();
+        $("#Secdropdown").empty();
+    }
+}
+    
+function OtherClick() {
+    // Organizations: "Add New" checkbox. when clicked, clear selected val from dropdown (if one is selected), show empty textinput to add value to list
+    var checkBoxCntrl = document.getElementById("OtherOrg");
+    if (checkBoxCntrl.checked == true) {
+        //clear dropdown values
+        $("#Orgdropdown").val('');
+        $("#Divdropdown").empty();
+        $("#Secdropdown").empty();
+        //show the input fields
+        $("#otherOrgInput").show();
+        //make sure there's nothing in them
+        $("#orgNmInput").val('');
+    }
+    else {
+        $("#otherOrgInput").hide();
+    }
+}
+
+function ConfirmAddOrg() {
+    // Organizations: show alert, ADD TO dropdown, hide text input and uncheck box
+    //get new org values
+    var orgName = $("#orgNmInput").val();
+    //hide the input area and uncheck the checkbox
+    $("#otherOrgInput").hide();
+    var checkboxCntrl = document.getElementById("OtherOrg");
+    checkboxCntrl.checked = false;
+    //post the new organization to db
+    $.post("/LaMPWeb/Project/AddOrganization/", { newOrgName: orgName }, function (data) {
+        populateOrgDD($("#Orgdropdown"), data);
+    });
+}
+
+function populateOrgDD(select, data) {
+    //populate organization dropdown with the full list of orgs (including 1 just added)
+    select.empty();
+    if (data == null) {
+        alert("Invalid, please try again");
+    }
+    else {
+        $.each(data, function (id, option) {
+            select.append($('<option/>', {
+                value: option.ORGANIZATION_ID,
+                text: option.NAME
+            }));
+        });
+        alert("Organization Added");
+    }
+}
+
+function OtherDivClick() {
+    // Divisions: "add" checkbox. when clicked, clear selected val from dropdown (if one is selected), show empty textinput to add value to list
+    var checkBoxCntrl = document.getElementById("OtherDiv");
+    if (checkBoxCntrl.checked == true) {
+        //make sure an organization has been chosen first
+        if ($("#Orgdropdown").val() != 0) {
+            //clear the dropdown values
+            $("#Divdropdown").empty();
+            $("#Secdropdown").empty();            
+            //make sure it's empty first
+            $("#DivNameInput").val('');
+            //show the input fields
+            $("#otherDivInput").show();
+        }
+        else {
+            alert("Choose an Organization first");
+            document.getElementById("OtherDiv").checked = false;
+        }
+    }
+    else {
+        $("#otherDivInput").hide();
+    }
+}
+
+    
+function ConfirmAddDiv() {
+// Divisions: show alert, ADD TO dropdown, hide text input and uncheck box
+    //get new div value
+    var divName = $("#DivNameInput").val();
+    var orgName = $("#Orgdropdown option:selected").text();
+    //hide the input area and uncheck the checkbox
+    $("#otherDivInput").hide();
+    var checkboxCntrl = document.getElementById("OtherDiv");
+    checkboxCntrl.checked = false;
+    //need to post the new division, and add to dropdown
+    $.post("/LaMPWeb/Project/AddDivision/", { OrgName: orgName, DivName: divName }, function (data) {
+        populateDivDD($("#Divdropdown"), data);
+    });
+}
+
+function populateDivDD(select, data) {
+    //populate the division dropdown with all the divisions for chosen organization (including new one added)
+    select.empty();
+    if (data.Data[0].DIVISION == null) {
+        alert("Invalid, please try again");
+    }
+    else {
+        $.each(data.Data, function (id, option) {
+            select.append($('<option/>', {
+                value: option.DIVISION,
+                text: option.DIVISION
+            }));
+        });
+        alert("Division Added");
+    }
+}
+
+function OtherSecClick() {
+    // Section: "add" checkbox. when clicked, clear selected val from dropdown (if one is selected), show empty textinput to add value to list 
+    var checkBoxCntrl = document.getElementById("OtherSec");
+    if (checkBoxCntrl.checked == true) {
+        //make sure division is chosen first
+        if ($("#Divdropdown").val() != null) {
+            $("#Secdropdown").empty();
+            //show hidden field
+            $("#otherSecInput").show();
+            //make sure it's empty
+            $("#SecInput").val('');
+        }
+        else {
+            alert("Choose a Division first");
+            document.getElementById("OtherSec").checked = false;
+        }
+    }
+    else {
+        $("#otherSecInput").hide();
+    }
+}
+
+function ConfirmAddSec() {
+    // Organization Section: show alert, ADD TO dropdown, hide text input and uncheck box 
+    var sectionName = $("#SecInput").val();
+    var divisionName = $("#Divdropdown").val();
+    var orgName = $("#Orgdropdown option:selected").text();
+    //hide the input area and uncheck the checkbox
+    $("#otherSecInput").hide();
+    var checkboxCntrl = document.getElementById("OtherSec");
+    checkboxCntrl.checked = false;
+    //need to post the new division, and add to dropdown
+    $.post("/LaMPWeb/Project/AddSection/", { OrgName: orgName, SecName: sectionName, DivName: divisionName }, function (data) {
+        populateSecDD($("#Secdropdown"), data);
+    });
+}
+
+function populateSecDD(select, data) {
+    //populate organization section dropdown with those for given division (including one added)
+    select.empty();
+    if (data.Data[1].SECTION == null) {
+        alert("Invalid, please try again");
+    }
+    else {
+        $.each(data.Data, function (id, option) {
+            select.append($('<option/>', {
+                value: option.SECTION,
+                text: option.SECTION
+            }));
+        });
+        alert("Section Added");
+    }
+}
+
+$(function () {
+    //datepicker 
+    $('input').filter('.datepicker').datepicker({
+        changeMonth: true,
+        changeYear: true
+    });
+});
+
+//////////////// Popup for Project Organizations ////////////////////////////
+//vars for getting what's in the textarea (organizations that were added from the popup) - to be passed back to popup for editing
+    var linkObj;
+    var dataArray;
+
+$(function () {
+    //add organizations from the project summary clicked to open popup dialog to add organizations to a project
+    $("#editLink").button();
+
+    $("#updateDialog").dialog({
+        dialogClass: 'dialog_style1',
+        autoOpen: false,
+        height: 'auto',
+        width: '80%',
+        resizable: false,
+        modal: true,
+        buttons: {
+            "Finished Adding Organizations": function () {
+                $("#update-message").html(''); //make sure nothing there
+                $("#updateOrgForm").submit();
+            },
+            "Cancel": function () {
+                $(this).dialog("close");
+            }
+        }
+    });
+
+    $("#editLink").click(function () {
+        //change title of dialog
+        if (dataArray != undefined) {
+            var orgStr = new String(dataArray.toString());
+        }
+        linkObj = $(this);
+        var dialogDiv = $("#updateDialog");
+        var viewUrl = linkObj.attr('href');
+        if (dataArray != undefined) {
+            $.ajax({
+                url: viewUrl,
+                type: 'GET',
+                data: { orgs: orgStr },
+                success: function (data) {
+                    dialogDiv.html(data);
+                    //validation
+                    var $form = $("#updateOrgForm");
+                    //unbind existing validation
+                    $form.unbind();
+                    $form.data("validator", null);
+                    //check document for changes
+                    $.validator.unobtrusive.parse(document);
+                    //re add validation with changes
+                    $form.validate($form.data("unobtrusiveValidation").options);
+                    //open dialog
+                    dialogDiv.dialog("open");
+                }
+            });
+        }
+        else {
+            $.get(viewUrl, function (data) {
+                dialogDiv.html(data);
+                //validation
+                var $form = $("#updateOrgForm");
+                //unbind existing validation
+                $form.unbind();
+                $form.data("validator", null);
+                //check document for changes
+                $.validator.unobtrusive.parse(document);
+                //re add validation with changes
+                $form.validate($form.data("unobtrusiveValidation").options);
+                //open dialog
+                dialogDiv.dialog("open");
+            });
+        }
+        return false;
+    });
+});
+
+function updateSuccess(data) {
+    //dialog success from post of dialog popup containing organizations for project. puts those chosen into textarea
+    if (data.Success == true) {
+        dataArray = data.Object;
+        var resultHTML = "";
+        for (i = 0; i < dataArray.length; i++) {
+            resultHTML += dataArray[i] + "\n";
+        }
+        $("#ProjectOrgs").val(resultHTML);
+            
+        //now we can close the dialog
+        $('#updateDialog').dialog('close');
+        //twitter type notification
+        $('#commonMessage').html("Update Complete");
+        $('#commonMessage').delay(400).slideDown(400).delay(3000).slideUp(400);
+    }
+    else {
+        $("#update-message").html(data.ErrorMessage);
+        $("#update-message").show();
+    }
+}
+
+function ContactClick() {
+    //want to add another contact (projContact checkbox). post this one, come back here with empty fields except project
+    var ContactName = $("#contactName").val();
+    var orgShName = $("#Orgdropdown").val();
+    var divID = $("#Divdropdown").val();
+    var secID = $("#Secdropdown").val();
+    var email = $("#email").val();
+    var phone = $("#phone").val();
+    var projectId = $("#projId").val();
+    var checkBoxCntrl = document.getElementById("OtherContact");
+    if ('@contact1' == 'True') {
+
+    }
+    if (checkBoxCntrl.checked == true) {
+        $.ajax({
+            url: '/LaMPWeb/Project/CreateContacts',
+            type: 'GET',
+            data: { projId: projectId, CName: ContactName, orgShort: orgShName, divisionId: divID, sectionId: secID, email: email, phone: phone },
+            success: function (response) {
+                window.location.href = response;
+            }
+        });
+    }
+}
+     
+//want to add another contact. post this one, come back here with empty fields except project
+function PubClick() {
+    //want to add another publication (projPublication checkbox). post this one, come back here with empty fields except project
+    var PubTitle = $("#pubTitle").val();
+    var PubDesc = $("#pubDescription").val();
+    var PubURL = $("#pubURL").val();
+    var projId = $("#projId").val();
+    var checkBoxCntrl = document.getElementById("OtherPub");
+    if (checkBoxCntrl.checked == true) {
+        $.ajax({
+            url: '/LaMPWeb/Project/CreatePublication',
+            type: 'GET',
+            data: { projId: projId, Title: PubTitle, Description: PubDesc, PubUrl: PubURL },
+            success: function (response) {
+                window.location.href = response;
+            }
+        });
+    }
+}
+
+//////////////// Popup for Sites Parameters ////////////////////////////
+var paramObj;
+var paramArray;
+
+$(function () {
+    //add organizations from the project summary clicked to open popup dialog to add organizations to a project
+    $("#ParamLink").button();
+
+    $("#ParamDialog").dialog({
+        dialogClass: 'dialog_style2',
+        autoOpen: false,
+        height: 'auto',
+        width: '80%',
+        resizable: false,
+        modal: true,
+        buttons: {
+            "Finished Adding Parameters": function () {
+                $("#update-message").html(''); //make sure nothing there
+                $("#updateParamForm").submit();
+            },
+            "Cancel": function () {
+                $(this).dialog("close");
+            }
+        }
+    });
+
+    $("#ParamLink").click(function () {
+        //change title of dialog
+        if (paramArray != undefined) {
+            var paramStr = new String(paramArray.toString());
+        }
+        paramObj = $(this);
+        var dialogDiv = $("#ParamDialog");
+        var viewUrl = paramObj.attr('href');
+        if (paramArray != undefined) {
+            $.ajax({
+                url: viewUrl,
+                type: 'GET',
+                data: { params: paramStr },
+                success: function (data) {
+                    dialogDiv.html(data);
+                    //validation
+                    var $form = $("#updateParamForm");
+                    //unbind existing validation
+                    $form.unbind();
+                    $form.data("validator", null);
+                    //check document for changes
+                    $.validator.unobtrusive.parse(document);
+                    //re add validation with changes
+                    $form.validate($form.data("unobtrusiveValidation").options);
+                    //open dialog
+                    dialogDiv.dialog("open");
+                }
+            });
+        }
+        else {
+            $.get(viewUrl, function (data) {
+                dialogDiv.html(data);
+                //validation
+                var $form = $("#updateParamForm");
+                //unbind existing validation
+                $form.unbind();
+                $form.data("validator", null);
+                //check document for changes
+                $.validator.unobtrusive.parse(document);
+                //re add validation with changes
+                $form.validate($form.data("unobtrusiveValidation").options);
+                //open dialog
+                dialogDiv.dialog("open");
+            });
+        }
+        return false;
+    });
+});
+
+function ParamSuccess(data) {
+    //dialog success from post of dialog popup containing parameters for site. puts those chosen into textarea
+    if (data.Success == true) {
+        paramArray = data.Object;
+        var resultHTML = "";
+        for (i = 0; i < paramArray.length; i++) {
+            resultHTML += paramArray[i] + ", ";
+        }
+        $("#SiteParams").val(resultHTML);
+
+        //now we can close the dialog
+        $('#ParamDialog').dialog('close');
+        //twitter type notification
+        $('#commonMessage').html("Update Complete");
+        $('#commonMessage').delay(400).slideDown(400).delay(3000).slideUp(400);
+    }
+    else {
+        $("#update-message").html(data.ErrorMessage);
+        $("#update-message").show();
+    }
+}
+
+function SiteClick() {
+    //want to add another site ( checkbox). post this one, come back here with empty fields except project
+    var SiteName = $("#SiteName").val();
+    var SiteLat = $("#SiteLat").val();
+    var SiteLong = $("#SiteLong").val();
+    var Country = $("#Countrydropdown").val();
+    var State = $("#statesdropdown").val();
+    var Lake = $("#Lakedropdown").val();
+    var Waterbody = $("#waterbody").val();
+    var Watershed = $("#watershed").val();
+    var Desc = $("#SiteDesc").val();
+    var Status = $("#statusdropdown").val();
+    var Resource = new Array();
+    Resource = $("#Resourcedropdown").val();
+    var Media = new Array();
+    Media = $("#mediadropdown").val();
+    var Frequency = new Array();
+    Frequency = $("#sfdropdown").val();
+    var startDate = $("#startDate").val();
+    var endDate = $("#endDate").val();
+    var platform = $("#samplePlatform").val();
+    var addInfo = $("#additionalInfo").val();
+    var url = $("#siteUrl").val();
+    var parameters = $("#SiteParams").val();
+    var projectId = $("#projId").val();
+    var checkBoxCntrl = document.getElementById("OtherSite");
+    
+    if (checkBoxCntrl.checked == true) {
+        $.ajax({
+            url: '/LaMPWeb/Site/CreateSite',
+            type: 'GET',
+            traditional: true,
+            data: { projId: projectId, Name: SiteName, Lat: SiteLat, Long: SiteLong, Country: Country, State: State, Lake: Lake,
+                    Waterbody: Waterbody, Watershed: Watershed, Desc: Desc, Status: Status, Resource: Resource, Media: Media,
+                    Freq: Frequency, Start: startDate, End: endDate, Platform: platform, AddInfo: addInfo, URL: url, Parameters: parameters },
+            success: function (response) {
+                window.location.href = response;
+            }
+        });
+    }
+}      

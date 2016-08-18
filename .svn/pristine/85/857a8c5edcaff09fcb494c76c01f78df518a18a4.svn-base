@@ -1,0 +1,69 @@
+﻿#region Comments
+// 03.05.13 - TR - Created 
+#endregion
+
+using System;
+using System.Collections.Generic;
+using System.Data.Objects.DataClasses;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+
+using LaMPWeb.Utilities;
+using RestSharp;
+
+using LaMPServices;
+using LaMPServices.Resources;
+using LaMPWeb.Models;
+
+namespace LaMPWeb.Controllers
+{
+    [Authorize]
+    public class LookupsController : Controller
+    {
+        //
+        // GET: /Lookups/
+
+        public ActionResult Index()
+        {
+            ViewData["organizations"] = GetAllOrganizations();
+            ViewData["keywords"] = GetAllKeywords();
+
+            return View("../Settings/Lookups/Index");
+        }
+
+        public ActionResult OrganizationEdit(int id)
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "organizations/{orgID}";
+            request.RootElement = "organizations";
+            request.AddParameter("orgID", id, ParameterType.UrlSegment);
+            ORGANIZATION org = serviceCaller.Execute<ORGANIZATION>(request);
+            return View("../Settings/Lookups/OrganizationEdit", org);
+        }
+
+        //method used several times to get list of all organizations
+        public List<ORGANIZATION> GetAllOrganizations()
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "organizations";
+            request.RootElement = "ArrayOfORGANIZATION";
+            List<ORGANIZATION> organizationList = serviceCaller.Execute<List<ORGANIZATION>>(request);
+
+            return organizationList;
+        }
+
+        //method used several times to get list of all organizations
+        public List<KEYWORD> GetAllKeywords()
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "keywords";
+            request.RootElement = "ArrayOfKEYWORD";
+            List<KEYWORD> keywordList = serviceCaller.Execute<List<KEYWORD>>(request);
+            return keywordList;
+        }
+    }
+}

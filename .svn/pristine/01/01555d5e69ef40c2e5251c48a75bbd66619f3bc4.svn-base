@@ -1,0 +1,187 @@
+﻿@* Comments:
+03.25.13 - TR - Created 
+
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+  * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Site Parameters
+ */
+ *@
+@using LaMPServices;
+@using LaMPWeb.Assets.Resources;
+
+
+@using System;
+@using System.Linq;
+
+<script src="@Url.Content("~/Assets/Scripts/Scripts.js")" type="text/javascript"></script>
+@{ 
+    List<int> SiteParametersPassed = ViewData.ContainsKey("siteParams")? ViewData["siteParams"] as List<int> : new List<int>();
+}
+
+@using (Ajax.BeginForm("AddSiteParameters", "Site", null, new AjaxOptions { InsertionMode = InsertionMode.Replace, HttpMethod = "POST", OnSuccess = "ParamSuccess" }, new { @id = "updateParamForm" }))
+{
+    @Html.ValidationSummary(true)
+    <div id="update-message" class="error invisible"></div>
+    
+ <div style="margin-left:15px">   
+    <br />
+    <div style="float:left; margin-left:5px; width:23%">
+        <table style="table-layout:auto">
+            <tr>
+                <th class="checkboxRow"></th><th class="titleRow">Physical</th>
+            </tr>   
+            @foreach (PARAMETER_TYPE pt in ViewData["Physical"] as List<PARAMETER_TYPE>)
+            {
+                <tr>
+                @if (SiteParametersPassed.Count >= 1) 
+                {
+                    if (SiteParametersPassed.Contains(Convert.ToInt32(pt.PARAMETER_TYPE_ID))) 
+                    {
+                        <td><input type="checkbox" checked="checked" name="@pt.PARAMETER_TYPE_ID" value="@pt.PARAMETER_TYPE_ID" /></td>
+                        <td class="bold">@pt.PARAMETER</td>
+                    }
+                    else
+                    {
+                        <td><input type="checkbox" name="@pt.PARAMETER_TYPE_ID" value="@pt.PARAMETER_TYPE_ID" /></td>
+                        <td>@pt.PARAMETER</td>
+                    }
+                }
+                else
+                {
+                    <td><input type="checkbox" name="@pt.PARAMETER_TYPE_ID" value="@pt.PARAMETER_TYPE_ID" /></td>
+                    <td>@pt.PARAMETER</td>
+                } 
+                </tr>
+            }                  
+        </table>
+    </div>
+    <div style="float:left; margin-left:5px; width:23%">    
+        <table style="table-layout:auto">
+            <tr>
+                <th class="checkboxRow"></th><th class="titleRow">Chemical</th>
+            </tr>
+            @foreach (PARAMETER_TYPE pt in ViewData["Chemical"] as List<PARAMETER_TYPE>)
+            {
+                <tr>
+                @if (SiteParametersPassed.Count >= 1)
+                {
+                    if (SiteParametersPassed.Contains(Convert.ToInt32(pt.PARAMETER_TYPE_ID)))
+                    {
+                        <td><input type="checkbox" checked="checked" name="@pt.PARAMETER_TYPE_ID" value="@pt.PARAMETER_TYPE_ID" /></td>
+                        <td class="bold">@pt.PARAMETER</td>
+                    }
+                    else
+                    {
+                        <td><input type="checkbox" name="@pt.PARAMETER_TYPE_ID" value="@pt.PARAMETER_TYPE_ID" /></td>
+                        <td>@pt.PARAMETER</td>
+                    }
+                }
+                else
+                {
+                    <td><input type="checkbox" name="@pt.PARAMETER_TYPE_ID" value="@pt.PARAMETER_TYPE_ID" /></td>
+                    <td>@pt.PARAMETER</td>
+                }
+                </tr>
+            }         
+        </table>
+    </div>
+    <div style="float:left; margin-left:5px; width:23%">    
+        <table style="table-layout:auto">
+            <tr>
+                <th class="checkboxRow"></th><th class="titleRow">Biological</th>
+            </tr>
+            @foreach (PARAMETER_TYPE pt in ViewData["Biological"] as List<PARAMETER_TYPE>)
+            {
+                <tr>
+                @if (SiteParametersPassed.Count >= 1)
+                {
+                    if (SiteParametersPassed.Contains(Convert.ToInt32(pt.PARAMETER_TYPE_ID)))
+                    {
+                        <td><input type="checkbox" checked="checked" name="@pt.PARAMETER_TYPE_ID" value="@pt.PARAMETER_TYPE_ID" /></td>
+                        <td class="bold">@pt.PARAMETER</td>
+                    }
+                    else
+                    {
+                        <td><input type="checkbox" name="@pt.PARAMETER_TYPE_ID" value="@pt.PARAMETER_TYPE_ID" /></td>
+                        <td>@pt.PARAMETER</td>
+                    }
+                }
+                else
+                {
+                    <td><input type="checkbox" name="@pt.PARAMETER_TYPE_ID" value="@pt.PARAMETER_TYPE_ID" /></td>
+                    <td>@pt.PARAMETER</td>
+                }
+                </tr>
+            }         
+        </table>        
+    </div>
+    <div style="float:left; margin-left:5px; width:23%">
+        <table style="table-layout:auto">
+            <tr>
+                <th class="checkboxRow"></th><th class="titleRow">Microbiological</th>
+            </tr>
+            @foreach (PARAMETER_TYPE pt in ViewData["Microbiological"] as List<PARAMETER_TYPE>)
+            {
+                <tr>
+                @if (SiteParametersPassed.Count >= 1)
+                {
+                    if (SiteParametersPassed.Contains(Convert.ToInt32(pt.PARAMETER_TYPE_ID)))
+                    {
+                        <td><input type="checkbox" checked="checked" name="@pt.PARAMETER_TYPE_ID" value="@pt.PARAMETER_TYPE_ID" /></td>
+                        <td class="bold">@pt.PARAMETER</td>
+                    }
+                    else
+                    {
+                        <td><input type="checkbox" name="@pt.PARAMETER_TYPE_ID" value="@pt.PARAMETER_TYPE_ID" /></td>
+                        <td>@pt.PARAMETER</td>
+                    }
+                }
+                else
+                {
+                    <td><input type="checkbox" name="@pt.PARAMETER_TYPE_ID" value="@pt.PARAMETER_TYPE_ID" /></td>
+                    <td>@pt.PARAMETER</td>
+                }
+                </tr>
+            }         
+        </table>    
+        
+        <br />   
+        
+        <table style="table-layout:auto">
+            <tr>
+                <th class="checkboxRow"></th><th class="titleRow">Toxicological</th>
+            </tr>
+            @foreach (PARAMETER_TYPE pt in ViewData["Toxicological"] as List<PARAMETER_TYPE>)
+            {
+                <tr>
+                @if (SiteParametersPassed.Count >= 1)
+                {
+                    if (SiteParametersPassed.Contains(Convert.ToInt32(pt.PARAMETER_TYPE_ID)))
+                    {
+                        <td><input type="checkbox" checked="checked" name="@pt.PARAMETER_TYPE_ID" value="@pt.PARAMETER_TYPE_ID" /></td>
+                        <td class="bold">@pt.PARAMETER</td>
+                    }
+                    else
+                    {
+                        <td><input type="checkbox" name="@pt.PARAMETER_TYPE_ID" value="@pt.PARAMETER_TYPE_ID" /></td>
+                        <td>@pt.PARAMETER</td>
+                    }
+                }
+                else
+                {
+                    <td><input type="checkbox" name="@pt.PARAMETER_TYPE_ID" value="@pt.PARAMETER_TYPE_ID" /></td>
+                    <td>@pt.PARAMETER</td>
+                }
+                </tr>
+            }         
+        </table>           
+    </div>
+    
+</div>
+}

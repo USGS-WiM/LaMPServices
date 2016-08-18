@@ -1,0 +1,75 @@
+﻿
+/*Comments:
+ 03.10.13 - TR - Changed index to list of projects for manager signed in
+*/
+
+using System;
+using System.Collections.Generic;
+using System.Data.Objects.DataClasses;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+
+using LaMPWeb.Utilities;
+using RestSharp;
+
+using LaMPServices;
+using LaMPServices.Resources;
+using LaMPWeb.Models;
+
+namespace LaMPWeb.Controllers
+{
+    [Authorize]
+    public class HomeController : Controller
+    {
+        public ActionResult Index()
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/projects/IndexProjects";
+            request.RootElement = "ArrayOfPRODUCT";            
+            List<ProjectRes> ProjectList = serviceCaller.Execute<List<ProjectRes>>(request);
+            ViewData["Role"] = GetLoggedInMember();
+            
+            ViewData["ProjectList"] = ProjectList;
+            return View();
+        }
+
+        public ActionResult About()
+        {
+            return View();
+        }
+
+        //call for who the member logged in is 
+        public string GetLoggedInMember()
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "/dataManagers?username={userName}";
+            request.RootElement = "DATA_MANAGER";
+            request.AddParameter("userName", User.Identity.Name, ParameterType.UrlSegment);
+            DATA_MANAGER thisUser = serviceCaller.Execute<DATA_MANAGER>(request);
+            int loggedInMember = Convert.ToInt32(thisUser.ROLE_ID);
+            string Role = string.Empty;
+            switch (loggedInMember)
+            {
+                case 1: Role = "Admin"; break;
+                case 2: Role = "Manager"; break;
+                case 3: Role = "Public"; break;
+                default: Role = "error"; break;
+            }
+
+            return Role;
+        }
+
+        public ActionResult Mapper()
+        {
+            return View();
+        }
+
+        public ActionResult Finish()
+        {
+            return View();
+        }
+    }
+}

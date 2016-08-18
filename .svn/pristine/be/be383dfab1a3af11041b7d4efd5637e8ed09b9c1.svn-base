@@ -1,0 +1,338 @@
+﻿//------------------------------------------------------------------------------
+//----- ParameterTypeHandler -----------------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2012 WiM - USGS
+
+//    authors:  Jeremy K. Newson USGS Wisconsin Internet Mapping
+//              
+//  
+//   purpose:   Handles parameter type resources through the HTTP uniform interface.
+//              Equivalent to the controller in MVC.
+//
+//discussion:   Handlers are objects which handle all interaction with resources in 
+//              this case the resources are POCO classes derived from the EF. 
+//               https://github.com/openrasta/openrasta/wiki/Handlers
+//
+//     
+#region Comments
+// 05.02.12 - jkn - Created
+#endregion   
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+using LaMPServices.Authentication;
+using OpenRasta.Web;
+using OpenRasta.Security;
+
+namespace LaMPServices.Handlers
+{
+    public class ParameterHandler:HandlerBase
+    {
+        #region Routed Methods
+
+        #region GetMethods
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get()
+        {
+            List<PARAMETER_TYPE> parameters;
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    parameters = aLaMPRDS.PARAMETER_TYPE.OrderBy(p => p.PARAMETER_TYPE_ID).ToList();
+
+                    if (parameters != null)
+                        parameters.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+
+                }//end using
+            }//end using
+
+
+
+            return new OperationResult.OK { ResponseResource = parameters };
+        }//end httpMethod get
+
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get(Int32 parameterId)
+        {
+            PARAMETER_TYPE aParameter;
+
+            //return BadRequest if ther is no ID
+            if (parameterId <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    aParameter = aLaMPRDS.PARAMETER_TYPE.SingleOrDefault(p => p.PARAMETER_TYPE_ID == parameterId);
+
+                    if (aParameter != null)
+                        aParameter.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+
+                }//end using
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = aParameter };
+        }//end httpMethod get
+
+        [HttpOperation(HttpMethod.GET, ForUriName = "GetCatalogParameters")]
+        public OperationResult GetCatalogParameters(Int32 catalogId)
+        {
+            List<PARAMETER_TYPE> parameters;
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    parameters = aLaMPRDS.CATALOG_PARAMETERS.Where(c=>c.CATALOG_ID == catalogId)
+                                                                            .Select(cp=>cp.PARAMETER_TYPE)
+                                                                                    .OrderBy(p=>p.PARAMETER_TYPE_ID).ToList();
+                }//end using
+            }//end using
+
+            if (parameters != null)
+                parameters.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+
+            return new OperationResult.OK { ResponseResource = parameters };
+        }//end httpMethod get
+
+        #endregion
+
+        #region PostMethods
+        /// 
+        /// Force the user to provide authentication 
+        /// 
+        [RequiresRole(AdminRole)]
+        [HttpOperation(HttpMethod.POST)]
+        public OperationResult Post(PARAMETER_TYPE aParameter)
+        {
+            //Return BadRequest if missing required fields
+            if (String.IsNullOrEmpty(aParameter.PARAMETER))
+            {return new OperationResult.BadRequest();}
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    if(!Exists(aLaMPRDS.PARAMETER_TYPE,ref aParameter))
+                    {
+                        //set ID
+                        aParameter.PARAMETER_TYPE_ID = GetNextParameterID(aLaMPRDS.PARAMETER_TYPE);
+
+                        aLaMPRDS.PARAMETER_TYPE.AddObject(aParameter);
+                        aLaMPRDS.SaveChanges();
+                    }
+
+                    if (aParameter != null)
+                        aParameter.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+
+                }// end using
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = aParameter };
+        }
+
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.POST, ForUriName = "AddCatalogParameter")]
+        public OperationResult AddCatalogParameter(Int32 catalogId, PARAMETER_TYPE aParameter)
+        {
+            CATALOG_PARAMETERS aCatalogParameter = null;
+            List<PARAMETER_TYPE> ParameterList = null;
+            //Return BadRequest if missing required fields
+            if (catalogId <= 0 || String.IsNullOrEmpty(aParameter.PARAMETER))
+            { return new OperationResult.BadRequest(); }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    //check if valid project
+                    if (aLaMPRDS.CATALOG_S.First(c => c.CATALOG_ID == catalogId) == null)
+                        return new OperationResult.BadRequest { Description = "Project does not exist" };
+
+                    //check authorization
+                    if (!aLaMPRDS.CATALOG_S.First(c => c.CATALOG_ID == catalogId).PROJECT.DATA_MANAGER.USERNAME.Equals(username, StringComparison.OrdinalIgnoreCase) || !IsAuthorized(AdminRole))
+                        return new OperationResult.Forbidden { Description = "Not Authorized" };
+
+                    if (!Exists(aLaMPRDS.PARAMETER_TYPE, ref aParameter))
+                    {
+                        //set ID
+                        aParameter.PARAMETER_TYPE_ID = GetNextParameterID(aLaMPRDS.PARAMETER_TYPE);
+                        aLaMPRDS.PARAMETER_TYPE.AddObject(aParameter);
+                        aLaMPRDS.SaveChanges();
+                    }//end if
+
+                    //add to project
+                    //first check if Catalog already contains parameter
+                    if (aLaMPRDS.CATALOG_PARAMETERS.FirstOrDefault(cp => cp.PARAMETER_TYPE_ID == aParameter.PARAMETER_TYPE_ID &&
+                                                                         cp.CATALOG_ID == catalogId) == null)
+                    {//create one
+                        aCatalogParameter = new CATALOG_PARAMETERS();
+                        //set ID and create catalogParameter
+                        aCatalogParameter.ID = GetNextCatalogParameterID(aLaMPRDS.CATALOG_PARAMETERS);
+
+                        aCatalogParameter.CATALOG_ID = catalogId;
+                        aCatalogParameter.PARAMETER_TYPE_ID = aParameter.PARAMETER_TYPE_ID;
+
+                        aLaMPRDS.CATALOG_PARAMETERS.AddObject(aCatalogParameter);
+                        aLaMPRDS.SaveChanges();
+                    }//end if
+
+                    //return the list of contacts associated with project
+                    ParameterList = aLaMPRDS.PARAMETER_TYPE.Where(p => p.CATALOG_PARAMETERS.Any(cp => cp.CATALOG_ID == catalogId)).ToList();
+
+                    if (ParameterList != null)
+                        ParameterList.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+
+                }// end using
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = ParameterList };
+        }
+        #endregion
+
+        #region PutMethods
+
+        [RequiresRole(AdminRole)]
+        [HttpOperation(HttpMethod.PUT)]
+        public OperationResult Put(Int32 parameterId, PARAMETER_TYPE instance)
+        {
+            //Return BadRequest if missing required fields
+            if ((parameterId <= 0))
+            {return new OperationResult.BadRequest();}
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    PARAMETER_TYPE ObjectToBeUpdated = aLaMPRDS.PARAMETER_TYPE.SingleOrDefault(p => p.PARAMETER_TYPE_ID == parameterId);
+
+                    //Parameter
+                    ObjectToBeUpdated.PARAMETER = (string.IsNullOrEmpty(instance.PARAMETER) ?
+                        ObjectToBeUpdated.PARAMETER : instance.PARAMETER);
+
+
+                    //Citation
+                    ObjectToBeUpdated.PARAMETER_GROUP = (string.IsNullOrEmpty(instance.PARAMETER_GROUP) ?
+                        ObjectToBeUpdated.PARAMETER_GROUP : instance.PARAMETER_GROUP);
+
+                    aLaMPRDS.SaveChanges();
+
+                    if (instance != null)
+                        instance.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+
+                }// end using
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = instance };
+        }
+        
+        #endregion
+
+        #region DeleteMethods
+
+        [RequiresRole(AdminRole)]
+        [HttpOperation(HttpMethod.DELETE)]
+        public OperationResult Post(Int32 parameterId)
+        {
+            //Return BadRequest if missing required fields
+            if (parameterId <= 0)
+            {return new OperationResult.BadRequest();}
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    PARAMETER_TYPE ObjectToBeDeleted = aLaMPRDS.PARAMETER_TYPE.SingleOrDefault(p => p.PARAMETER_TYPE_ID == parameterId);
+                    //delete it
+                    aLaMPRDS.PARAMETER_TYPE.DeleteObject(ObjectToBeDeleted);
+
+                    aLaMPRDS.SaveChanges();
+
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { };
+        }
+
+        #endregion
+
+        #endregion
+        #region "Helper Methods"
+        private Boolean Exists(System.Data.Objects.IObjectSet<PARAMETER_TYPE> parameters, ref PARAMETER_TYPE aParameterType)
+        {
+            PARAMETER_TYPE existingParameter;
+            PARAMETER_TYPE thisParameter = aParameterType;
+            //check if it exists
+            try
+            {
+                existingParameter = parameters.FirstOrDefault(p => p.PARAMETER.Equals(thisParameter.PARAMETER, StringComparison.OrdinalIgnoreCase));
+
+                if (existingParameter == null)
+                    return false;
+
+                //if exists then update ref contact
+                aParameterType = existingParameter;
+                return true;
+
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        private decimal GetNextParameterID(System.Data.Objects.IObjectSet<PARAMETER_TYPE> parameters)
+        {
+            decimal nextKey = 1;
+            if (parameters.Count() > 0)
+            {
+                nextKey = parameters.OrderByDescending(p => p.PARAMETER_TYPE_ID).First().PARAMETER_TYPE_ID + 1;
+            }
+
+            return nextKey;
+        }
+        private decimal GetNextCatalogParameterID(System.Data.Objects.IObjectSet<CATALOG_PARAMETERS> catalogParameters)
+        {
+            decimal nextKey = 1;
+            if (catalogParameters.Count() > 0)
+            {
+                nextKey = catalogParameters.OrderByDescending(cp => cp.ID).First().ID + 1;
+            }
+
+            return nextKey;
+        }
+        #endregion
+    }//end ParameterTypeHandler
+}//end namespace

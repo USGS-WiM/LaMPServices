@@ -1,0 +1,56 @@
+﻿@* Comments:
+03.05.143- TR - Created
+*@
+
+@* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+ * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Display a master settings page and link to individual setting pages 
+ *
+*@
+@{
+    ViewBag.Title = "Resources";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<div id="dataTitle">
+        <div class="title">Resources</div>
+    </div>
+    <br clear="all" />
+
+    <hr class="headerUnderline" />
+     
+    <div class="verticalColumn">
+        <div style="margin-left:6em" class="subSection borderChild sectionIcon">
+            <a onclick="loading();" class="bigAndBold" href="@Url.Action("Index", "DataManager")">
+            <img src="@Url.Content("~/Assets/Images/Members1.png")" height="100px" alt="Data Managers" /><br />
+	        Data Managers
+            </a>
+		</div>
+
+        @*if (User.IsInRole("Admin")) {}*@
+        
+        <div style="margin-left:8em" class="subSection borderChild sectionIcon">                 
+	            <a onclick="loading();" class="bigAndBold" href="@Url.Action("Index", "Lookups")">
+                <img src="@Url.Content("~/Assets/Images/Tables1.png")" alt="Lookup Tables" /><br />
+                Pick lists and organizations
+                </a>
+		</div>
+        
+        <div style="margin-left:8em" class="subSection borderChild sectionIcon">                 
+	            <a onclick="loading();" class="bigAndBold" href="@Url.Action("Index", "Reporting")">
+                <img style="margin-bottom:7px;" src="@Url.Content("~/Assets/Images/reports.png")" alt="Reports" /><br />
+                Reporting
+                </a>
+		</div>
+        <br />
+    </div> @* end verticalColumn *@
+
+    <script type="text/javascript">
+        function loading() {
+            $("#loading").fadeIn();
+        };
+    </script>

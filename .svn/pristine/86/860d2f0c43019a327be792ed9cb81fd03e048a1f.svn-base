@@ -1,0 +1,358 @@
+﻿//------------------------------------------------------------------------------
+//----- ProjectController.cs-----------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2013 WiM - USGS
+
+//    authors:  Tonia Roddick USGS Wisconsin Internet Mapping
+//              
+//  
+//   purpose:   Display master pages
+//
+//discussion:   
+//
+//     
+
+#region Comments
+// 03.05.13 - TR - added partial views for Organizations and keyword
+// 02.28.13 - TR - hooked into services
+// 02.21.13 - TR - Created 
+#endregion
+
+
+using System;
+using System.Collections.Generic;
+using System.Data.Objects.DataClasses;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+
+using LaMPWeb.Utilities;
+using RestSharp;
+
+using LaMPServices;
+using LaMPServices.Resources;
+using LaMPWeb.Models;
+
+namespace LaMPWeb.Controllers
+{
+    [Authorize]
+    public class ProjectController : Controller
+    {
+        //
+        // GET: Project summary page
+        public ActionResult ProjSummary1()
+        {
+            //Organizations
+            ViewData["organizations"] = GetAllOrganizations();
+            
+            //Division
+            //dynamically loaded based on organization chosen
+
+            //Sections
+            
+            //Descriptors
+            
+            ViewData["descriptors"] = GetAllDescriptors();
+
+            return View("Create/ProjSummary1");
+        }
+
+        //partial view containing dropdown of all organizations for create project page
+        public PartialViewResult OrganizationPV()
+        {
+            ViewData["organizations"] = GetAllOrganizations();
+            return PartialView();
+        }
+
+        //partial view containing dropdown of all keywords for create project page
+        public PartialViewResult KeywordsPV()
+        {
+            //string[] terms = GetAllKeywords();
+            //ViewData["terms"] = terms;
+            return PartialView();
+        }
+
+        //
+        //POST: Post first page of project create and send to contact info page
+        [HttpPost]
+        public ActionResult ProjSummary1(FormCollection fc)
+        {
+            string projName = fc["ProjName"];
+            string organization = fc["ProjOrg"];
+            string projStart = fc["ProjStartDate"];
+            string projEnd = fc["ProjEndDate"];
+            string projObj = fc["ProjObjectives"];
+
+            //string projDesc = fc["ProjDescriptors"];
+            
+            string projKeys = fc["keywords"];
+            string projWeb = fc["ProjWeb"];
+            string dataMan = fc["DataMan"];
+            string dataHost = fc["DataHost"];
+            string dataPort = fc["dataPortal"];
+            string fundProj = fc["FundProg"];
+            string projCost = fc["ProjCost"];
+            string projAddInfo = fc["ProjAddInfo"];
+
+            //post to all tables that need to be updated. ==createdProject
+            Session["projectName"] = projName;
+            //Session["projectName"] = createdProject.NAME;
+            //ViewData["Project"] = createdProject;
+
+            return RedirectToAction("Create/ProjContacts2");
+        }
+
+        //
+        //GET: Project Contacts page
+        public ActionResult ProjContacts2()
+        {
+            ViewData["organizations"] = GetAllOrganizations();
+            //ViewData["sections"] = GetAllSections();
+
+            return View("Create/ProjContacts2");
+        }
+
+        //POST: post the contact info, and send to the Project publications page
+        [HttpPost]
+        public ActionResult ProjContacts2(FormCollection fc)
+        {
+            string projName = fc["ProjName"];
+            string contactName = fc["NAME"];
+            string organization = fc["ORGANIZATION_ID"];
+
+            string otherOrgChBox = fc["OtherOrgCB"];
+            string newOrgName = fc["addOrgName"];
+            string newOrgState = fc["addOrgState"];
+            string newOrgShort = fc["addOrgShortName"];
+
+            string division = fc["Division"];
+            string otherDivChBox = fc["OtherDivCB"];
+            string newDivName = fc["addDivision"];
+
+            string section = fc["Section"];
+            string otherSecChBox = fc["OtherSecCB"];
+            string newSecName = fc["addSection"];
+
+            string Email = fc["EMAIL"];
+            string Phone = fc["PHONE"];
+                        
+            //POst to Contact
+            return RedirectToAction("Create/ProjPublications3");
+        }
+
+        public ActionResult ProjPublications3()
+        {
+
+            return View("Create/ProjPublications3");
+        }
+
+        [HttpPost]
+        public ActionResult ProjPublications3(FormCollection fc)
+        {
+            string pubs = fc["Publications"];
+            string projName = fc["ProjName"];
+            string title = fc["Title"];
+            string Descript = fc["pubDescript"];
+            string pubURL = fc["pubURL"];
+
+
+            return RedirectToAction("SiteSummary1", "Site");
+        }
+
+        public ActionResult Review()
+        {
+            return View();
+        }
+
+        //add organization to dropdown list when checkbox click input text add
+        [HttpPost]
+        public JsonResult AddOrganization(string newOrgName, string newOrgState, string newOrgShName)
+        {
+            ORGANIZATION newOrg = new ORGANIZATION();
+            newOrg.NAME = newOrgName;
+            newOrg.STATE = newOrgState;
+            newOrg.SHORTNAME = newOrgShName;
+
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest(Method.POST);
+            request.Resource = "organizations/";
+            request.RequestFormat = DataFormat.Xml;
+            request.AddHeader("Content-type", "application/xml");
+            request.AddParameter("application/xml", request.XmlSerializer.Serialize(newOrg), ParameterType.RequestBody);
+            ORGANIZATION createdOrg = serviceCaller.Execute<ORGANIZATION>(request);
+
+            List<ORGANIZATION> Organizations = GetAllOrganizations();
+            
+            return Json(Organizations);
+        }
+
+        //add organization to dropdown list when checkbox click input text add
+        public JsonResult AddDivision(string newDiv, string thisOrg)
+        {
+            var Divisions = GetDivisionsList(thisOrg);
+            
+            return Json(Divisions);
+        }
+
+        //Holder for now. want to add multiple contacts. checkbox onclick - post the contact then go back and add another
+        public Boolean PostAndReturnContacts(string CName)
+        {
+            Session["Contact"] = Session["Contact"] + CName + ", ";
+            return true;
+        }
+
+        //Holder for now. want to add multiple publishers. checkbox onclick - post the publisher then go back and add another
+        public Boolean PostAndReturnPubs(string PName)
+        {
+            Session["Publications"] = Session["Publications"] + PName + ", ";
+            return true;
+        }
+
+        //GET: Get a list of the divisions to return to populate division dropdown based on organization selection
+        public JsonResult GetDivisionsList(string name)
+        {
+            List<string> divisionsReturned = new List<string>();
+
+            if (name == "Central Michigan University" || name == "Environment Canada" || name == "Illinois Department of Natural Resources" ||
+                name == "Illinois Environmental Protection Agency" || name == "Michigan Deparment of Natural Resources" || name == "Milwaukee Metropolitan Sewerage District" ||
+                name == "University of Wisconsin, Oshkosh" || name == "Wisconsin Department of Natural Resources")
+            {
+                
+            } 
+            if (name == "Grand Valley State University")
+            {
+                divisionsReturned.Add("Annis Water Resources Institute");
+            }
+            if (name == "Green Bay Metropolitan Sewerage District")
+            {
+                divisionsReturned.Add("Water Resources");
+            }
+            if (name == "Illinois Environmental Protection Agency")
+            {
+                divisionsReturned.Add("Bureau of Water");
+            }
+            if (name == "Indiana Deparment of Environmental Management")
+            {
+                divisionsReturned.Add("Drinking Water Branch");
+                divisionsReturned.Add("Northwest Regional Office");
+                divisionsReturned.Add("Office of Water Quality");
+            }
+            if (name ==  "Michigan Department of Environmental Quality")
+            {
+                divisionsReturned.Add("Water Resource Division");
+            }
+            if (name == "U.S. Environmental Protection Agency")
+            {
+                divisionsReturned.Add("Office of Wetlands, Oceans & Watersheds");
+                divisionsReturned.Add("Region 5 GIS Office");
+                divisionsReturned.Add("STORET Data Warehouse");
+            }
+            if (name == "U.S. Geological Survey")
+            {
+                divisionsReturned.Add("Great Lakes Science Center");
+                divisionsReturned.Add("Indiana Water Science Center");
+                divisionsReturned.Add("Michigan Water Science Center");
+                divisionsReturned.Add("National Wildlife Health Center");
+                divisionsReturned.Add("Upper Midwest Environmental Sciences Center");
+                divisionsReturned.Add("Wisconsin Water Science Center");
+            }
+            if (name == "University of Michigan")
+            {
+                divisionsReturned.Add("Museum of Zoology");
+            }
+            if (name == "University of Wisconsin, Milwaukee")
+            {
+                divisionsReturned.Add("Great Lakes WATER Institute");
+            }
+           
+            return Json(divisionsReturned);
+        }
+
+        public List<ORGANIZATION> GetAllOrganizations()
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "organizations";
+            request.RootElement = "ArrayOfORGANIZATION";
+            List<ORGANIZATION> organizationList = serviceCaller.Execute<List<ORGANIZATION>>(request);
+
+            return organizationList;
+        }
+
+
+
+        public JsonResult GetAllKeywords()
+        {
+            LaMPServiceCaller serviceCaller = LaMPServiceCaller.Instance;
+            var request = new RestRequest();
+            request.Resource = "keywords";
+            request.RootElement = "ArrayOfKEYWORD";
+            List<KEYWORD> keywordList = serviceCaller.Execute<List<KEYWORD>>(request);
+            int total = keywordList.Count;
+            string [] KeywordsStrings = new string[total];
+
+            int i = 0;
+            foreach (KEYWORD k in keywordList)
+            {
+                KeywordsStrings[i] = k.TERM;
+                i++;
+            }
+
+            return Json(KeywordsStrings);
+        }
+
+        public List<string> GetAllDivsions()
+        {
+            List<string> divisions = new List<string>();
+            divisions.Add("Annis Water Resources Institute");
+            divisions.Add("Water Resources");
+            divisions.Add("Bureau of Water");
+            divisions.Add("Drinking Water Branch");
+            divisions.Add("Northwest Regional Office");
+            divisions.Add("Office of Water Quality");
+            divisions.Add("Water Resource Division");
+            divisions.Add("Office of Wetlands, Oceans & Watersheds");
+            divisions.Add("Region 5 GIS Office");
+            divisions.Add("STORET Data Warehouse");
+            divisions.Add("Great Lakes Science Center");
+            divisions.Add("Indiana Water Science Center");
+            divisions.Add("Michigan Water Science Center");
+            divisions.Add("National Wildlife Health Center");
+            divisions.Add("Upper Midwest Environmental Sciences Center");
+            divisions.Add("Wisconsin Water Science Center");
+            divisions.Add("Museum of Zoology");
+            divisions.Add("Great Lakes WATER Institute");
+            return divisions;
+        }
+
+        public List<string> GetAllSections()
+        {
+            List<string> sections = new List<string>();
+            sections.Add("Watershed Planning & Restoration Section");
+            return sections;
+        }
+
+        public List<string> GetAllDescriptors()
+        {
+            List<string> descriptors = new List<string>();
+            descriptors.Add("Assessment");
+            descriptors.Add("Ecosystem Health");
+            descriptors.Add("Governmental");
+            descriptors.Add("Human Health");
+            descriptors.Add("Local");
+            descriptors.Add("Non-Governmental");
+            descriptors.Add("Non-Regulatory");
+            descriptors.Add("Project Specific");
+            descriptors.Add("Regional");
+            descriptors.Add("Regulatory");
+            descriptors.Add("Whole-lake");
+                      
+            return descriptors;
+        }
+    }
+}

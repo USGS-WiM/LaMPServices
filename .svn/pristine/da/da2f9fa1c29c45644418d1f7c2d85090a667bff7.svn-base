@@ -1,0 +1,368 @@
+﻿//------------------------------------------------------------------------------
+//----- Configuration -----------------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2012 WiM - USGS
+
+//    authors:  Jeremy K. Newson USGS Kentucky Water Science Center
+//              
+//  
+//   purpose:   Configuration implements the IConfiurationSource interface. OpenRasta
+//              will call the Configure method and use it to configure the application 
+//              through a fluent interface using the Resource space as root objects. 
+//
+//discussion:   The ResourceSpace is where you can define the resources in the application and what
+//              handles them and how thy are represented. 
+//              https://github.com/openrasta/openrasta/wiki/Configuration
+//
+//     
+#region Comments
+// 04.15.12 - jkn - Created
+#endregion                          
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Data.Objects.DataClasses;
+
+using OpenRasta.Authentication;
+using OpenRasta.Authentication.Basic;
+using OpenRasta.Codecs;
+using OpenRasta.Codecs.WebForms;
+using OpenRasta.Configuration;
+using OpenRasta.DI;
+using OpenRasta.IO;
+using OpenRasta.Pipeline.Contributors;
+using OpenRasta.Web.UriDecorators;
+
+using LaMPServices.Handlers;
+using LaMPServices.Codecs;
+using LaMPServices.Resources;
+using LaMPServices.Authentication;
+
+
+namespace LaMPServices
+{
+    public class Configuration:IConfigurationSource
+    {
+        public void Configure()
+        {
+            using (OpenRastaConfiguration.Manual)
+            {
+                // specify the authentication scheme you want to use, you can register multiple ones
+                ResourceSpace.Uses.CustomDependency<IAuthenticationScheme, BasicAuthenticationScheme>(DependencyLifetime.Singleton);
+
+                // register your basic authenticator in the DI resolver
+                ResourceSpace.Uses.CustomDependency<IBasicAuthenticator, LaMPBasicAuthentication>(DependencyLifetime.Transient);
+
+                // Allow codec choice by extension 
+                ResourceSpace.Uses.UriDecorator<ContentTypeExtensionUriDecorator>(); 
+
+                AddCATALOG_Resources();
+                AddCONTACT_Resources();
+                AddDATAHOST_Resources();
+                AddFREQUENCY_Resources();
+                AddKEYWORD_Resources();
+                AddSITE_Resources();
+                AddMEDIA_Resources();
+                AddOBJECTIVE_Resources();
+                AddORGANIZATION_Resources();
+                AddPARAMETER_Resources();
+                AddPROJECT_Resources();
+                AddPUBLICATION_Resources();
+                AddRESOURCE_Resources();
+                AddROLE_Resources();
+                AddLAKE_Resources();
+                AddSTATUS_Resources();
+                AddAUTHENTICATION_Resources();
+                AddDATA_MANAGER_Resources();
+
+            }//End using OpenRastaConfiguration.Manual
+
+
+        }//End Configure()
+
+        #region Helper methods
+             
+        private void AddCATALOG_Resources()
+        {
+            //CATALOGS
+            ResourceSpace.Has.ResourcesOfType<List<CATALOG_>>()
+               .AtUri("/catalogs")
+               .And.AtUri("/projects/{projectId}/catalogs").Named("GetProjectCatalogs")
+               .And.AtUri("/sites/{siteId}/catalogs").Named("GetSiteCatalogs")
+               .And.AtUri("/media/{mediaId}/catalogs").Named("GetMediaCatalogs")
+               .And.AtUri("/resources/{resourceId}/catalogs").Named("GetResourceCatalogs")
+               .And.AtUri("/parameters/{parameterId}/catalogs").Named("GetParameterCatalogs")
+               .HandledBy<CatalogHandler>()
+               .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+
+            ResourceSpace.Has.ResourcesOfType<CATALOG_>()
+                .AtUri("/catalogs/{catalogId}")
+                .HandledBy<CatalogHandler>()
+                .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+        }//end AddCATALOG_Resources
+        private void AddCONTACT_Resources()
+        {
+            //Contacts
+            ResourceSpace.Has.ResourcesOfType<List<CONTACT>>()
+                .AtUri("/contacts")
+                .And.AtUri("/projects/{projectId}/AddContact").Named("AddProjectContact")
+                .And.AtUri("/projects/{projectId}/contacts").Named("GetProjectContacts")
+                .And.AtUri("/organizations/{organizationId}/contacts").Named("GetOrganizationContacts")
+                .HandledBy<ContactHandler>()
+                .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+
+            ResourceSpace.Has.ResourcesOfType<CONTACT>()
+                .AtUri("/contacts/{contactId}")
+                .HandledBy<ContactHandler>()
+                .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+
+        }//end AddCONTACT_Resources
+        private void AddDATAHOST_Resources()
+        {
+            //DATA_HOSTS
+            ResourceSpace.Has.ResourcesOfType<List<DATA_HOST>>()
+               .AtUri("/datahosts")
+               .And.AtUri("/projects/{projectId}/dataHosts").Named("GetProjectDataHosts")
+               .HandledBy<DataHostHandler>()
+               .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+
+            ResourceSpace.Has.ResourcesOfType<DATA_HOST>()
+                .AtUri("/datahosts/{dataHostId}")
+                .HandledBy<DataHostHandler>()
+                .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+        }//end AddPUBLICATION_Resources
+        private void AddDATA_MANAGER_Resources()
+        {
+            //DATA_MANAGER
+            ResourceSpace.Has.ResourcesOfType<List<DATA_MANAGER>>()
+                .AtUri("/dataManagers")
+                .HandledBy<DataManagerHandler>()
+                .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+
+            ResourceSpace.Has.ResourcesOfType<DATA_MANAGER>()
+                .AtUri("/dataManagers/{dataManagerId}")
+                .And.AtUri("/dataManagers?username={userName}").Named("GetByUserName")
+                .And.AtUri("/projects/{projectId}/dataManager").Named("GetProjectDataManager")
+                .HandledBy<DataManagerHandler>()
+                .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+        }//end AddDATA_MANAGER_Resources
+        private void AddFREQUENCY_Resources()
+        {
+            //FREQUENCY_TYPE
+            ResourceSpace.Has.ResourcesOfType<List<FREQUENCY_TYPE>>()
+               .AtUri("/frequencies")
+               .HandledBy<FrequencyHandler>()
+               .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+
+            ResourceSpace.Has.ResourcesOfType<FREQUENCY_TYPE>()
+                .AtUri("/frequencies/{frequencyId}")
+                .And.AtUri("/catalogs/{catalogId}/frequency").Named("GetCatalogFrequency")
+                .HandledBy<FrequencyHandler>()
+                .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+
+        }//end addFREQUENCY_TYPE_Resources
+        private void AddKEYWORD_Resources()
+        {
+            //KEYWORDS
+            ResourceSpace.Has.ResourcesOfType<List<KEYWORD>>()
+                .AtUri("/keywords")
+                .And.AtUri("/projects/{projectId}/addKeyword").Named("AddProjectKeyword")
+                .And.AtUri("/projects/{projectId}/keywords").Named("GetProjectKeyword")
+                .HandledBy<KeywordHandler>()
+                .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+
+            ResourceSpace.Has.ResourcesOfType<KEYWORD>()
+                .AtUri("/keywords/{keywordId}")
+                .And.AtUri("/keywords?term={term}").Named("GetKeywordByTerm")
+                .HandledBy<KeywordHandler>()
+                .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+
+        }//end AddKEYWORD_Resources
+        private void AddLAKE_Resources()
+        {
+            ResourceSpace.Has.ResourcesOfType<List<LAKE_TYPE>>()
+               .AtUri("/lakes")
+               .HandledBy<LakeHandler>()
+               .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+
+            ResourceSpace.Has.ResourcesOfType<LAKE_TYPE>()
+                .AtUri("/lakes/{lakeId}")
+                .And.AtUri("/sites/{siteId}/lake").Named("GetSiteLake")
+                .HandledBy<LakeHandler>()
+                .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+        }//end AddLAMP_GROUP_TYPE_Resources
+        private void AddSITE_Resources()
+        {
+            //LOCATIONS
+            ResourceSpace.Has.ResourcesOfType<List<LOCATION>>()
+               .AtUri("/sites")
+               .And.AtUri("/lakes/{lakeId}/sites").Named("GetLakeSites")
+               .And.AtUri("/status/{statusId}/sites").Named("GetStatusSites")
+               .HandledBy<SiteHandler>()
+               .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+
+            ResourceSpace.Has.ResourcesOfType<LOCATION>()
+                .AtUri("/sites/{siteId}")
+                .And.AtUri("/catalogs/{catalogId}/site").Named("GetCatalogSite")
+                .HandledBy<SiteHandler>()
+                .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+        }//end AddLOCATION_Resources
+        private void AddMEDIA_Resources()
+        {
+            //MEDIA_TYPE
+            ResourceSpace.Has.ResourcesOfType<List<MEDIA_TYPE>>()
+               .AtUri("/media")
+               .HandledBy<MediaHandler>()
+               .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+
+            ResourceSpace.Has.ResourcesOfType<MEDIA_TYPE>()
+                .AtUri("/media/{mediaId}")
+                .And.AtUri("/catalogs/{catalogId}/media").Named("GetCatalogMedia")
+                .HandledBy<MediaHandler>()
+                .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+
+        }//end addMEDIA_TYPE_Resources
+        private void AddOBJECTIVE_Resources()
+        {
+            //PUBLICATIONS
+            ResourceSpace.Has.ResourcesOfType<List<OBJECTIVE_TYPE>>()
+               .AtUri("/objectives")
+               .And.AtUri("/projects/{projectId}/objectives").Named("GetProjectObjectives")
+               .And.AtUri("/projects/{projectId}/addObjective").Named("AddProjectObjective")
+               .HandledBy<ObjectiveHandler>()
+               .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+
+            ResourceSpace.Has.ResourcesOfType<OBJECTIVE_TYPE>()
+                .AtUri("/objectives/{objectiveId}")
+                .HandledBy<ObjectiveHandler>()
+                .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+        }//end AddPUBLICATION_Resources
+        private void AddORGANIZATION_Resources()
+        {
+            //ORGANIZATION
+            ResourceSpace.Has.ResourcesOfType<List<ORGANIZATION>>()
+               .AtUri("/organizations")
+               .And.AtUri("/projects/{projectId}/AddOrganization").Named("AddProjectOrganization")
+               .And.AtUri("/projects/{projectId}/organizations").Named("GetProjectOrganizations")
+               .HandledBy<OrganizationHandler>()
+               .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+
+            ResourceSpace.Has.ResourcesOfType<ORGANIZATION>()
+                .AtUri("/organizations/{organizationId}")
+                .HandledBy<OrganizationHandler>()
+                .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+        }//end AddORGANIZATION_Resources
+        private void AddPARAMETER_Resources()
+        {
+            //PARAMETER_TYPE
+            ResourceSpace.Has.ResourcesOfType<List<PARAMETER_TYPE>>()
+               .AtUri("/parameters")
+               .And.AtUri("/catalogs/{catalogId}/addParameter").Named("AddCatalogParameter")
+               .And.AtUri("/catalogs/{catalogId}/parameters").Named("GetCatalogParameters")
+               .HandledBy<ParameterHandler>()
+               .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+
+            ResourceSpace.Has.ResourcesOfType<PARAMETER_TYPE>()
+                .AtUri("/parameters/{parameterId}")
+                .HandledBy<ParameterHandler>()
+                .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+
+        }//end addPARAMETER_TYPE_Resources
+        private void AddPROJECT_Resources()
+        {
+            //PROJECT
+            ResourceSpace.Has.ResourcesOfType<List<PROJECT>>()
+               .AtUri("/projects")
+               .And.AtUri("/projects/managed").Named("GetManagedProjects")
+               .And.AtUri("/contacts/{contactId}/projects").Named("GetContactProjects")
+               .And.AtUri("/dataManagers/{dataManagerId}/projects").Named("GetDataManagersProjects")
+               .And.AtUri("/keywords/{keywordId}/projects").Named("GetKeyWordProjects")
+               .And.AtUri("/publications/{publicationId}/projects").Named("GetPublicationProjects")
+               .And.AtUri("/objectives/{objectiveId}/projects").Named("GetObjectiveProjects")
+               .And.AtUri("/organizations/{organizationId}/projects").Named("GetOrganizationProject")
+
+               .HandledBy<ProjectHandler>()
+               .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+
+            ResourceSpace.Has.ResourcesOfType<PROJECT>()
+                .AtUri("/projects/{projectId}")
+                .And.AtUri("/catalogs/{catalogId}/project").Named("GetCatalogProject")
+                .And.AtUri("/dataHosts/{dataHostId}/projects").Named("GetDataHostProject")
+                .HandledBy<ProjectHandler>()
+                .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+        }//end AddPROJECT_Resources
+        private void AddPUBLICATION_Resources()
+        {
+            //PUBLICATIONS
+            ResourceSpace.Has.ResourcesOfType<List<PUBLICATION>>()
+               .AtUri("/publications")
+               .And.AtUri("/projects/{projectId}/publications").Named("GetProjectPublications")
+               .And.AtUri("/projects/{projectId}/addPublication").Named("AddProjectPublication")
+               .HandledBy<PublicationHandler>()
+               .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+
+            ResourceSpace.Has.ResourcesOfType<PUBLICATION>()
+                .AtUri("/publications/{publicationId}")
+                .HandledBy<PublicationHandler>()
+                .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+        }//end AddPUBLICATION_Resources
+        private void AddRESOURCE_Resources()
+        {
+            //RESOURCE_TYPE
+            ResourceSpace.Has.ResourcesOfType<List<RESOURCE_TYPE>>()
+               .AtUri("/resources")
+               .HandledBy<ResourceHandler>()
+               .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+
+            ResourceSpace.Has.ResourcesOfType<RESOURCE_TYPE>()
+                .AtUri("/resources/{resourceTypeId}")
+                .And.AtUri("/catalogs/{catalogId}/resource").Named("GetCatalogResource")
+                .HandledBy<ResourceHandler>()
+                .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+        }//end AddRESOURCE_TYPE_Resources
+        private void AddROLE_Resources()
+        {
+            ResourceSpace.Has.ResourcesOfType<List<ROLE>>()
+               .AtUri("/roles")
+               .HandledBy<RoleHandler>()
+               .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+
+            ResourceSpace.Has.ResourcesOfType<ROLE>()
+                .AtUri("/roles/{roleId}")
+                .And.AtUri("dataManagers/{dataManagerId}/role").Named("GetDataManagersRole")
+                .HandledBy<RoleHandler>()
+                .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+        }//end AddRole_Resources
+        private void AddSTATUS_Resources()
+        {
+            ResourceSpace.Has.ResourcesOfType<List<STATUS_TYPE>>()
+               .AtUri("/statusTypes")
+               .HandledBy<StatusHandler>()
+               .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+
+            ResourceSpace.Has.ResourcesOfType<STATUS_TYPE>()
+                .AtUri("/statusTypes/{statusTypeId}")
+                .And.AtUri("/sites/{siteId}/status").Named("GetSiteStatus")
+                .HandledBy<StatusHandler>()
+                .TranscodedBy<SimpleUTF8XmlSerializerCodec>();
+        }//end AddStatus_Resources
+        private void AddAUTHENTICATION_Resources()
+        {
+            //Authentication
+            ResourceSpace.Has.ResourcesOfType<Boolean>()
+            .AtUri("/login")
+            .HandledBy<LoginHandler>()
+            .TranscodedBy<UTF8XmlSerializerCodec>();
+
+        }//end AddAUTHENTICATION_Resources
+
+        #endregion
+
+    }//End class Configuration
+}//End namespace

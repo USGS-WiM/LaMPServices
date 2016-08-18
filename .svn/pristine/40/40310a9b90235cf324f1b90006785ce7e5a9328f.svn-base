@@ -1,0 +1,283 @@
+﻿//------------------------------------------------------------------------------
+//----- ProjectHandler -----------------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2012 WiM - USGS
+
+//    authors:  Jeremy K. Newson USGS Wisconsin Internet Mapping
+//              
+//  
+//   purpose:   Handles Project resources through the HTTP uniform interface.
+//              Equivalent to the controller in MVC.
+//
+//discussion:   Handlers are objects which handle all interaction with resources in 
+//              this case the resources are POCO classes derived from the EF. 
+//               https://github.com/openrasta/openrasta/wiki/Handlers
+//
+//     
+#region Comments
+// 04.25.12 - jkn - Created
+#endregion                          
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+using LaMPServices.Authentication;
+
+
+using OpenRasta.Web;
+using OpenRasta.Security;
+
+namespace LaMPServices.Handlers
+{
+    public class ProjectHandler:HandlerBase
+    {
+        
+        #region Routed Methods
+
+        #region GetMethods
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get()
+        {
+            List<PROJECT> aProjects;
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    aProjects = aLaMPRDS.PROJECTS.Where(p=>p.DATA_MANAGER.USERNAME == username).OrderBy(p => p.PROJECT_ID).ToList();
+                }//end using
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = aProjects };
+        }//end httpMethod get
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get(Int32 projectId)
+        {
+            PROJECT aProject;
+
+            //return BadRequest if ther is no ID
+            if (projectId <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+
+                    aProject = aLaMPRDS.PROJECTS.AsEnumerable().Single(p => p.PROJECT_ID == projectId);
+
+
+                }//end using
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = aProject };
+        }//end httpMethod get
+
+        #endregion
+
+        #region PostMethods
+        /// 
+        /// Force the user to provide authentication 
+        /// 
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.POST, ForUriName = "CreateProject")]
+        public OperationResult Post(PROJECT aProject)
+        {
+            //Return BadRequest if missing required fields
+            if (String.IsNullOrEmpty(aProject.NAME))
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                   //Check for existing project
+                    PROJECT existingProject = aLaMPRDS.PROJECTS.FirstOrDefault(p => p.NAME.Trim().ToUpper() == aProject.NAME.Trim().ToUpper() &&
+                                                                                   (p.START_DATE.Value == aProject.START_DATE.Value || !aProject.START_DATE.HasValue) &&
+                                                                                   (p.END_DATE.Value == aProject.END_DATE.Value || !aProject.END_DATE.HasValue) &&
+                                                                                   (p.OBJECTIVE.Trim().ToUpper() == aProject.OBJECTIVE.Trim().ToUpper() || string.IsNullOrEmpty(aProject.OBJECTIVE)) &&
+                                                                                   (p.DATA_MANAGEMENT_SYSTEM.Trim().ToUpper() == aProject.DATA_MANAGEMENT_SYSTEM.Trim().ToUpper() || string.IsNullOrEmpty(aProject.DATA_MANAGEMENT_SYSTEM)) &&
+                                                                                   (p.URL.Trim().ToUpper() == aProject.URL.Trim().ToUpper() || string.IsNullOrEmpty(aProject.URL)));
+                    if (existingProject == null)
+                    {
+                        decimal nextKey = 1;
+                        if (aLaMPRDS.PROJECTS.Count() > 0)
+                        {
+                            nextKey = aLaMPRDS.PROJECTS.OrderByDescending(p => p.PROJECT_ID).First().PROJECT_ID + 1;
+                        }
+
+                        //set ID
+                        aProject.PROJECT_ID = nextKey;
+                        aLaMPRDS.PROJECTS.AddObject(aProject);
+                    }
+                    else //return existing
+                    {
+                        aProject = existingProject;
+                    }
+
+                    aLaMPRDS.SaveChanges();
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = aProject };
+        }
+
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.POST, ForUriName = "CreateProjectList")]
+        public OperationResult Post(List<PROJECT> aProjects)
+        {
+            //Return BadRequest if missing required fields
+            if (aProjects.Count <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    decimal nextKey = 1;
+                    if (aLaMPRDS.PROJECTS.Count() > 0)
+                    {
+                        nextKey = aLaMPRDS.PROJECTS.OrderByDescending(p => p.PROJECT_ID).First().PROJECT_ID + 1;
+                    }
+
+                    foreach (PROJECT item in aProjects)
+                    {
+                        item.PROJECT_ID = nextKey;
+                        aLaMPRDS.PROJECTS.AddObject(item);
+                        nextKey++;
+
+                    }//next item
+
+                    aLaMPRDS.SaveChanges();
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = aProjects };
+        }
+        #endregion
+
+        #region PutMethods
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.PUT, ForUriName = "UpdateProject")]
+        public OperationResult Post(Int32 ProjId, PROJECT instance)
+        {
+            //Return BadRequest if missing required fields
+            if ((ProjId <= 0))
+            {
+                return new OperationResult.BadRequest();
+            }
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    PROJECT ObjectToBeUpdated = aLaMPRDS.PROJECTS.Single(p => p.PROJECT_ID == ProjId);
+
+                    //Name
+                    ObjectToBeUpdated.NAME = (string.IsNullOrEmpty(instance.NAME) ?
+                        ObjectToBeUpdated.NAME : instance.NAME);
+
+                    //Start date
+                    ObjectToBeUpdated.START_DATE = (DateTime.Equals(instance.START_DATE, ObjectToBeUpdated.START_DATE) ?
+                         ObjectToBeUpdated.START_DATE : instance.START_DATE);
+
+                    //End date
+                    ObjectToBeUpdated.END_DATE = (DateTime.Equals(instance.END_DATE, ObjectToBeUpdated.END_DATE) ?
+                         ObjectToBeUpdated.END_DATE : instance.END_DATE);
+
+                    //Objectives
+                    ObjectToBeUpdated.OBJECTIVE = (string.IsNullOrEmpty(instance.OBJECTIVE) ?
+                        ObjectToBeUpdated.OBJECTIVE : instance.OBJECTIVE);
+
+                    //Data management system
+                    ObjectToBeUpdated.DATA_MANAGEMENT_SYSTEM = (string.IsNullOrEmpty(instance.DATA_MANAGEMENT_SYSTEM) ?
+                        ObjectToBeUpdated.DATA_MANAGEMENT_SYSTEM : instance.DATA_MANAGEMENT_SYSTEM);
+
+                    //URL
+                    ObjectToBeUpdated.URL = (string.IsNullOrEmpty(instance.URL) ?
+                        ObjectToBeUpdated.URL : instance.URL);
+
+                    //Comments
+                    ObjectToBeUpdated.COMMENTS = (string.IsNullOrEmpty(instance.COMMENTS) ?
+                        ObjectToBeUpdated.COMMENTS : instance.COMMENTS);
+
+                    aLaMPRDS.SaveChanges();
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = instance };
+        }
+
+
+        #endregion
+
+        #region DeleteMethods
+        [RequiresAuthentication]
+        [HttpOperation(HttpMethod.DELETE, ForUriName = "DeleteProject")]
+        public OperationResult Delete(Int32 projectId)
+        {
+            //Return BadRequest if missing required fields
+            if (projectId <= 0 || projectId == null)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    PROJECT ObjectToBeDeleted = aLaMPRDS.PROJECTS.Single(p => p.PROJECT_ID == projectId);
+                
+                    //delete it
+                    aLaMPRDS.PROJECTS.DeleteObject(ObjectToBeDeleted);
+
+                    aLaMPRDS.SaveChanges();
+
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { };
+        }
+
+        #endregion
+
+        #endregion
+
+
+    }//end class ProjectHandler
+}//end namespace

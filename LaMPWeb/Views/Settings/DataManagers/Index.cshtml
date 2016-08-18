@@ -1,0 +1,69 @@
+﻿@* Comments: 
+10.01.14 - TR - Copied from STN app 
+
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+ * Copyright:
+ *      2014 USGS - WiM
+ * Purpose:
+ *      Display Data Manager listing
+ */
+ *@
+
+ @using LaMPServices;
+ @using LaMPWeb.Models;
+ 
+
+ @model System.Collections.Generic.List<DataManListingModel>
+            
+ @{
+    ViewBag.Title = "Data Managers";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div id="loading"><div id="loadingcontent"><p id="loadingspinner" style=""><img src="@Url.Content("~/Assets/Images/loading1.gif")"  /></p></div></div>
+
+<div id="dataTitle">
+        <div class="title">Data Managers</div>
+    </div>
+    <br clear="all" />    
+    <hr class="headerUnderline" />
+
+    @if (ViewData["Role"] == "Admin")
+    {
+        <div>
+            @Html.ActionLink("Create", "DataManagerCreate", "DataManager", null, new { @class = "LaMPButton blue", onclick = "loading();" })
+        </div>
+    }
+    
+<br clear="all" />
+
+<div>
+
+    <table id="DMListTable-a">
+        <thead>
+            <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Organization</th>
+                <th scope="col">Role</th>
+            </tr>
+        </thead>
+        @foreach (var aDM in Model) 
+        {
+            <tr>
+                <td>@Html.ActionLink(aDM.DataManagerName, "DataManagerDetails", "DataManager", new { id = aDM.DataManagerID }, new { onclick = "loading();" })</td>
+                <td>@(aDM.OrganizationName)</td>
+                <td>@(aDM.RoleName)</td>
+            </tr>
+        }
+    </table>                              
+</div>
+
+<script type="text/javascript">
+    function loading() {
+        $("#loading").fadeIn();
+    };
+</script>

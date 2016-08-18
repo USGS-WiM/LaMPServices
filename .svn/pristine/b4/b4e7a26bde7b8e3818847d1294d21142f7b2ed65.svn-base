@@ -1,0 +1,491 @@
+﻿//------------------------------------------------------------------------------
+//----- ProjectHandler -----------------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2012 WiM - USGS
+
+//    authors:  Jeremy K. Newson USGS Wisconsin Internet Mapping
+//              
+//  
+//   purpose:   Handles Project resources through the HTTP uniform interface.
+//              Equivalent to the controller in MVC.
+//
+//discussion:   Handlers are objects which handle all interaction with resources in 
+//              this case the resources are POCO classes derived from the EF. 
+//               https://github.com/openrasta/openrasta/wiki/Handlers
+//
+//     
+#region Comments
+// 04.02.13 - jkn - Created public user for get requests
+// 04.25.12 - jkn - Created
+#endregion                          
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+using LaMPServices.Authentication;
+
+
+using OpenRasta.Web;
+using OpenRasta.Security;
+
+namespace LaMPServices.Handlers
+{
+    public class ProjectHandler:HandlerBase
+    {
+      
+        #region Routed Methods
+
+        #region GetMethods
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get()
+        {
+            List<PROJECT> projectList;
+
+            //Get basic authentication password
+           
+            using (LaMPDSEntities aLaMPRDS = GetRDS())
+            {
+                projectList = aLaMPRDS.PROJECTS.OrderBy(p => p.PROJECT_ID).ToList();
+
+                if (projectList != null)
+                    projectList.ForEach(p=>p.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+ 
+            }//end using
+        
+
+            return new OperationResult.OK { ResponseResource = projectList };
+        }//end httpMethod get
+
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get(Int32 projectId)
+        {
+            PROJECT aProject;
+
+            //return BadRequest if ther is no ID
+            if (projectId <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            using (LaMPDSEntities aLaMPRDS = GetRDS())
+            {
+
+                aProject = aLaMPRDS.PROJECTS.AsEnumerable().SingleOrDefault(p => p.PROJECT_ID == projectId);
+
+                if (aProject != null)
+                    aProject.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+
+            }//end using
+
+
+            return new OperationResult.OK { ResponseResource = aProject };
+        }//end httpMethod get
+
+        [HttpOperation(HttpMethod.GET, ForUriName="GetSiteProject")]
+        public OperationResult GetSiteProject(Int32 siteId)
+        {
+            PROJECT aProject;
+
+            //return BadRequest if ther is no ID
+            if (siteId <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            using (LaMPDSEntities aLaMPRDS = GetRDS())
+            {
+
+                aProject = aLaMPRDS.SITE.SingleOrDefault(c => c.SITE_ID == siteId).PROJECT;
+
+                if (aProject != null)
+                    aProject.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+
+            }//end using
+
+
+            return new OperationResult.OK { ResponseResource = aProject };
+        }//end httpMethod get
+
+        [HttpOperation(HttpMethod.GET, ForUriName = "GetDataHostProject")]
+        public OperationResult GetDataHostProject(Int32 dataHostId)
+        {
+            PROJECT aProject;
+
+            //return BadRequest if ther is no ID
+            if (dataHostId <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            using (LaMPDSEntities aLaMPRDS = GetRDS())
+            {
+
+                aProject = aLaMPRDS.DATA_HOST.SingleOrDefault(dh => dh.DATA_HOST_ID == dataHostId).PROJECTs;
+
+                if (aProject != null)
+                    aProject.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+
+            }//end using
+
+
+            return new OperationResult.OK { ResponseResource = aProject };
+        }//end httpMethod get
+
+        [HttpOperation(HttpMethod.GET,ForUriName ="GetContactProjects")]
+        public OperationResult GetContactProjects(Int32 contactId)
+        {
+            List<PROJECT> projectList;
+            using (LaMPDSEntities aLaMPRDS = GetRDS())
+            {
+                projectList = aLaMPRDS.PROJECTS.Where(p => p.CONTACTS.Any(c=>c.CONTACT_ID == contactId)).OrderBy(p => p.PROJECT_ID).ToList();
+
+                if (projectList != null)
+                    projectList.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = projectList };
+        }//end httpMethod get
+
+        [HttpOperation(HttpMethod.GET, ForUriName = "GetKeyWordProjects")]
+        public OperationResult GetKeyWordProjects(Int32 keywordId)
+        {
+            List<PROJECT> projectList;
+
+            using (LaMPDSEntities aLaMPRDS = GetRDS())
+            {
+                projectList = aLaMPRDS.PROJECTS.Where(p => p.KEYWORDS.Any(k => k.KEYWORD_ID == keywordId)).OrderBy(p => p.PROJECT_ID).ToList();
+
+                if (projectList != null)
+                    projectList.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+            }//end using
+
+
+            return new OperationResult.OK { ResponseResource = projectList };
+        }//end httpMethod get
+
+        [HttpOperation(HttpMethod.GET, ForUriName = "GetPublicationProjects")]
+        public OperationResult GetPublicationProjects(Int32 publicationId)
+        {
+            List<PROJECT> projectList;
+
+            using (LaMPDSEntities aLaMPRDS = GetRDS())
+            {
+                projectList = aLaMPRDS.PROJECTS.Where(p => p.PUBLICATIONS.Any(pp => pp.PUBLICATION_ID == publicationId))
+                                                .OrderBy(p => p.PROJECT_ID).ToList();
+                if (projectList != null)
+                    projectList.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+
+            }//end using
+
+
+            return new OperationResult.OK { ResponseResource = projectList };
+        }//end httpMethod get
+
+        [HttpOperation(HttpMethod.GET, ForUriName = "GetObjectiveProjects")]
+        public OperationResult GetObjectiveProjects(Int32 objectiveId)
+        {
+            List<PROJECT> projectList;
+
+            using (LaMPDSEntities aLaMPRDS = GetRDS())
+            {
+                projectList = aLaMPRDS.PROJECTS.Where(p => p.PROJECT_OBJECTIVES.Any(po => po.OBJECTIVE_ID == objectiveId))
+                                                .OrderBy(p => p.PROJECT_ID).ToList();
+                if (projectList != null)
+                    projectList.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = projectList };
+        }//end httpMethod get
+
+        [HttpOperation(HttpMethod.GET, ForUriName = "GetOrganizationProject")]
+        public OperationResult GetOrganizationProject(Int32 organizationId)
+        {
+            List<PROJECT> projectList;
+
+            using (LaMPDSEntities aLaMPRDS = GetRDS())
+            {
+                projectList = aLaMPRDS.PROJECTS.Where(p =>p.COOPERATORS.Any(c=>c.ORGANIZATION_ID == organizationId)).ToList();
+
+                if (projectList != null)
+                    projectList.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = projectList };
+        }//end httpMethod get
+
+        [HttpOperation(HttpMethod.GET, ForUriName = "GetDataManagersProjects")]
+        public OperationResult GetDataManagersProjects(Int32 dataManagerId)
+        {
+            List<PROJECT> projectList;
+
+            using (LaMPDSEntities aLaMPRDS = GetRDS())
+            {
+                projectList = aLaMPRDS.PROJECTS.Where(p => p.DATA_MANAGER_ID == dataManagerId).OrderBy(p => p.PROJECT_ID).ToList();
+
+                if (projectList != null)
+                    projectList.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+
+            }//end using
+
+
+            return new OperationResult.OK { ResponseResource = projectList };
+        }//end httpMethod get
+
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.GET, ForUriName = "GetManagedProjects")]
+        public OperationResult GetManagedProjects()
+        {
+            List<PROJECT> projectList;
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    if(IsAuthorized(AdminRole))
+                    {
+                        projectList = aLaMPRDS.PROJECTS.OrderBy(p => p.PROJECT_ID).ToList();
+                    }
+                    else
+                    {
+                        projectList = aLaMPRDS.PROJECTS.Where(p => p.DATA_MANAGER.USERNAME == username).OrderBy(p => p.PROJECT_ID).ToList();
+                    }
+
+                    if (projectList != null)
+                        projectList.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+
+                }//end using
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = projectList };
+        }//end httpMethod get
+        #endregion
+
+        #region PostMethods
+        /// 
+        /// Force the user to provide authentication 
+        /// 
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.POST)]
+        public OperationResult Post(PROJECT aProject)
+        {
+            //Return BadRequest if missing required fields
+            if (String.IsNullOrEmpty(aProject.NAME))
+            {return new OperationResult.BadRequest();}
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                   //Check for existing project
+                   if (!Exists(aLaMPRDS.PROJECTS, ref aProject))
+                    {
+                        aProject.DATA_MANAGER_ID = (IsAuthorized(AdminRole) && aProject.DATA_MANAGER_ID > 0) ? 
+                            aProject.DATA_MANAGER_ID : GetLoggedInDataManager(aLaMPRDS).DATA_MANAGER_ID;
+
+                        aLaMPRDS.PROJECTS.AddObject(aProject);
+                        aLaMPRDS.SaveChanges();
+
+                    }
+
+                   if (aProject != null)
+                       aProject.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+
+                }// end using
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = aProject };
+        }
+
+        #endregion
+
+        #region PutMethods
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.PUT)]
+        public OperationResult Put(Int32 projectId, PROJECT instance)
+        {
+            //Return BadRequest if missing required fields
+            if ((projectId <= 0))
+            {return new OperationResult.BadRequest();}
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    PROJECT ObjectToBeUpdated = aLaMPRDS.PROJECTS.SingleOrDefault(p => p.PROJECT_ID == projectId);
+
+                    if (!IsAuthorizedToEdit(ObjectToBeUpdated.DATA_MANAGER.USERNAME))
+                        return new OperationResult.Forbidden { Description = "Not Authorized" };
+
+                    //Name
+                    ObjectToBeUpdated.NAME = (string.IsNullOrEmpty(instance.NAME) ?
+                        ObjectToBeUpdated.NAME : instance.NAME);
+
+                    //Start date
+                    ObjectToBeUpdated.START_DATE = (DateTime.Equals(instance.START_DATE, ObjectToBeUpdated.START_DATE) ?
+                         ObjectToBeUpdated.START_DATE : instance.START_DATE);
+
+                    //End date
+                    ObjectToBeUpdated.END_DATE = (DateTime.Equals(instance.END_DATE, ObjectToBeUpdated.END_DATE) ?
+                         ObjectToBeUpdated.END_DATE : instance.END_DATE);
+
+                    //Objectives
+                    ObjectToBeUpdated.DESCRIPTION = (string.IsNullOrEmpty(instance.DESCRIPTION) ?
+                        ObjectToBeUpdated.DESCRIPTION : instance.DESCRIPTION);
+
+                    //URL
+                    ObjectToBeUpdated.URL = (string.IsNullOrEmpty(instance.URL) ?
+                        ObjectToBeUpdated.URL : instance.URL);
+
+                    //Additional Info
+                    ObjectToBeUpdated.ADDITIONAL_INFO = (string.IsNullOrEmpty(instance.ADDITIONAL_INFO) ?
+                        ObjectToBeUpdated.ADDITIONAL_INFO : instance.ADDITIONAL_INFO);
+
+                    aLaMPRDS.SaveChanges();
+
+                    if (instance != null)
+                        instance.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+                
+                }// end using
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = instance };
+        }
+
+        #endregion
+
+        #region DeleteMethods
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.DELETE)]
+        public OperationResult Delete(Int32 projectId)
+        {
+            //Return BadRequest if missing required fields
+            if (projectId <= 0 || projectId == null)
+            { return new OperationResult.BadRequest();}
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    PROJECT ObjectToBeDeleted = aLaMPRDS.PROJECTS.SingleOrDefault(p => p.PROJECT_ID == projectId);
+
+                    if (!IsAuthorizedToEdit(ObjectToBeDeleted.DATA_MANAGER.USERNAME))
+                        return new OperationResult.Forbidden { Description = "Not Authorized" };
+
+                    //delete it
+                    aLaMPRDS.PROJECTS.DeleteObject(ObjectToBeDeleted);
+                    aLaMPRDS.SaveChanges();
+
+                    //delete all project cooperators
+
+                    //delete all project keywords
+
+                    //delete all project objectives
+
+                    //delete all project contacts
+                    List<PROJECT_CONTACTS> projContacts = aLaMPRDS.PROJECT_CONTACTS.Where(pc => pc.PROJECT_ID == projectId).ToList();
+                    if (projContacts != null)
+                    {
+                        foreach (PROJECT_CONTACTS pc in projContacts)
+                        {
+                            aLaMPRDS.PROJECT_CONTACTS.DeleteObject(pc);
+                            aLaMPRDS.SaveChanges();
+                        }
+                    }
+
+                    //delete all project publications
+                    
+                    //delete all sites for this project
+                    List<SITE> projSites = aLaMPRDS.SITE.Where(s => s.PROJECT_ID == projectId).ToList();
+                    if (projSites != null)
+                    {
+                        foreach (SITE site in projSites)
+                        {
+                            aLaMPRDS.SITE.DeleteObject(site);
+                            aLaMPRDS.SaveChanges();
+                        }
+                    }
+
+                    //delete all site frequency
+                    //delete all site media
+                    //delete all site parameters
+                    //delete all site resources
+                    
+
+                    aLaMPRDS.SaveChanges();
+
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { };
+        }
+
+        #endregion
+
+        #endregion
+
+        #region "Helper Methods"
+
+        private Boolean Exists(System.Data.Objects.IObjectSet<PROJECT> projects, ref PROJECT aProject)
+        {
+            PROJECT existingProject;
+            PROJECT thisProject = aProject;
+            //check if it exists
+            try
+            {
+                existingProject = projects.FirstOrDefault(p => string.Equals(p.NAME.ToUpper(),thisProject.NAME.ToUpper()) &&
+                                                            (p.START_DATE.Value == thisProject.START_DATE.Value || !thisProject.START_DATE.HasValue) &&
+                                                            (p.END_DATE.Value == thisProject.END_DATE.Value || !thisProject.END_DATE.HasValue) &&
+                                                            (string.Equals(p.DESCRIPTION.ToUpper(),thisProject.DESCRIPTION.ToUpper()) || string.IsNullOrEmpty(thisProject.DESCRIPTION)) &&
+                                                            (string.Equals(p.URL.ToUpper(),thisProject.URL.ToUpper()) || string.IsNullOrEmpty(thisProject.URL)));
+
+
+                if (existingProject == null)
+                    return false;
+
+                //if exists then update ref contact
+                aProject = existingProject;
+                return true;
+
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        //private decimal GetNextProjectID(System.Data.Objects.IObjectSet<PROJECT> projects)
+        //{
+        //    decimal nextKey = 1;
+        //    if (projects.Count() > 0)
+        //    {
+        //        nextKey = projects.OrderByDescending(p => p.PROJECT_ID).First().PROJECT_ID + 1;
+        //    }
+
+        //    return nextKey;
+        //}
+        #endregion
+    }//end class ProjectHandler
+}//end namespace

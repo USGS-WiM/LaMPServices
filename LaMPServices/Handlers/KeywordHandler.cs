@@ -1,0 +1,428 @@
+﻿//------------------------------------------------------------------------------
+//----- KeywordHandler -----------------------------------------------------------
+//------------------------------------------------------------------------------
+
+//-------1---------2---------3---------4---------5---------6---------7---------8
+//       01234567890123456789012345678901234567890123456789012345678901234567890
+//-------+---------+---------+---------+---------+---------+---------+---------+
+
+// copyright:   2012 WiM - USGS
+
+//    author:   Jeremy K. Newson  USGS Wisconsin Internet Mapping
+//  
+//   purpose:   Handles publication resources through the HTTP uniform interface.
+//              Equivalent to the controller in MVC.
+//
+//discussion:   Handlers are objects which handle all interaction with resources in 
+//              this case the resources are POCO classes derived from the EF. 
+//               https://github.com/openrasta/openrasta/wiki/Handlers
+//
+//     
+#region Comments
+// 04.02.13 - jkn - Created public user for get requests
+// 04.15.12 - jkn - Created
+#endregion                          
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+using OpenRasta.Web;
+using OpenRasta.Security;
+
+using LaMPServices.Authentication;
+
+
+namespace LaMPServices.Handlers
+{
+    public class KeywordHandler: HandlerBase
+    {
+        #region Routed Methods
+
+        #region GetMethods
+
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get()
+        {
+            //KeywordList keywords = new KeywordList();
+            List<KEYWORD> kywrds;
+
+            using (LaMPDSEntities aLaMPRDS = GetRDS())
+            {
+                //Context.ContextOptions.ProxyCreationEnabled = false;
+                kywrds = aLaMPRDS.KEYWORDS.OrderBy(k => k.KEYWORD_ID).ToList();
+
+            }//end using
+
+            if (kywrds != null)
+                kywrds.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+   
+            return new OperationResult.OK { ResponseResource = kywrds };
+        }//end httpMethod get
+        
+        [HttpOperation(HttpMethod.GET)]
+        public OperationResult Get(Int32 keywordId)
+        {
+            KEYWORD aKeyword;
+
+            //return BadRequest if ther is no ID
+            if (keywordId <= 0)
+            {
+                return new OperationResult.BadRequest();
+            }
+
+                using (LaMPDSEntities aLaMPRDS = GetRDS())
+                {
+                    aKeyword = aLaMPRDS.KEYWORDS.SingleOrDefault(k => k.KEYWORD_ID == keywordId);
+                }//end using
+
+            if (aKeyword != null)
+                aKeyword.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+
+            return new OperationResult.OK { ResponseResource = aKeyword };
+        }//end httpMethod get
+        
+        [HttpOperation(HttpMethod.GET, ForUriName ="GetKeywordByTerm")]
+        public OperationResult GetKeywordByTerm(string term)
+        {
+            KEYWORD aKeyword;
+
+            //return BadRequest if ther is no ID
+            if (string.IsNullOrEmpty(term))
+            {
+                return new OperationResult.BadRequest();
+            }
+
+            using (LaMPDSEntities aLaMPRDS = GetRDS())
+            {
+                aKeyword = aLaMPRDS.KEYWORDS.SingleOrDefault(k => string.Equals(k.TERM.ToUpper().Trim(), term.ToUpper().Trim()));
+            }//end using
+ 
+            if (aKeyword != null)
+                aKeyword.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+
+            return new OperationResult.OK { ResponseResource = aKeyword };
+        }//end httpMethod get
+
+        [HttpOperation(HttpMethod.GET, ForUriName="GetProjectKeyword")]
+        public OperationResult GetProjectKeyword(Int32 projectId)
+        {
+            //KeywordList keywords = new KeywordList();
+            List<KEYWORD> kywrds;
+
+            using (LaMPDSEntities aLaMPRDS = GetRDS())
+            {
+                //return the list of contacts associated with project
+                kywrds = aLaMPRDS.KEYWORDS.Where(k => k.PROJECT_KEYWORDS.Any(pk => pk.PROJECT_ID == projectId)).ToList();
+
+                if (kywrds != null)
+                    kywrds.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+
+            }//end using
+
+            return new OperationResult.OK { ResponseResource = kywrds };
+        }//end httpMethod get
+        #endregion
+
+        #region PostMethods
+       
+        /// 
+        /// Force the user to provide authentication 
+        /// 
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.POST)]
+        public OperationResult Post(KEYWORD aKeyword)
+        {
+            //Return BadRequest if missing required fields
+            if (String.IsNullOrEmpty(aKeyword.TERM))
+            {return new OperationResult.BadRequest();}
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                   
+                    if (!Exists(aLaMPRDS.KEYWORDS,ref aKeyword))
+                    {
+                        //set ID
+                        //aKeyword.KEYWORD_ID = GetNextKeywordID(aLaMPRDS.KEYWORDS);
+
+                        aLaMPRDS.KEYWORDS.AddObject(aKeyword);
+                        aLaMPRDS.SaveChanges();
+                    }
+
+                }// end using
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = aKeyword };
+        }
+
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.POST, ForUriName = "AddProjectKeyword")]
+        public OperationResult AddProjectKeyword(Int32 projectId, KEYWORD aKeyword)
+        {
+            PROJECT_KEYWORDS aProjectKeyword = null;
+            List<KEYWORD> KeywordList = null;
+            //Return BadRequest if missing required fields
+            if (projectId <= 0 || String.IsNullOrEmpty(aKeyword.TERM))
+            { return new OperationResult.BadRequest(); }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //get requested project
+                    PROJECT requestedProject = aLaMPRDS.PROJECTS.First(p => p.PROJECT_ID == projectId);
+
+                    //check if valid project
+                    if (requestedProject == null)
+                        return new OperationResult.BadRequest { Description = "Project does not exist" };
+
+                    //check authorization
+                    if (!IsAuthorizedToEdit(requestedProject.DATA_MANAGER.USERNAME))
+                        return new OperationResult.Forbidden { Description = "Not Authorized" };
+
+                    if (!Exists(aLaMPRDS.KEYWORDS, ref aKeyword))
+                    {
+                        //set ID
+                       // aKeyword.KEYWORD_ID = GetNextKeywordID(aLaMPRDS.KEYWORDS);
+                        aLaMPRDS.KEYWORDS.AddObject(aKeyword);
+                        aLaMPRDS.SaveChanges();
+                    }//end if
+
+                    //add to project
+                    //first check if Project already contains keyword
+                    if (aLaMPRDS.PROJECT_KEYWORDS.FirstOrDefault(pk => pk.KEYWORD_ID == aKeyword.KEYWORD_ID &&
+                                                                       pk.PROJECT_ID == projectId) == null)
+                    {//create one
+                        aProjectKeyword = new PROJECT_KEYWORDS();
+                        //set ID and create ProjectContact
+                        //aProjectKeyword.PROJECT_KEYWORDS_ID = GetNextProjectKeywordID(aLaMPRDS.PROJECT_KEYWORDS);
+
+                        aProjectKeyword.PROJECT_ID = projectId;
+                        aProjectKeyword.KEYWORD_ID = aKeyword.KEYWORD_ID;
+
+                        aLaMPRDS.PROJECT_KEYWORDS.AddObject(aProjectKeyword);
+                        aLaMPRDS.SaveChanges();
+                    }//end if
+
+                    //return the list of contacts associated with project
+                    KeywordList = aLaMPRDS.KEYWORDS.Where(k => k.PROJECT_KEYWORDS.Any(pk => pk.PROJECT_ID == projectId)).ToList();
+
+                    if (KeywordList != null)
+                        KeywordList.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = KeywordList };
+        }
+
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.POST, ForUriName = "AddKeywordList")]
+        public OperationResult AddKeywordList(List<KEYWORD> aKeywordList)
+        {
+            //+_+_+_+_+_+_ ORIGINAL CODEC DOES NOT SUPPORT LISTS<OBJECTS>_+_+_+_+
+            //Return BadRequest if missing required fields
+            if (aKeywordList.Count <= 0)
+            { return new OperationResult.BadRequest();}
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    for (int i = 0; i < aKeywordList.Count; i++ )
+                    {
+                        KEYWORD item = aKeywordList[i];
+                        if (!Exists(aLaMPRDS.KEYWORDS, ref item))
+                        {
+                            //item.KEYWORD_ID = GetNextKeywordID(aLaMPRDS.KEYWORDS);
+                            aLaMPRDS.KEYWORDS.AddObject(item);
+                            aLaMPRDS.SaveChanges();
+                            //update
+                        }
+                        //update keyword
+                        aKeywordList[i] = item;
+                    }//next item
+
+                }// end using
+            }// end using
+
+            if (aKeywordList != null)
+                aKeywordList.ForEach(x => x.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_group));
+
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = aKeywordList };
+        }
+        #endregion
+
+        #region PutMethods
+
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.PUT)]
+        public OperationResult Put(Int32 keywordId, KEYWORD instance)
+        {
+            //Return BadRequest if missing required fields
+            if ((keywordId <=0 ) && string.IsNullOrEmpty(instance.TERM))
+            {return new OperationResult.BadRequest();}
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    KEYWORD ObjectToBeUpdated = aLaMPRDS.KEYWORDS.SingleOrDefault(k => k.KEYWORD_ID == keywordId);
+
+                    //term
+                    ObjectToBeUpdated.TERM = (string.IsNullOrEmpty(instance.TERM) ?
+                        ObjectToBeUpdated.TERM : instance.TERM);
+
+                    aLaMPRDS.SaveChanges();
+                }// end using
+            }// end using
+
+            if (instance != null)
+                instance.LoadLinks(Context.ApplicationBaseUri.AbsoluteUri, linkType.e_individual);
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { ResponseResource = instance };
+        }
+
+
+        #endregion
+
+        #region DeleteMethods
+
+        [RequiresRole(AdminRole)]
+        [HttpOperation(HttpMethod.DELETE)]
+        public OperationResult Delete(Int32 keywordId)
+        {
+            //Return BadRequest if missing required fields
+            if (keywordId <= 0)
+            {return new OperationResult.BadRequest();}
+
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //fetch the object to be updated (assuming that it exists)
+                    KEYWORD ObjectToBeDeleted = aLaMPRDS.KEYWORDS.SingleOrDefault(k => k.KEYWORD_ID == keywordId);
+                    //delete it
+                    aLaMPRDS.KEYWORDS.DeleteObject(ObjectToBeDeleted);
+                    aLaMPRDS.SaveChanges();
+
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK {};
+        }
+
+        [LaMPRequiresRole(new string[] { AdminRole, ManagerRole })]
+        [HttpOperation(HttpMethod.DELETE, ForUriName = "RemoveProjectKeyword")]
+        public OperationResult RemoveProjectKeyword(Int32 projectId, Int32 keywordId)// KEYWORD aKeyword)
+        {
+            //Return BadRequest if missing required fields
+            if (projectId <= 0 || keywordId <= 0)// String.IsNullOrEmpty(aKeyword.TERM))
+            { return new OperationResult.BadRequest(); }
+
+            //Get basic authentication password
+            using (EasySecureString securedPassword = GetSecuredPassword())
+            {
+                using (LaMPDSEntities aLaMPRDS = GetRDS(securedPassword))
+                {
+                    //get requested project
+                    PROJECT requestedProject = aLaMPRDS.PROJECTS.First(p => p.PROJECT_ID == projectId);
+
+                    //check if valid project
+                    if (requestedProject == null)
+                        return new OperationResult.BadRequest { Description = "Project does not exist" };
+
+                    //check authorization
+                    if (!IsAuthorizedToEdit(requestedProject.DATA_MANAGER.USERNAME))
+                        return new OperationResult.Forbidden { Description = "Not Authorized" };
+
+                    //remove from project
+                    //PROJECT_KEYWORDS aProjectKeyword = aLaMPRDS.PROJECT_KEYWORDS.FirstOrDefault(pk => pk.KEYWORD_ID == aKeyword.KEYWORD_ID &&
+                    //                                                   pk.PROJECT_ID == projectId);
+                    PROJECT_KEYWORDS aProjectKeyword = aLaMPRDS.PROJECT_KEYWORDS.FirstOrDefault(pk => pk.KEYWORD_ID == keywordId &&
+                                                                       pk.PROJECT_ID == projectId);
+                    if (aProjectKeyword != null)
+                    {//remove it
+                        aLaMPRDS.PROJECT_KEYWORDS.DeleteObject(aProjectKeyword);
+                        aLaMPRDS.SaveChanges();
+                    }//end if
+
+                }// end using
+
+            }// end using
+
+            //Return object to verify persisitance
+            return new OperationResult.OK { };
+        }
+
+        #endregion
+
+        #endregion
+        #region Helper Methods
+        private Boolean Exists(System.Data.Objects.IObjectSet<KEYWORD> k, ref KEYWORD akeyword)
+        {
+            KEYWORD existingKeyword;
+            KEYWORD thisKeyword = akeyword;
+            //check if it exists
+            try
+            {
+                existingKeyword = k.FirstOrDefault(o => string.Equals(o.TERM.ToUpper(),thisKeyword.TERM.ToUpper()));
+
+                if (existingKeyword == null)
+                    return false;
+
+                //if exists then update ref contact
+                akeyword = existingKeyword;
+                return true;
+
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        //private decimal GetNextKeywordID(System.Data.Objects.IObjectSet<KEYWORD> keywords)
+        //{
+        //    decimal nextKey = 1;
+        //    if (keywords.Count() > 0)
+        //    {
+        //        nextKey = keywords.OrderByDescending(k =>k.KEYWORD_ID).First().KEYWORD_ID + 1;
+        //    }
+
+        //    return nextKey;
+        //}
+        //private decimal GetNextProjectKeywordID(System.Data.Objects.IObjectSet<PROJECT_KEYWORDS> projectKeywords)
+        //{
+        //    decimal nextKey = 1;
+        //    if (projectKeywords.Count() > 0)
+        //    {
+        //        nextKey = projectKeywords.OrderByDescending(pk => pk.PROJECT_KEYWORDS_ID).First().PROJECT_KEYWORDS_ID + 1;
+        //    }
+
+        //    return nextKey;
+        //}
+        #endregion
+    }// end KeywordHandler
+
+}// end namespace

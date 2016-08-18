@@ -1,0 +1,537 @@
+﻿@* Comments:
+07.17.13 - TR - Created 
+
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+ * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Display edit page for a Contact 
+ */
+ *@
+@using LaMPServices;
+@using LaMPWeb.Assets.Resources;
+
+@model LaMPServices.CONTACT
+           
+
+@{
+    ViewBag.Title = "Contact Edit";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ORGANIZATION thisOrg = ViewData["contactOrg"] as ORGANIZATION;
+    PROJECT thisProject = ViewData["Project"] as PROJECT;
+}
+
+           
+<div id="loading"><div id="loadingcontent"><p id="loadingspinner" style=""><img src="@Url.Content("~/Assets/Images/loading1.gif")"  /></p></div></div>
+
+<div id="dataTitle">                                                        
+    <div class="title">Project: @Html.ActionLink(thisProject.NAME, "ProjectDetails", "Project", new { id = thisProject.PROJECT_ID }, new { onclick = "loading();" }), Contact: @Model.NAME</div>
+</div>
+<br clear="all" />
+
+<hr class="headerUnderline" />
+
+@using (Html.BeginForm("ContactEdit", "Contact", new { id = Model.CONTACT_ID, projId = thisProject.PROJECT_ID }, FormMethod.Post, new { @id = "form0" }))
+{
+     <input type="hidden" id="contactId" name="CONTACT_ID" value="@Model.CONTACT_ID" />
+     <input type="hidden" id="projId" name="PROJECT_ID" value="@thisProject.PROJECT_ID" />
+    @* Contact Name: *@
+    <div class="ui-grid-a">          
+        <div class="ui-block-a"><span class="required">Contact Name:</span></div>
+        <div class="ui-block-b"><input type="text" id="contactName" name="NAME" class="required lampTextInput ui-shadow-inset" value="@Model.NAME" /></div>
+    </div>
+
+    <div id="existingContactOrg">
+        @* Organizations: (PROJECT_COOPERATORS)*@
+        <div class="ui-grid-a">
+            <div class="ui-block-a"><span class="required">Contact Organization:</span></div>
+            <div class="ui-block-b">
+            @{
+                if (thisOrg.NAME != null && thisOrg.NAME != "")
+                {
+                    if (thisOrg.DIVISION != null && thisOrg.DIVISION != "")
+                    {
+                        if (thisOrg.SECTION != null && thisOrg.SECTION != "")
+                        {
+                                <label>@thisOrg.NAME, @thisOrg.DIVISION, @thisOrg.SECTION</label>
+                        }
+                        else
+                        {
+                                <label>@thisOrg.NAME, @thisOrg.DIVISION</label>         
+                        }
+                    }
+                    else
+                    {
+                            <label>@thisOrg.NAME</label>
+                    }
+                }
+                else
+                {
+                        <label></label>
+                }
+            }
+            </div>
+        </div>
+        <input type="hidden" name="ORGANIZATION_ID" value="@Model.ORGANIZATION_ID" />
+    
+        <div class="ui-grid-a">
+            <div data-role="fieldcontain">
+                <div class="ui-block-a"></div>
+                <div class="ui-block-b"><input type="button" id="ChangeOrgCheckBx" name="ChgOrgCB" value="Change Organization" onclick="ChangeOrgClick();" /></div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="hiddenOrgParts" class="hidden">
+    @* Contact Organization: *@
+        <div class="ui-grid-a">
+            <div class="ui-block-a"><span class="required">Contact Organization:</span></div>
+            <div class="ui-block-b">
+                <select id="OrgDD" class="lampSelectInput" name="ProjOrg">
+                    <option value="0">Choose an Organization</option>
+                    @foreach (LaMPServices.ORGANIZATION o in ViewData["Organizations"] as List<ORGANIZATION>)
+                    {
+                        <option @(o.ORGANIZATION_ID == Model.ORGANIZATION_ID ? "selected" : "") value='@o.ORGANIZATION_ID'>@o.NAME</option> 
+                    }
+                </select>
+            </div>
+        </div>
+
+        @* Add Organization (checkbox) *@
+        <div class="ui-grid-a">
+            <div data-role="fieldcontain">
+                <div class="ui-block-a">Add Organization:</div>
+                <div class="ui-block-b"><input type="checkbox" id="addOrgCheckBx" name="OtherOrgCB" onclick="AddOrgClick();" />                    
+                </div>
+            </div>
+        </div>       
+
+        @* Hidden New Organization input: *@
+        <div id="NewOrgInput" class="ui-grid-a hidden">
+            <div data-role="fieldcontain">
+                <div class="ui-block-a"><span class="padding">Organization Name:</span></div>
+                <div  class="ui-block-b" ><input type="text" id="NewOrgName" name="addOrgName" class="lampTextInput ui-shadow-inset" /></div>
+                <div class="ui-block-a"><span class="padding"><input type="button" onclick="ConfirmAddOrg();" name="AddOrg" value="Add to Organizations" /></span></div>
+                <br />
+           </div>
+        </div>
+
+		@* Division: *@
+       <div class="ui-grid-a">
+            <div class="ui-block-a"><span>Division/Office:</span></div>
+            <div class="ui-block-b">
+                <select id="DivDD" class="lampSelectInput" name="division">
+			          
+                </select>
+            </div>
+        </div>
+        
+        @* Add Division (checkbox): *@
+        <div class="ui-grid-a">
+            <div data-role="fieldcontain">
+                <div class="ui-block-a">Add Division/Office:</div>
+                <div class="ui-block-b"><input type="checkbox" id="AddDivCheckBx" name="OtherDivCB" onclick="AddDivClick();" /></div>
+            </div>
+        </div>
+
+         @* Hidden New Division Input: *@
+        <div id="NewDivInput" class="ui-grid-a hidden">
+            <div data-role="fieldcontain">
+                <div class="ui-block-a"><span class="padding">Division Name:</span></div>
+                <div  class="ui-block-b" ><input type="text" id="DivName" name="addDivName" class="lampTextInput ui-shadow-inset" /></div>
+                <div class="ui-block-a"><span class="padding"><input type="button" onclick="ConfirmAddDiv();" name="addDivision" value="Add to Divisions" /></span></div>
+                <br />
+           </div>
+        </div>
+        
+        @*  Section: *@
+        <div class="ui-grid-a">
+            <div class="ui-block-a"><span>Section:</span></div>
+            <div class="ui-block-b">
+               <select id="SecDD" class="lampSelectInput" name="section">
+			          
+               </select>
+            </div>
+        </div>    
+        
+        @* Add Section (checkbox): *@
+        <div class="ui-grid-a">
+            <div data-role="fieldcontain">
+                <div class="ui-block-a">Add Section:</div>
+                <div class="ui-block-b"><input type="checkbox" id="AddSecCheckBx" name="OtherSecCB" onclick="AddSecClick();" /></div>
+            </div>
+        </div>
+        
+         @* Hidden New Section Input: *@
+        <div id="NewSecInput" class="ui-grid-a hidden">
+            <div data-role="fieldcontain">
+                <div class="ui-block-a"><span class="padding">Section Name:</span></div>
+                <div  class="ui-block-b" ><input type="text" id="SecName" name="addSection" class="lampTextInput ui-shadow-inset" /></div>
+                <div class="ui-block-a"><span class="padding"><input type="button" onclick="ConfirmAddSec();" name="addSection" value="Add to Sections" /></span></div>
+                <br />
+           </div>
+        </div>
+    </div>
+        
+    @* Contact Email: *@
+    <div class="ui-grid-a">
+        <div class="ui-block-a"><span class="required">Email:</span></div>
+        <div class="ui-block-b"><input type="text" id="email" name="EMAIL" class="required lampTextInput ui-shadow-inset" value="@Model.EMAIL" /></div>
+    </div>
+    
+    @* Contact Phone: *@
+    <div class="ui-grid-a">
+        <div class="ui-block-a">Phone:</div>
+        <div class="ui-block-b"><input type="text" id="phone" name="PHONE" class="lampTextInput ui-shadow-inset" value="@Model.PHONE" /></div>
+    </div>
+    <br />
+    
+    <div id="formSubmitDiv" class="formSection">
+        <div class="leftSideSubmit">
+            <div class="cancelDiv"><div class="lightButtonBorder"><input id="resetButton" type="reset" class="cancel" value="Cancel" onclick="stopClick();" /></div></div>
+            <div class="submitDiv"><div class="darkButtonBorder"><input type="submit" class="submit" value="Save" /></div></div>
+            <span id="errorSection" class="failureNotification"><asp:Literal ID="ErrorMessage" runat="server"></asp:Literal></span>
+        </div>
+    </div>
+
+}
+
+
+<script type="text/javascript">
+    function stopClick() {
+        //cancel from a create page (contacts, publications), sent back to project details
+        var id = $("#contactId").val();
+        var projectId = $("#projId").val();
+        var answer = confirm("Continue without saving any changes?");
+        if (answer) {
+            $("#loading").fadeIn();
+            window.location.href = '@Url.Action("ContactDetails", "Contact")' + "/" + id + "?projId=" + projectId;
+        }
+    }
+
+    function ChangeOrgClick() {
+        //hide existing org info and show hidden inputs to change it
+        $("#existingContactOrg").hide();
+        $("#hiddenOrgParts").show();
+    }
+
+    
+
+    $(document).ready(function () {
+        //when the organization dropdown selection changes
+        $("#OrgDD").change(function () {
+            // Adjust contents of Divisions dropdown based on Organization choice
+            var orgId = $("#OrgDD").val();
+            var url = '/LaMPWeb/Contact/GetOrgDivisions/';
+            $.post(url, { id: orgId }, function (data) {
+                populateDD($("#DivDD"), data);
+            });
+        });
+
+        function populateDD(select1, data) {
+            //populate the organization division dropdown based on organization dropdown choice (data returned from GetDivisionsList)
+            select1.empty();
+            $.each(data, function (id, option) {
+                if (option.DIVISION == null) {
+                    select1.append($('<option/>', {
+                        value: option.ORGANIZATION_ID,
+                        text: ""
+                    }));
+                }
+                else {
+                    select1.append($('<option/>', {
+                        value: option.ORGANIZATION_ID,
+                        text: option.DIVISION
+                    }));
+                }
+            });
+        }
+
+        $("#DivDD").change(function () {
+            // Organization division dropdown change: Adjust contents of Section dropdown based on Division choice
+            var divId = $("#DivDD").val();
+            $.post("/LaMPWeb/Contact/GetDivSections/", { id: divId }, function (data) {
+                populateDD1($("#SecDD"), data);
+            });
+        });
+    });
+
+    function populateDD1(select, data) {
+        // populate section dropdown choice based on division choice (data returned from GetSectionsList)
+        select.empty();
+        $.each(data, function (id, option) {
+            if (option.SECTION == null) {
+                select.append($('<option/>', {
+                    value: option.ORGANIZATION_ID,
+                    text: ""
+                }));
+            }
+            else {
+                select.append($('<option/>', {
+                    value: option.ORGANIZATION_ID,
+                    text: option.SECTION
+                }));
+            }
+        });
+    }
+
+    function AddOrgClick() {
+        // Organizations: "Add New" checkbox. when clicked, clear selected val from dropdown (if one is selected), show empty textinput to add value to list
+        var checkBoxCntrl = document.getElementById("addOrgCheckBx");
+        if (checkBoxCntrl.checked == true) {
+            //clear dropdown values
+            $("#OrgDD").val('');
+            $("#DivDD").empty();
+            $("#SecDD").empty();
+            //show the input fields
+            $("#NewOrgInput").show();
+            //make sure there's nothing in them
+            $("#NewOrgName").val('');
+            $("#NewOrgName").focus();
+        }
+        else {
+            $("#NewOrgInput").hide();
+        }
+    }
+
+    function ConfirmAddOrg() {
+        // Organizations: show alert, ADD TO dropdown, hide text input and uncheck box
+        //get new org values
+        var orgName = $("#NewOrgName").val();
+        if (orgName == "") {
+            alert("Please enter a new Organization name.");
+        }
+        else {
+            //hide the input area and uncheck the checkbox
+            $("#NewOrgInput").hide();
+            var checkboxCntrl = document.getElementById("addOrgCheckBx");
+            checkboxCntrl.checked = false;
+            //post the new organization to db
+            $.post("/LaMPWeb/Project/AddOrganization/", { newOrgName: orgName }, function (data) {
+                populateOrgDD($("#OrgDD"), data);
+            });
+        }
+    }
+
+    function populateOrgDD(select, data) {
+        //populate organization dropdown with the full list of orgs (including 1 just added)
+        select.empty();
+        if (data == null) {
+            alert("Invalid, please try again");
+        }
+        else {
+            $.each(data, function (id, option) {
+                select.append($('<option/>', {
+                    value: option.ORGANIZATION_ID,
+                    text: option.NAME
+                }));
+            });
+            alert("Organization Added");
+        }
+    }
+
+    function AddDivClick() {
+        // Divisions: "add" checkbox. when clicked, clear selected val from dropdown (if one is selected), show empty textinput to add value to list
+        var checkBoxCntrl = document.getElementById("AddDivCheckBx");
+        if (checkBoxCntrl.checked == true) {
+            //make sure an organization has been chosen first
+            if ($("#OrgDD").val() != 0) {
+                //clear the dropdown values
+                $("#DivDD").empty();
+                $("#SecDD").empty();
+                //make sure it's empty first
+                $("#DivNameInput").val('');
+                //show the input fields
+                $("#NewDivInput").show();
+                $("#DivName").focus();
+            }
+            else {
+                alert("Choose an Organization first");
+                document.getElementById("AddDivCheckBx").checked = false;
+            }
+        }
+        else {
+            $("#NewDivInput").hide();
+        }
+    }
+
+    function ConfirmAddDiv() {
+        // Divisions: show alert, ADD TO dropdown, hide text input and uncheck box
+        //get new div value
+        var divName = $("#DivName").val();
+        var orgName = $("#OrgDD option:selected").text();
+        if (divName == "") {
+            alert("Please enter a new Division name.");
+        }
+        else {
+            //hide the input area and uncheck the checkbox
+            $("#NewDivInput").hide();
+            var checkboxCntrl = document.getElementById("AddDivCheckBx");
+            checkboxCntrl.checked = false;
+            //need to post the new division, and add to dropdown
+            $.post("/LaMPWeb/Project/AddDivision/", { OrgName: orgName, DivName: divName }, function (data) {
+                populateDivDD($("#DivDD"), data);
+            });
+        }
+    }
+
+    function populateDivDD(select, data) {
+        //populate the division dropdown with all the divisions for chosen organization (including new one added)
+        select.empty();
+        if (data.Data[1].DIVISION == null) {
+            alert("Invalid, please try again");
+        }
+        else {
+            $.each(data.Data, function (id, option) {
+                if (option.DIVISION == null) {
+                    select.append($('<option/>', {
+                        value: option.ORGANIZATION_ID,
+                        text: ""
+                    }));
+                }
+                else {
+                    select.append($('<option/>', {
+                        value: option.ORGANIZATION_ID,
+                        text: option.DIVISION
+                    }));
+                }
+            });
+            alert("Division Added");
+        }
+    }
+
+    function AddSecClick() {
+        // Section: "add" checkbox. when clicked, clear selected val from dropdown (if one is selected), show empty textinput to add value to list 
+        var checkBoxCntrl = document.getElementById("AddSecCheckBx");
+        if (checkBoxCntrl.checked == true) {
+            //make sure division is chosen first
+            if ($("#DivDD").val() != null) {
+                $("#SecDD").empty();
+                //show hidden field
+                $("#NewSecInput").show();
+                //make sure it's empty
+                $("#SecName").val('');
+                $("#SecName").focus();
+            }
+            else {
+                alert("Choose a Division first");
+                document.getElementById("AddSecCheckBx").checked = false;
+            }
+        }
+        else {
+            $("#NewSecInput").hide();
+        }
+    }
+
+    function ConfirmAddSec() {
+        // Organization Section: show alert, ADD TO dropdown, hide text input and uncheck box 
+        var sectionName = $("#SecName").val();
+        var divisionName = $("#DivDD option:selected").text();
+        var orgName = $("#OrgDD option:selected").text();
+        if (sectionName == "") {
+            alert("Please enter a new Section name.");
+        }
+        else {
+            //hide the input area and uncheck the checkbox
+            $("#NewSecInput").hide();
+            var checkboxCntrl = document.getElementById("AddSecCheckBx");
+            checkboxCntrl.checked = false;
+            //need to post the new section, and add to dropdown
+            $.post("/LaMPWeb/Project/AddSection/", { OrgName: orgName, SecName: sectionName, DivName: divisionName }, function (data) {
+                populateSecDD($("#SecDD"), data);
+            });
+        }
+    }
+
+    function populateSecDD(select, data) {
+        //populate organization section dropdown with those for given division (including one added)
+        select.empty();
+        if (data.Data[1].SECTION == null) {
+            alert("Invalid, please try again");
+        }
+        else {
+            $.each(data.Data, function (id, option) {
+                if (option.SECTION == null) {
+                    select.append($('<option/>', {
+                        value: option.ORGANIZATION_ID,
+                        text: ""
+                    }));
+                }
+                else {
+                    select.append($('<option/>', {
+                        value: option.ORGANIZATION_ID,
+                        text: option.SECTION
+                    }));
+                }
+            });
+            alert("Section Added");
+        }
+    }
+
+    $("#form0").submit(function () {
+        var MISSING = "ui-req";
+        var SelMISSING = "ui-Sel-req";
+
+        var requiredInput = $('input[class*="required"]');
+        var requiredSelect = $('select[class*="required"]');
+        var requiredTextArea = $('textarea[class*="required"]');
+
+        var Ierr = false;
+        var Serr = false;
+        var Terr = false;
+        var missingMsg = "The highlighted fields are required.";
+
+        // Reset the previously highlighted input fields  
+        requiredInput.each(function (index) {
+            $(this).removeClass(MISSING);
+            $(this).addClass("ui-shadow-inset");
+        });
+        // Reset the previously highlighted select fields  
+        requiredSelect.each(function (index) {
+            $(this).removeClass(MISSING);
+            $(this).addClass("ui-shadow-inset");
+        });
+        // Reset the previously highlighted textarea fields  
+        requiredTextArea.each(function (index) {
+            $(this).removeClass(MISSING);
+            $(this).addClass("ui-shadow-inset");
+        });
+        // Perform form validation (input field)
+        requiredInput.each(function (index) {
+            if ($(this).val() == null || $(this).val() == "") {
+                $(this).addClass(MISSING);
+                $(this).removeClass("ui-shadow-inset");
+                Ierr = true;
+            }
+        });
+        // Perform form validation (select field) 
+        requiredSelect.each(function (index) {
+            var ind = $(this).context.selectedIndex;
+            if (ind == 0) {
+                $(this).addClass(SelMISSING);
+                Serr = true;
+            }
+        });
+        // Perform form validation (textarea field)
+        requiredTextArea.each(function (index) {
+            if ($(this).val() == null || $(this).val() == "") {
+                $(this).addClass(MISSING);
+                $(this).removeClass("ui-shadow-inset");
+                Terr = true;
+            }
+        });
+        // Check if validation fails
+        if (Ierr == true || Serr == true || Terr == true) {
+            $("#errorSection").append(missingMsg);
+            return false;
+        }
+        else {
+            loading();
+            return true;
+        }
+    });
+</script>

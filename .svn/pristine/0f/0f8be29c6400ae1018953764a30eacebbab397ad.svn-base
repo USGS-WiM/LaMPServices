@@ -1,0 +1,46 @@
+﻿@* Comments: 
+03.11.13 - TR - Created 
+*@
+
+@*
+/* Authors:
+ *      Tonia Roddick (troddick@usgs.gov)
+  * Copyright:
+ *      2012 USGS - WiM
+ * Purpose:
+ *      Partial view for Viewing list of sites for a project
+ */
+ *@
+
+@using LaMPServices;
+@using LaMPWeb.Models;
+           
+@{ List<Site> theseSites = ViewData["SiteList"] as List<Site>;
+   PROJECT thisProject = ViewData["project"] as PROJECT;
+}
+
+<div class="subSection softHeader">
+        <label class="bold Lpadded">SITES</label>
+        <hr class="infoUnderline" />
+        <div>Number of Sites: @ViewData["SiteCount"]</div>
+        <br />
+        <div id="siteList" style="height: 120px; overflow:auto">
+            <ul>
+            @foreach (Site cat in theseSites)
+            {
+                if (cat.LocationName != null)
+                {
+                    <li>@Html.ActionLink(cat.LocationName, "SiteDetails", "Site", new { id = cat.CatalogId, projId = cat.ProjectId }, new { onclick = "loading();" })</li>
+                }
+                else
+                {
+                    <li>@Html.ActionLink(cat.CatalogId.ToString(), "SiteDetails", "Site", new { id = cat.CatalogId, projId = cat.ProjectId }, new { onclick = "loading();" })</li>
+                }
+            }
+            </ul>
+        </div>
+
+        <div style="padding-left:5px; padding-top:12px">@Html.ActionLink("Add new Site", "SiteSummary1", "Site", new { id = thisProject.PROJECT_ID, From = "Details" }, new { @class = "LaMPButton blue", onclick = "loading();" })</div>   	
+        <br />
+    </div>
+    <br />
