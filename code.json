@@ -1,0 +1,48 @@
+[
+  {
+    "name": "LaMPServices",
+    "organization": "U.S. Geological Survey",
+    "description": "archiving old LaMPServices which contain the LaMPServices and old MVC SiGLDMS",
+    "version": "v0.0.0",
+    "status": "Archival"
+
+    "permissions": {
+      "usageType": "openSource",
+      "licenses": [
+        {
+          "name": "Public Domain",
+          "URL": "https://github.com/usgs/LaMPServices/blob/master/LICENSE.md"
+        }
+      ]
+    },
+
+    "homepageURL": null,
+    "downloadURL": "https://github.com/USGS-WiM/LaMPServices/archive/master.zip",
+    "disclaimerURL": "https://github.com/USGS-WiM/LaMPServices/blob/master/DISCLAIMER.md",
+    "repositoryUrl": "https://github.com/USGS-WiM/LaMPServices",
+    "vcs": "git",
+
+    "laborHours": null,
+
+    "tags": [
+      "lamp",
+      "services",
+      "sigl",
+      "dms"
+    ],
+
+    "languages": [
+      "c#",
+      "javascript"
+    ],
+
+    "contact": {
+      "name": "Tonia Roddick",
+      "email": "troddick@usgs.gov"
+    },
+
+    "date": {
+      "metadataLastUpdated": "2018-02-20"
+    }
+  }
+]
